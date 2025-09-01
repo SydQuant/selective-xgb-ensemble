@@ -1,0 +1,103 @@
+# Symbol presets for futures data loading
+# This file defines which symbols to load by default
+
+# Default preset for futures trading
+default:
+  # - '@AD#C'  # Australian Dollar
+  # - '@ES#C'  # E-Mini S&P 500
+  # - 'QCL#C'  # Crude Oil
+  # - '@TY#C'   # 10 YR US Treasury Note 
+  # - '@S#C'   # Soybeans
+  
+  - '@AD#C'  # Australian Dollar
+  - '@BP#C'  # British Pound
+  - '@EU#C'  # Euro FX
+  - '@JY#C'  # Japanese Yen
+
+  - '@ES#C'  # E-Mini S&P 500
+  - '@NQ#C'  # E-Mini NASDAQ 100
+  - '@RTY#C' # E-Mini Russell 2000
+
+  - '@C#C'   # Corn
+  - '@CT#C'  # Cotton
+  - '@KW#C'  # Hard Red Winter Wheat
+  - '@S#C'   # Soybeans
+  - '@SM#C'  # Soybean Meal
+  - '@W#C'   # Wheat
+
+  - '@FV#C'  # 5 YR US Treasury Note
+  - '@TY#C'  # 10 YR US Treasury Note
+  - '@US#C'  # US Long Bond
+
+# All available symbols (for reference)
+all_symbols:
+  - '@AD#C'
+  - '@BO#C'
+  - '@BP#C'
+  - '@C#C'
+  - '@CT#C'
+  - '@ES#C'
+  - '@EU#C'
+  - '@FV#C'
+  - '@JY#C'
+  - '@KW#C'
+  - '@NQ#C'
+  - '@RTY#C'
+  - '@S#C'
+  - '@SM#C'
+  - '@TY#C'
+  - '@US#C'
+  - '@W#C'
+  - 'BD#C'
+  - 'BL#C'
+  - 'QBZ#C'
+  - 'QCL#C'
+  - 'QGC#C'
+  - 'QHG#C'
+  - 'QNG#C'
+  - 'QPL#C'
+  - 'QRB#C'
+  - 'QSI#C'
+
+# Asset class groups for cluster caps (based on instrument_config.yaml baskets)
+groups:
+  FX:
+    - '@AD#C'  # Australian Dollar
+    - '@BP#C'  # British Pound
+    - '@EU#C'  # Euro FX
+    - '@JY#C'  # Japanese Yen
+  
+  EQUITY:
+    - '@ES#C'  # E-Mini S&P 500
+    - '@NQ#C'  # E-Mini NASDAQ 100
+    - '@RTY#C' # E-Mini Russell 2000
+  
+  AGS:  # Agriculture
+    - '@BO#C'  # Soybean Oil
+    - '@C#C'   # Corn
+    - '@CT#C'  # Cotton
+    - '@KW#C'  # Hard Red Winter Wheat
+    - '@S#C'   # Soybeans
+    - '@SM#C'  # Soybean Meal
+    - '@W#C'   # Wheat
+  
+  RATESUS:  # US Rates
+    - '@FV#C'  # 5 YR US Treasury Note
+    - '@TY#C'  # 10 YR US Treasury Note
+    - '@US#C'  # US Long Bond
+  
+  RATESEU:  # European Rates
+    - 'BD#C'   # Euro Bund
+    - 'BL#C'   # Euro Bund
+  
+  ENERGY:
+    - 'QBZ#C'  # Brent Crude Oil
+    - 'QCL#C'  # Crude Oil
+    - 'QNG#C'  # Natural Gas
+    - 'QRB#C'  # RBOB Gasoline
+  
+  METALS:
+    - 'QGC#C'  # Gold
+    - 'QHG#C'  # Copper
+    - 'QPL#C'  # Platinum
+    - 'QSI#C'  # Silver

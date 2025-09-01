@@ -1,5 +1,7 @@
 
 import argparse, numpy as np, pandas as pd, os, json
+# CHANGED: Added logging and real data support
+import logging
 from cv.wfo import wfo_splits
 from model.xgb_drivers import generate_xgb_specs, fold_train_predict
 from ensemble.combiner import build_driver_signals, combine_signals, softmax
@@ -9,6 +11,13 @@ from opt.weight_objective import weight_objective_factory
 from metrics.dapy import hit_rate
 from metrics.perf import information_ratio
 from eval.target_shuffling import shuffle_pvalue
+# CHANGED: Added real data loading support
+from data.data_utils import prepare_real_data
+from data.symbol_loader import get_default_symbols
+
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 def get_dapy_fn(style: str):
     style = (style or "hits").lower()
@@ -57,10 +66,51 @@ def make_synth(n=2400, n_features=600, seed=0, signal_frac=0.04):
 
 def main(args):
     dapy_fn = get_dapy_fn(args.dapy_style)
+    
+    # CHANGED: Added real data loading support with Arctic DB integration
     if args.synthetic:
+        logger.info("Using synthetic data for testing")
         X, y = make_synth(n=args.n_obs, n_features=args.n_features, seed=42)
     else:
-        raise SystemExit("Replace make_synth with your real pipeline.")
+        logger.info(f"Loading real market data for target: {args.target_symbol}")
+        
+        # Load symbols from config
+        if args.symbols:
+            symbols = args.symbols.split(',')
+        else:
+            symbols = get_default_symbols()
+            logger.info(f"Using default symbols: {symbols[:5]}{'...' if len(symbols) > 5 else ''}")
+        
+        # Prepare real data with feature engineering
+        df = prepare_real_data(
+            target_symbol=args.target_symbol,
+            symbols=symbols,
+            start_date=args.start_date,
+            end_date=args.end_date,
+            n_hours=args.n_hours,
+            signal_hour=args.signal_hour,
+            max_features=args.max_features  # CHANGED: Added feature limiting for testing
+        )
+        
+        if df.empty:
+            raise SystemExit(f"No data loaded for target symbol: {args.target_symbol}")
+        
+        # Split into features and target
+        target_col = f"{args.target_symbol}_target_return"
+        if target_col not in df.columns:
+            raise SystemExit(f"Target column {target_col} not found in data")
+            
+        y = df[target_col]
+        X = df.drop(columns=[target_col])
+        
+        logger.info(f"Loaded real data: X shape {X.shape}, y shape {y.shape}")
+        logger.info(f"Date range: {X.index.min()} to {X.index.max()}")
+        
+        # Ensure we have enough data
+        if len(X) < args.folds * 100:
+            logger.warning(f"Limited data: {len(X)} observations for {args.folds} folds")
+            args.folds = max(2, len(X) // 100)  # Adjust folds for limited data
+            logger.info(f"Reduced to {args.folds} folds")
 
     splits = wfo_splits(len(X), k_folds=args.folds, min_train=max(252, len(X)//(args.folds*2)))
     specs = generate_xgb_specs(n_models=args.n_models, seed=7)
@@ -73,7 +123,8 @@ def main(args):
         X_tr, y_tr = X.iloc[tr], y.iloc[tr]
         X_te, y_te = X.iloc[te], y.iloc[te]
 
-        train_preds, test_preds = fold_train_predict(X_tr, y_tr, X_te, specs)
+        # CHANGED: Added multiprocessing support for XGB training
+        train_preds, test_preds = fold_train_predict(X_tr, y_tr, X_te, specs, use_multiprocessing=args.use_multiprocessing)
         s_tr, s_te = build_driver_signals(train_preds, test_preds, y_tr, z_win=args.z_win, beta=args.beta_pre)
 
         def gate(sig, y_local):
@@ -276,28 +327,53 @@ def random_inperiod_train_then_backtest(X: pd.DataFrame, y: pd.Series, args):
     print("[RandInPeriod] Saved artifacts/random_inperiod_timeseries.csv and metadata.")
 
 if __name__ == "__main__":
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--synthetic", action="store_true", default=True)
-    ap.add_argument("--n_obs", type=int, default=2400)
-    ap.add_argument("--n_features", type=int, default=600)
-    ap.add_argument("--folds", type=int, default=6)
-    ap.add_argument("--n_models", type=int, default=50)
-    ap.add_argument("--n_select", type=int, default=12)
+    ap = argparse.ArgumentParser(description="XGB ensemble with GROPE optimization - supports synthetic and real market data")
+    
+    # Data source options
+    ap.add_argument("--synthetic", action="store_true", default=False, help="Use synthetic data (default: False, use real data)")
+    ap.add_argument("--target_symbol", type=str, default="@ES#C", help="Target symbol for prediction (default: @ES#C)")
+    ap.add_argument("--symbols", type=str, help="Comma-separated list of symbols (default: from symbols.yaml)")
+    
+    # CHANGED: Added real data parameters
+    ap.add_argument("--start_date", type=str, help="Start date for data loading (YYYY-MM-DD)")
+    ap.add_argument("--end_date", type=str, help="End date for data loading (YYYY-MM-DD)")
+    ap.add_argument("--signal_hour", type=int, default=12, help="Hour for signal generation (default: 12 = 1PM)")
+    ap.add_argument("--n_hours", type=int, default=3, help="Lookahead hours for target return (default: 3)")
+    ap.add_argument("--max_features", type=int, help="Limit features for testing (e.g., 50)")
+    
+    # Synthetic data options (for testing)
+    ap.add_argument("--n_obs", type=int, default=2400, help="Number of synthetic observations")
+    ap.add_argument("--n_features", type=int, default=600, help="Number of synthetic features")
+    
+    # Model parameters
+    ap.add_argument("--folds", type=int, default=3, help="Walk-forward CV folds (reduced default for real data)")
+    ap.add_argument("--n_models", type=int, default=20, help="Number of XGB models (reduced default for testing)")
+    ap.add_argument("--n_select", type=int, default=8, help="Number of drivers to select (reduced default)")
+    ap.add_argument("--use_multiprocessing", action="store_true", default=True, help="Use multiprocessing for XGB training")
+    
+    # Signal processing
     ap.add_argument("--z_win", type=int, default=100)
     ap.add_argument("--beta_pre", type=float, default=1.0)
     ap.add_argument("--lambda_to", type=float, default=0.05)
-    ap.add_argument("--weight_budget", type=int, default=80)
+    
+    # Optimization parameters (reduced for testing)
+    ap.add_argument("--weight_budget", type=int, default=40, help="GROPE optimization budget (reduced default)")
     ap.add_argument("--w_dapy", type=float, default=1.0)
     ap.add_argument("--w_ir", type=float, default=1.0)
     ap.add_argument("--diversity_penalty", type=float, default=0.2)
     ap.add_argument("--pmax", type=float, default=0.20)
-    ap.add_argument("--final_shuffles", type=int, default=600)
+    ap.add_argument("--final_shuffles", type=int, default=300, help="Final shuffle tests (reduced default)")
     ap.add_argument("--block", type=int, default=10)
+    
+    # Output options
     ap.add_argument("--train_production", action="store_true", default=False)
     ap.add_argument("--dapy_style", type=str, default="hits", help="hits | eri_long | eri_short | eri_both")
+    
+    # Legacy random training options
     ap.add_argument("--test_start", type=str, default="2018-01-01")
     ap.add_argument("--random_train_pct", type=float, default=0.0)
     ap.add_argument("--randtrain_seed", type=int, default=123)
     ap.add_argument("--random_inperiod_train_pct", type=float, default=0.0)
+    
     args = ap.parse_args()
     main(args)
