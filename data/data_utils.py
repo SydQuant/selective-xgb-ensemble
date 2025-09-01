@@ -352,8 +352,7 @@ def prepare_real_data(target_symbol: str, symbols: List[str] = None, start_date:
     if target_symbol not in symbols:
         symbols = [target_symbol] + symbols
     
-    logger.info(f"🎯 Preparing data: target={target_symbol}, {len(symbols)} symbols, signal_hour={signal_hour}")
-    logger.info(f"📊 Date range: {start_date or 'auto'} to {end_date or 'auto'}")
+    # Removed verbose logging
     
     # Check for cached features (comprehensive cache key to avoid wrong cache usage)
     import os
@@ -382,22 +381,22 @@ def prepare_real_data(target_symbol: str, symbols: List[str] = None, start_date:
     
     if os.path.exists(cache_file):
         import pickle
-        logger.info(f"📦 Loading cached features from {cache_file}")
+        # logger.info(f"Loading cached features from {cache_file}")
         try:
             with open(cache_file, 'rb') as f:
                 cached_df = pickle.load(f)
-                logger.info(f"✅ Cache hit: {cached_df.shape}")
+                # logger.info(f"Cache hit: {cached_df.shape}")
                 return cached_df
         except Exception as e:
             logger.warning(f"⚠️ Cache read failed: {e}, rebuilding...")
     
-    logger.info(f"🔄 Loading raw data from Arctic DB...")
+    # Loading raw data from Arctic DB
     raw_data = load_real_data(symbols, start_date, end_date, signal_hour=None)
     if not raw_data:
         logger.error("❌ No data loaded from Arctic DB")
         return pd.DataFrame()
     
-    logger.info(f"✅ Loaded {len(raw_data)} symbols from Arctic DB")
+    # logger.info(f"Loaded {len(raw_data)} symbols from Arctic DB")
     
     # Generate target returns (forward n_hours)
     logger.info(f"🎯 Generating {n_hours}h forward returns for {target_symbol}...")

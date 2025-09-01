@@ -170,9 +170,7 @@ def run_training_pipeline(X, y, args, dapy_fn):
         X_te = X.iloc[te]  # Removed unused y_te
 
         # DEBUG: Check input data to XGBoost
-        logger.info(f"[Fold {f}] Input data: X_tr{X_tr.shape}, y_tr{y_tr.shape}")
-        logger.info(f"  Target: mean={y_tr.mean():.6f}, std={y_tr.std():.6f}, range=[{y_tr.min():.6f}, {y_tr.max():.6f}]")
-        logger.info(f"  Features: {X_tr.shape[1]} features from {len(X_tr.columns)} columns")
+        # Removed verbose fold logging
         
         # Check for degenerate cases
         if y_tr.std() < 1e-10:
@@ -182,26 +180,20 @@ def run_training_pipeline(X, y, args, dapy_fn):
         # CHANGED: Added multiprocessing support for XGB training
         train_preds, test_preds = fold_train_predict(X_tr, y_tr, X_te, specs, use_multiprocessing=args.use_multiprocessing)
         
-        # DEBUG: Check XGB predictions
+        # Check for constant predictions
         if isinstance(train_preds, list) and len(train_preds) > 0:
             train_arr = np.column_stack([p.values if hasattr(p, 'values') else p for p in train_preds])
-            test_arr = np.column_stack([p.values if hasattr(p, 'values') else p for p in test_preds])
-            logger.info(f"[Fold {f}] XGB predictions: train{train_arr.shape}, test{test_arr.shape}")
-            for i in range(min(3, train_arr.shape[1])):
-                tr_std, te_std = train_arr[:,i].std(), test_arr[:,i].std()
-                logger.info(f"  Model {i}: train_std={tr_std:.8f}, test_std={te_std:.8f}")
-                if tr_std < 1e-10 or te_std < 1e-10:
-                    logger.warning(f"  ❌ Model {i} has constant predictions!")
+            constant_models = sum(1 for i in range(train_arr.shape[1]) if train_arr[:,i].std() < 1e-10)
+            if constant_models > 0:
+                logger.warning(f"❌ Fold {f}: {constant_models}/{train_arr.shape[1]} models have constant predictions")
         
         s_tr, s_te = build_driver_signals(train_preds, test_preds, y_tr, z_win=args.z_win, beta=args.beta_pre)
 
-        # Debug: Check all driver p-values
+        # Check driver significance
         driver_pvals = []
-        for i, sig in enumerate(s_tr):
+        for sig in s_tr:
             pval, _, _ = shuffle_pvalue(sig, y_tr, dapy_fn, n_shuffles=200, block=args.block)
             driver_pvals.append(pval)
-        
-        logger.info(f"[Fold {f}] Driver p-values: min={min(driver_pvals):.4f}, max={max(driver_pvals):.4f}, threshold={args.pmax}")
         
         def gate(sig, y_local):
             pval, _, _ = shuffle_pvalue(sig, y_local, dapy_fn, n_shuffles=200, block=args.block)
@@ -224,6 +216,10 @@ def run_training_pipeline(X, y, args, dapy_fn):
         w = np.array([theta_star[f"w{i}"] for i in range(len(train_sel))], dtype=float)
         tau = float(theta_star["tau"])
         ww = softmax(w, temperature=tau)
+        
+        # Show GROPE results for this fold
+        logger.info(f"Fold {f}: Selected {len(chosen_idx)} models, weights: {[f'{w:.3f}' for w in ww]}, tau: {tau:.3f}")
+        
         s_fold = combine_signals(test_sel, ww)
         oos_signal.iloc[te] = s_fold
 
