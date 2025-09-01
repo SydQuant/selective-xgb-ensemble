@@ -6,15 +6,11 @@ from utils.transforms import zscore, tanh_squash
 
 def build_driver_signals(train_preds, test_preds, y_tr, z_win=100, beta=1.0):
     s_tr, s_te = [], []
-    for i, (p_tr, p_te) in enumerate(zip(train_preds, test_preds)):
-        if p_tr is None or p_te is None:
-            continue
-        
+    for p_tr, p_te in zip(train_preds, test_preds):
         z_tr = zscore(p_tr, win=z_win)
         z_te = zscore(p_te, win=z_win)
         s_tr.append(tanh_squash(z_tr, beta=beta))
         s_te.append(tanh_squash(z_te, beta=beta))
-    
     return s_tr, s_te
 
 def softmax(w: np.ndarray, temperature: float = 1.0) -> np.ndarray:

@@ -13,7 +13,8 @@ def get_arcticdb_connection():
     """Get ArcticDB connection and futures library."""
     import arcticdb as adb
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    db_path = os.path.join(current_dir, "arctic_data")
+    # Database moved to artifacts directory
+    db_path = os.path.join(os.path.dirname(current_dir), "artifacts", "arctic_data")
     
     if not os.path.exists(db_path):
         raise FileNotFoundError(f"Arctic DB path not found: {db_path}")

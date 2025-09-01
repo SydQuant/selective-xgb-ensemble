@@ -1,0 +1,39 @@
+# --- polygon_1pm_config.yaml ---
+# Minimal config focused on S&P 500 and Nasdaq-100, with a 1:00 PM New York snapshot.
+
+polygon_api_key: "YOUR_POLYGON_API_KEY"
+fmp_api_key: "YOUR_FMP_API_KEY"   # used only to fetch constituents
+
+# Date range (inclusive). Use trading days; script will skip days with no data.
+start_date: "2015-01-01"
+end_date: null  # null -> today
+
+# Snapshot time in America/New_York local time
+snapshot_time_local: "13:00:00"   # 1:00 PM
+tz_local: "America/New_York"
+
+# Download granularity
+multiplier: 1
+timespan: "minute"
+adjusted: true
+limit_per_call: 50000
+
+# I/O
+output_dir: "./data_1pm"
+formats:
+  parquet: true
+  csv: true
+
+# Performance
+rate_limit_sleep_secs: 0.2
+retry:
+  max_tries: 5
+  backoff_secs: 1.5
+
+# Logging
+log_every: 25
+
+# Universe (fixed to S&P500 and Nasdaq-100 for simplicity)
+universe:
+  sp500: true
+  nasdaq100: true

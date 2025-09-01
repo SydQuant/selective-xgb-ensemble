@@ -1,0 +1,38 @@
+# Full 26-Symbol Universe Test
+# Using the symbols provided by user + additional core futures
+
+target_symbol: "@ES#C,@NQ#C,@YM#C,@RTY#C,@TY#C,@US#C"  # Index + Bond targets
+symbols: "@ES#C,@NQ#C,@YM#C,@RTY#C,@TY#C,@US#C,@FV#C,@TU#C,@EU#C,@BP#C,@JY#C,@AD#C,@C#C,@S#C,@W#C,@LE#C,@GF#C,@HE#C,@KC#C,@SB#C,@CC#C,@CT#C,@BO#C,@SM#C,@VX#C,@QGC#C"  # Full 26-symbol cross-asset universe
+start_date: "2021-01-01"  # Extended history for more samples
+end_date: "2023-12-31"
+signal_hour: 12
+n_hours: 24  # Always use 24h prediction horizon
+on_target_only: false  # USE FULL UNIVERSE
+corr_threshold: 0.7  # Clustering threshold
+
+# Original model configuration
+n_models: 50   # Original default
+n_select: 12   # Original default
+folds: 6       # Original default
+use_multiprocessing: true  # Enable for performance
+
+# Signal processing - original defaults
+z_win: 100
+beta_pre: 1.0
+lambda_to: 0.05
+
+# Optimization - original defaults
+weight_budget: 80  # Original default
+w_dapy: 1.0
+w_ir: 1.0
+diversity_penalty: 0.2
+pmax: 0.20
+final_shuffles: 600
+block: 10
+
+# Training
+train_production: false
+dapy_style: "hits"
+test_start: "2023-10-01"
+random_train_pct: 0.0
+randtrain_seed: 123

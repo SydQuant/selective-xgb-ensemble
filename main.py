@@ -2,6 +2,7 @@
 import argparse, numpy as np, pandas as pd, os, json
 # CHANGED: Added logging and real data support
 import logging
+import yaml
 from cv.wfo import wfo_splits
 from model.xgb_drivers import generate_xgb_specs, fold_train_predict
 from ensemble.combiner import build_driver_signals, combine_signals, softmax
@@ -54,68 +55,108 @@ def save_oos_artifacts(signal: pd.Series, y: pd.Series, block: int, final_shuffl
     os.makedirs("artifacts", exist_ok=True)
     out = save_timeseries("artifacts/oos_timeseries.csv", signal, y)
     pval, obs, _ = shuffle_pvalue(signal, y, dapy_fn, n_shuffles=final_shuffles, block=block)
-    print(f"OOS Shuffling p-value (DAPY): {pval:.3f} (obs={obs:.2f})")
+    print(f"OOS Shuffling p-value (DAPY): {pval:.10f} (obs={obs:.2f})")
     return out
 
-def make_synth(n=2400, n_features=600, seed=0, signal_frac=0.04):
-    rng = np.random.default_rng(seed)
-    idx = pd.date_range("2010-01-01", periods=n, freq="B")
-    X = pd.DataFrame(rng.normal(size=(n, n_features)), index=idx, columns=[f"f{i}" for i in range(n_features)])
-    k = max(4, int(n_features*signal_frac))
-    cols = rng.choice(n_features, size=k, replace=False)
-    w = rng.normal(scale=0.25, size=k)
-    y = (X.iloc[:, cols] @ w)
-    y = y.shift(-1) + 0.6*rng.normal(size=n)
-    y = (y - y.mean()) / (y.std() + 1e-9)
-    return X, y.rename("target")
-
 def main(args):
+    """Main dispatcher - handles single or multiple targets."""
     dapy_fn = get_dapy_fn(args.dapy_style)
     
-    # CHANGED: Added real data loading support with Arctic DB integration
-    if args.synthetic:
-        logger.info("Using synthetic data for testing")
-        X, y = make_synth(n=args.n_obs, n_features=args.n_features, seed=42)
+    # Parse target symbols
+    target_symbols = [s.strip() for s in args.target_symbol.split(',')]
+    logger.info(f"🚀 Starting XGB Ensemble Analysis")
+    logger.info(f"🎯 Target symbols: {target_symbols}")
+    
+    # Load symbols from config
+    if args.symbols:
+        symbols = args.symbols.split(',')
     else:
-        logger.info(f"Loading real market data for target: {args.target_symbol}")
+        symbols = get_default_symbols()
+        logger.info(f"📋 Using default symbols: {symbols[:5]}{'...' if len(symbols) > 5 else ''}")
+    
+    # Process each target
+    results = {}
+    for i, target_symbol in enumerate(target_symbols, 1):
+        logger.info(f"\n{'='*80}")
+        logger.info(f"🔄 PROCESSING TARGET {i}/{len(target_symbols)}: {target_symbol}")
+        logger.info(f"{'='*80}")
         
-        # Load symbols from config
-        if args.symbols:
-            symbols = args.symbols.split(',')
-        else:
-            symbols = get_default_symbols()
-            logger.info(f"Using default symbols: {symbols[:5]}{'...' if len(symbols) > 5 else ''}")
+        try:
+            result = run_single_target(target_symbol, args, symbols, dapy_fn)
+            results[target_symbol] = result
+            if result:
+                logger.info(f"✅ Completed {target_symbol}")
+            else:
+                logger.warning(f"⚠️ Failed {target_symbol}")
+        except Exception as e:
+            logger.error(f"❌ Error processing {target_symbol}: {e}")
+            results[target_symbol] = None
+    
+    # Summary
+    successful = sum(1 for r in results.values() if r is not None)
+    logger.info(f"\n{'='*80}")
+    logger.info(f"📊 FINAL SUMMARY: {successful}/{len(target_symbols)} targets completed successfully")
+    logger.info(f"{'='*80}")
+    
+    return results
+
+def run_single_target(target_symbol: str, args, symbols: list, dapy_fn):
+    """Run analysis for a single target symbol."""
+    # Set the target in args temporarily for compatibility 
+    original_target = args.target_symbol
+    args.target_symbol = target_symbol
+    
+    try:
+        # CHANGED: Removed synthetic data fallback - only real market data supported
+        logger.info(f"🔄 Loading real market data for target: {target_symbol}")
         
         # Prepare real data with feature engineering
         df = prepare_real_data(
-            target_symbol=args.target_symbol,
+            target_symbol=target_symbol,
             symbols=symbols,
             start_date=args.start_date,
             end_date=args.end_date,
             n_hours=args.n_hours,
             signal_hour=args.signal_hour,
-            max_features=args.max_features  # CHANGED: Added feature limiting for testing
+            max_features=args.max_features,
+            on_target_only=args.on_target_only,
+            corr_threshold=args.corr_threshold
         )
         
         if df.empty:
-            raise SystemExit(f"No data loaded for target symbol: {args.target_symbol}")
+            logger.error(f"❌ No data loaded for target symbol: {target_symbol}")
+            return None
         
         # Split into features and target
-        target_col = f"{args.target_symbol}_target_return"
+        target_col = f"{target_symbol}_target_return"
         if target_col not in df.columns:
-            raise SystemExit(f"Target column {target_col} not found in data")
-            
+            logger.error(f"❌ Target column {target_col} not found in data")
+            return None
+        
         y = df[target_col]
         X = df.drop(columns=[target_col])
         
-        logger.info(f"Loaded real data: X shape {X.shape}, y shape {y.shape}")
-        logger.info(f"Date range: {X.index.min()} to {X.index.max()}")
+        logger.info(f"✅ Loaded data: X shape {X.shape}, y shape {y.shape}")
+        logger.info(f"📅 Date range: {X.index.min()} to {X.index.max()}")
         
-        # Ensure we have enough data
-        if len(X) < args.folds * 100:
-            logger.warning(f"Limited data: {len(X)} observations for {args.folds} folds")
-            args.folds = max(2, len(X) // 100)  # Adjust folds for limited data
-            logger.info(f"Reduced to {args.folds} folds")
+        # Continue with existing logic...
+        return run_training_pipeline(X, y, args, dapy_fn)
+    
+    finally:
+        # Restore original target
+        args.target_symbol = original_target
+
+def run_training_pipeline(X, y, args, dapy_fn):
+    """Run the XGB training pipeline."""
+    
+    logger.info(f"Loaded real data: X shape {X.shape}, y shape {y.shape}")
+    logger.info(f"Date range: {X.index.min()} to {X.index.max()}")
+    
+    # Ensure we have enough data
+    if len(X) < args.folds * 100:
+        logger.warning(f"Limited data: {len(X)} observations for {args.folds} folds")
+        args.folds = max(2, len(X) // 100)  # Adjust folds for limited data
+        logger.info(f"Reduced to {args.folds} folds")
 
     splits = wfo_splits(len(X), k_folds=args.folds, min_train=max(252, len(X)//(args.folds*2)))
     specs = generate_xgb_specs(n_models=args.n_models, seed=7)
@@ -126,12 +167,42 @@ def main(args):
 
     for f, (tr, te) in enumerate(splits):
         X_tr, y_tr = X.iloc[tr], y.iloc[tr]
-        X_te, y_te = X.iloc[te], y.iloc[te]
+        X_te = X.iloc[te]  # Removed unused y_te
 
+        # DEBUG: Check input data to XGBoost
+        logger.info(f"[Fold {f}] Input data: X_tr{X_tr.shape}, y_tr{y_tr.shape}")
+        logger.info(f"  Target: mean={y_tr.mean():.6f}, std={y_tr.std():.6f}, range=[{y_tr.min():.6f}, {y_tr.max():.6f}]")
+        logger.info(f"  Features: {X_tr.shape[1]} features from {len(X_tr.columns)} columns")
+        
+        # Check for degenerate cases
+        if y_tr.std() < 1e-10:
+            logger.error(f"[Fold {f}] ❌ Target has no variance! Cannot train XGBoost.")
+            continue
+            
         # CHANGED: Added multiprocessing support for XGB training
         train_preds, test_preds = fold_train_predict(X_tr, y_tr, X_te, specs, use_multiprocessing=args.use_multiprocessing)
+        
+        # DEBUG: Check XGB predictions
+        if isinstance(train_preds, list) and len(train_preds) > 0:
+            train_arr = np.column_stack([p.values if hasattr(p, 'values') else p for p in train_preds])
+            test_arr = np.column_stack([p.values if hasattr(p, 'values') else p for p in test_preds])
+            logger.info(f"[Fold {f}] XGB predictions: train{train_arr.shape}, test{test_arr.shape}")
+            for i in range(min(3, train_arr.shape[1])):
+                tr_std, te_std = train_arr[:,i].std(), test_arr[:,i].std()
+                logger.info(f"  Model {i}: train_std={tr_std:.8f}, test_std={te_std:.8f}")
+                if tr_std < 1e-10 or te_std < 1e-10:
+                    logger.warning(f"  ❌ Model {i} has constant predictions!")
+        
         s_tr, s_te = build_driver_signals(train_preds, test_preds, y_tr, z_win=args.z_win, beta=args.beta_pre)
 
+        # Debug: Check all driver p-values
+        driver_pvals = []
+        for i, sig in enumerate(s_tr):
+            pval, _, _ = shuffle_pvalue(sig, y_tr, dapy_fn, n_shuffles=200, block=args.block)
+            driver_pvals.append(pval)
+        
+        logger.info(f"[Fold {f}] Driver p-values: min={min(driver_pvals):.4f}, max={max(driver_pvals):.4f}, threshold={args.pmax}")
+        
         def gate(sig, y_local):
             pval, _, _ = shuffle_pvalue(sig, y_local, dapy_fn, n_shuffles=200, block=args.block)
             return pval <= args.pmax
@@ -141,14 +212,14 @@ def main(args):
             w_dapy=args.w_dapy, w_ir=args.w_ir, diversity_penalty=args.diversity_penalty, dapy_fn=dapy_fn
         )
         if len(chosen_idx) == 0:
-            print(f"[Fold {f}] No drivers passed the p-value gate; ensemble is zero.")
+            logger.warning(f"[Fold {f}] No drivers passed the p-value gate (threshold={args.pmax:.3f}); ensemble is zero.")
             continue
         train_sel = [s_tr[i] for i in chosen_idx]
         test_sel  = [s_te[i] for i in chosen_idx]
 
         bounds = {**{f"w{i}": (-2.0, 2.0) for i in range(len(train_sel))}, "tau": (0.2, 3.0)}
         fobj = weight_objective_factory(train_sel, y_tr, turnover_penalty=args.lambda_to, pmax=args.pmax, w_dapy=args.w_dapy, w_ir=args.w_ir, metric_fn_dapy=dapy_fn)
-        theta_star, J_star, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, seed=1234+f)
+        theta_star, _, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, seed=1234+f)  # Removed unused J_star
 
         w = np.array([theta_star[f"w{i}"] for i in range(len(train_sel))], dtype=float)
         tau = float(theta_star["tau"])
@@ -156,13 +227,18 @@ def main(args):
         s_fold = combine_signals(test_sel, ww)
         oos_signal.iloc[te] = s_fold
 
-        fold_summaries.append({"fold": f, "chosen_idx": chosen_idx, "weights": ww.tolist(), "tau": tau, "J_train": J_star})
+        fold_summaries.append({"fold": f, "chosen_idx": chosen_idx, "weights": ww.tolist(), "tau": tau})
+
+    # Check if we have any valid signal
+    if len(fold_summaries) == 0 or oos_signal.abs().sum() < 1e-10:
+        logger.error("❌ No folds produced valid signals. All models failed p-value gating.")
+        return None
 
     # Final OOS metrics - ORIGINAL LOGIC PRESERVED
     dapy_val = dapy_fn(oos_signal, y)
     ir = information_ratio(oos_signal, y)
     hr = hit_rate(oos_signal, y)
-    print(f"OOS DAPY({args.dapy_style}): {dapy_val:.2f} | OOS IR: {ir:.2f} | OOS hit-rate: {hr:.3f}")
+    logger.info(f"OOS DAPY({args.dapy_style}): {dapy_val:.2f} | OOS IR: {ir:.2f} | OOS hit-rate: {hr:.3f}")
     save_oos_artifacts(oos_signal, y, block=args.block, final_shuffles=args.final_shuffles, dapy_fn=dapy_fn)
     
     # ENHANCED: Comprehensive performance analysis
@@ -184,6 +260,41 @@ def main(args):
 
     with open("artifacts/fold_summaries.json", "w", encoding="utf-8") as fsum:
         json.dump(fold_summaries, fsum, indent=2)
+    
+    # ENHANCED: Save comprehensive diagnostics
+    try:
+        from diagnostics.diagnostic_output import save_comprehensive_diagnostics
+        
+        # Collect feature information from the loaded data
+        feature_info = []
+        if 'X' in locals() and X is not None:
+            for i, col in enumerate(X.columns):
+                feature_info.append({
+                    "name": col,
+                    "index": i,
+                    "min": float(X[col].min()) if not X[col].empty else 0,
+                    "max": float(X[col].max()) if not X[col].empty else 0,
+                    "std": float(X[col].std()) if not X[col].empty else 0,
+                    "mean": float(X[col].mean()) if not X[col].empty else 0
+                })
+        
+        # Collect model performance info from fold summaries
+        model_performance = {
+            "total_models": sum([len(fs.get('models', [])) for fs in fold_summaries]),
+            "pvalue_range": f"{min([fs.get('min_pvalue', 1.0) for fs in fold_summaries]):.4f} - {max([fs.get('max_pvalue', 1.0) for fs in fold_summaries]):.4f}",
+            "constant_models": sum([fs.get('constant_predictions', 0) for fs in fold_summaries]),
+            "variable_models": sum([fs.get('variable_predictions', 0) for fs in fold_summaries]),
+            "total_return": performance_metrics.get('total_return', 0),
+            "sharpe_ratio": performance_metrics.get('sharpe_ratio', 0),
+            "hit_rate": performance_metrics.get('hit_rate', 0),
+            "max_drawdown": performance_metrics.get('max_drawdown', 0)
+        }
+        
+        data_shape = X.shape if 'X' in locals() else (0, 0)
+        save_comprehensive_diagnostics(vars(args), data_shape, feature_info, model_performance)
+        
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to save comprehensive diagnostics: {e}")
 
     # Production model (unrealistic backtest)
     if args.train_production:
@@ -195,10 +306,9 @@ def main(args):
         print(f"\n[RandTrain] Training on {args.random_train_pct*100:.1f}% of pre-{args.test_start} data, then backtesting from {args.test_start}...")
         random_past_train_then_backtest(X, y, args)
 
-    # Random IN-PERIOD train then full in-period backtest
-    if args.random_inperiod_train_pct > 0.0:
-        print(f"\n[RandInPeriod] Training on {args.random_inperiod_train_pct*100:.1f}% of data since {args.test_start}, then backtesting on the full period...")
-        random_inperiod_train_then_backtest(X, y, args)
+    # Return success
+    return True
+
 
 def train_production_model(X: pd.DataFrame, y: pd.Series, args):
     import numpy as np
@@ -269,10 +379,30 @@ def random_past_train_then_backtest(X: pd.DataFrame, y: pd.Series, args):
     n_sample = max(10, int(len(idx_pre) * args.random_train_pct))
     idx_train = np.sort(rng.choice(idx_pre, size=n_sample, replace=False))
 
+    # CHANGED: Fixed bug - use proper test set (post test_start) instead of full dataset
     X_tr, y_tr = X.iloc[idx_train], y.iloc[idx_train]
+    X_te = X[X.index >= ts]  # Test data only (post test_start)
+    
+    # CHANGED: Added data validation to prevent NaN/infinity errors
+    if X_tr.isnull().any().any() or y_tr.isnull().any():
+        print(f"[RandTrain] Warning: NaN values in training data. X_tr NaN: {X_tr.isnull().sum().sum()}, y_tr NaN: {y_tr.isnull().sum()}")
+        # Drop NaN rows
+        mask_valid = ~(X_tr.isnull().any(axis=1) | y_tr.isnull())
+        X_tr, y_tr = X_tr[mask_valid], y_tr[mask_valid]
+        print(f"[RandTrain] After cleaning: {len(X_tr)} valid samples")
+    
+    if (y_tr.abs() > 1e6).any() or not np.isfinite(y_tr).all():
+        print(f"[RandTrain] Warning: Extreme/infinite values in y_tr. Range: {y_tr.min():.6f} to {y_tr.max():.6f}")
+        # Clip extreme values
+        y_tr = y_tr.clip(-10, 10)
+    
+    if len(X_tr) < 10:
+        print(f"[RandTrain] Not enough valid training samples: {len(X_tr)}")
+        return
+    
     specs = generate_xgb_specs(n_models=args.n_models, seed=7)
-    train_preds, test_preds = fold_train_predict(X_tr, y_tr, X, specs)
-    s_tr, s_full = build_driver_signals(train_preds, test_preds, y_tr, z_win=args.z_win, beta=args.beta_pre)
+    train_preds, test_preds = fold_train_predict(X_tr, y_tr, X_te, specs)
+    s_tr, s_te = build_driver_signals(train_preds, test_preds, y_tr, z_win=args.z_win, beta=args.beta_pre)
 
     def gate(sig, yy):
         pval, _, _ = shuffle_pvalue(sig, yy, dapy_fn, n_shuffles=200, block=args.block)
@@ -283,119 +413,113 @@ def random_past_train_then_backtest(X: pd.DataFrame, y: pd.Series, args):
         print("[RandTrain] No drivers passed p-value gate.")
         return
     train_sel = [s_tr[i] for i in chosen_idx]
-    full_sel  = [s_full[i] for i in chosen_idx]
+    test_sel  = [s_te[i] for i in chosen_idx]
 
     bounds = {**{f"w{i}": (-2.0, 2.0) for i in range(len(train_sel))}, "tau": (0.2, 3.0)}
     fobj = weight_objective_factory(train_sel, y_tr, turnover_penalty=args.lambda_to, pmax=args.pmax, w_dapy=args.w_dapy, w_ir=args.w_ir, metric_fn_dapy=dapy_fn)
-    theta_star, J_star, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, seed=2468)
+    theta_star, _, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, seed=2468)
 
     w = np.array([theta_star[f"w{i}"] for i in range(len(train_sel))], dtype=float)
     tau = float(theta_star["tau"]); ww = softmax(w, temperature=tau)
 
-    s_full_ens = combine_signals(full_sel, ww)
-    s_test = s_full_ens[s_full_ens.index >= ts]; y_test = y[y.index >= ts]
-    save_timeseries("artifacts/randomtrain_timeseries.csv", s_test, y_test)
+    s_test_ens = combine_signals(test_sel, ww)
+    y_test = y[y.index >= ts]
+    save_timeseries("artifacts/randomtrain_timeseries.csv", s_test_ens, y_test)
     print("[RandTrain] Saved artifacts/randomtrain_timeseries.csv and metadata.")
 
-def random_inperiod_train_then_backtest(X: pd.DataFrame, y: pd.Series, args):
-    dapy_fn = get_dapy_fn(args.dapy_style)
-    from model.xgb_drivers import generate_xgb_specs, fold_train_predict
-    from ensemble.combiner import build_driver_signals, softmax, combine_signals
-    from ensemble.selection import pick_top_n_greedy_diverse
-    from opt.grope import grope_optimize
-    from opt.weight_objective import weight_objective_factory
-    from eval.target_shuffling import shuffle_pvalue
 
-    import numpy as np, pandas as pd
-    os.makedirs("artifacts", exist_ok=True)
+def load_config(config_path: str) -> dict:
+    """Load configuration from YAML file."""
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+    logger.info(f"📄 Loaded configuration from {config_path}")
+    return config
 
-    ts = pd.Timestamp(args.test_start)
-    mask_inperiod = X.index >= ts
-    if mask_inperiod.sum() < 100:
-        print("[RandInPeriod] Not enough in-period data.")
-        return
-
-    rng = np.random.default_rng(args.randtrain_seed)
-    idx_all = np.where(mask_inperiod)[0]
-    n_sample = max(50, int(len(idx_all) * args.random_inperiod_train_pct))
-    idx_train = np.sort(rng.choice(idx_all, size=n_sample, replace=False))
-
-    X_tr, y_tr = X.iloc[idx_train], y.iloc[idx_train]
-    specs = generate_xgb_specs(n_models=args.n_models, seed=7)
-    train_preds, test_preds = fold_train_predict(X_tr, y_tr, X[mask_inperiod], specs)
-    s_tr, s_full = build_driver_signals(train_preds, test_preds, y_tr, z_win=args.z_win, beta=args.beta_pre)
-
-    def gate(sig, yy):
-        pval, _, _ = shuffle_pvalue(sig, yy, dapy_fn, n_shuffles=200, block=args.block)
-        return pval <= args.pmax
-
-    chosen_idx = pick_top_n_greedy_diverse(s_tr, y_tr, n=args.n_select, pval_gate=gate, w_dapy=args.w_dapy, w_ir=args.w_ir, diversity_penalty=args.diversity_penalty, dapy_fn=dapy_fn)
-    if len(chosen_idx) == 0:
-        print("[RandInPeriod] No drivers passed p-value gate.")
-        return
-
-    train_sel = [s_tr[i] for i in chosen_idx]
-    full_sel  = [s_full[i] for i in chosen_idx]
-    bounds = {**{f"w{i}": (-2.0, 2.0) for i in range(len(train_sel))}, "tau": (0.2, 3.0)}
-    fobj = weight_objective_factory(train_sel, y_tr, turnover_penalty=args.lambda_to, pmax=args.pmax, w_dapy=args.w_dapy, w_ir=args.w_ir, metric_fn_dapy=dapy_fn)
-    theta_star, J_star, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, seed=97531)
-
-    w = np.array([theta_star[f"w{i}"] for i in range(len(train_sel))], dtype=float)
-    tau = float(theta_star["tau"]); ww = softmax(w, temperature=tau)
-
-    s_full_ens = combine_signals(full_sel, ww)
-    y_full = y[mask_inperiod]
-    save_timeseries("artifacts/random_inperiod_timeseries.csv", s_full_ens, y_full)
-    print("[RandInPeriod] Saved artifacts/random_inperiod_timeseries.csv and metadata.")
+def merge_args_with_config(args, config: dict):
+    """Merge command line arguments with config file, CLI takes precedence."""
+    for key, value in config.items():
+        # Handle boolean flags specially
+        if key == 'on_target_only' and isinstance(value, bool):
+            if hasattr(args, key):
+                # If not explicitly set in CLI, use config value
+                if not getattr(args, key, False):
+                    setattr(args, key, value)
+            else:
+                setattr(args, key, value)
+        elif hasattr(args, key):
+            current_value = getattr(args, key)
+            # Only override if CLI value is None/default
+            if current_value is None:
+                setattr(args, key, value)
+        else:
+            setattr(args, key, value)
+    return args
 
 if __name__ == "__main__":
-    ap = argparse.ArgumentParser(description="XGB ensemble with GROPE optimization - supports synthetic and real market data")
+    ap = argparse.ArgumentParser(description="XGB ensemble with GROPE optimization - supports config files and CLI overrides")
+    
+    # Configuration file option
+    ap.add_argument("--config", type=str, help="Path to YAML configuration file (e.g., configs/fast_test.yaml)")
     
     # Data source options
-    ap.add_argument("--synthetic", action="store_true", default=False, help="Use synthetic data (default: False, use real data)")
-    ap.add_argument("--target_symbol", type=str, default="@ES#C", help="Target symbol for prediction (default: @ES#C)")
+    ap.add_argument("--target_symbol", type=str, help="Target symbol(s) for prediction - comma-separated for multiple")
     ap.add_argument("--symbols", type=str, help="Comma-separated list of symbols (default: from symbols.yaml)")
     
     # CHANGED: Added real data parameters
     ap.add_argument("--start_date", type=str, help="Start date for data loading (YYYY-MM-DD)")
     ap.add_argument("--end_date", type=str, help="End date for data loading (YYYY-MM-DD)")
-    ap.add_argument("--signal_hour", type=int, default=12, help="Hour for signal generation (default: 12 = 1PM)")
-    ap.add_argument("--n_hours", type=int, default=3, help="Lookahead hours for target return (default: 3)")
-    ap.add_argument("--max_features", type=int, help="Limit features for testing (e.g., 50)")
+    ap.add_argument("--signal_hour", type=int, help="Hour for signal generation")
+    ap.add_argument("--n_hours", type=int, help="Lookahead hours for target return")
+    ap.add_argument("--max_features", type=int, help="Limit features for testing")
     
-    # Synthetic data options (for testing)
-    ap.add_argument("--n_obs", type=int, default=2400, help="Number of synthetic observations")
-    ap.add_argument("--n_features", type=int, default=600, help="Number of synthetic features")
+    # Feature selection options
+    ap.add_argument("--on_target_only", action="store_true", help="Use only target symbol features")
+    ap.add_argument("--corr_threshold", type=float, help="Correlation threshold for feature clustering")
     
     # Model parameters
-    ap.add_argument("--folds", type=int, default=3, help="Walk-forward CV folds (reduced default for real data)")
-    ap.add_argument("--n_models", type=int, default=20, help="Number of XGB models (reduced default for testing)")
-    ap.add_argument("--n_select", type=int, default=8, help="Number of drivers to select (reduced default)")
-    ap.add_argument("--use_multiprocessing", action="store_true", default=True, help="Use multiprocessing for XGB training")
+    ap.add_argument("--folds", type=int, help="Walk-forward CV folds")
+    ap.add_argument("--n_models", type=int, help="Number of XGB models")
+    ap.add_argument("--n_select", type=int, help="Number of drivers to select")
+    ap.add_argument("--use_multiprocessing", action="store_true", help="Use multiprocessing for XGB training")
     
     # Signal processing
-    ap.add_argument("--z_win", type=int, default=100)
-    ap.add_argument("--beta_pre", type=float, default=1.0)
-    ap.add_argument("--lambda_to", type=float, default=0.05)
+    ap.add_argument("--z_win", type=int, help="Z-score window")
+    ap.add_argument("--beta_pre", type=float, help="Tanh squash beta")
+    ap.add_argument("--lambda_to", type=float, help="Turnover penalty")
     
-    # Optimization parameters (reduced for testing)
-    ap.add_argument("--weight_budget", type=int, default=40, help="GROPE optimization budget (reduced default)")
-    ap.add_argument("--w_dapy", type=float, default=1.0)
-    ap.add_argument("--w_ir", type=float, default=1.0)
-    ap.add_argument("--diversity_penalty", type=float, default=0.2)
-    ap.add_argument("--pmax", type=float, default=0.20)
-    ap.add_argument("--final_shuffles", type=int, default=300, help="Final shuffle tests (reduced default)")
-    ap.add_argument("--block", type=int, default=10)
+    # Optimization parameters
+    ap.add_argument("--weight_budget", type=int, help="GROPE optimization budget")
+    ap.add_argument("--w_dapy", type=float, help="DAPY weight")
+    ap.add_argument("--w_ir", type=float, help="Information ratio weight")
+    ap.add_argument("--diversity_penalty", type=float, help="Diversity penalty")
+    ap.add_argument("--pmax", type=float, help="P-value threshold")
+    ap.add_argument("--final_shuffles", type=int, help="Final shuffle tests")
+    ap.add_argument("--block", type=int, help="Block size for permutation")
     
     # Output options
-    ap.add_argument("--train_production", action="store_true", default=False)
-    ap.add_argument("--dapy_style", type=str, default="hits", help="hits | eri_long | eri_short | eri_both")
+    ap.add_argument("--train_production", action="store_true", help="Train production model")
+    ap.add_argument("--dapy_style", type=str, help="DAPY style")
     
-    # Legacy random training options
-    ap.add_argument("--test_start", type=str, default="2018-01-01")
-    ap.add_argument("--random_train_pct", type=float, default=0.0)
-    ap.add_argument("--randtrain_seed", type=int, default=123)
-    ap.add_argument("--random_inperiod_train_pct", type=float, default=0.0)
+    # Random training options
+    ap.add_argument("--test_start", type=str, help="Test start date for random training")
+    ap.add_argument("--random_train_pct", type=float, help="Random training percentage")
+    ap.add_argument("--randtrain_seed", type=int, help="Random training seed")
+    
     
     args = ap.parse_args()
+    
+    # Load configuration file if provided
+    config = {}
+    if args.config:
+        if not os.path.exists(args.config):
+            raise FileNotFoundError(f"Configuration file not found: {args.config}")
+        config = load_config(args.config)
+        args = merge_args_with_config(args, config)
+    
+    # Log configuration source
+    if args.config:
+        logger.info(f"📄 Using configuration: {args.config}")
+    else:
+        logger.info("🔧 Using CLI arguments and defaults")
+    
     main(args)

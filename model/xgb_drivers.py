@@ -14,22 +14,26 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 def generate_xgb_specs(n_models: int = 50, seed: int = 13) -> List[Dict[str, Any]]:
+    """Generate diverse XGB specifications with improved ranges for small datasets."""
     rng = np.random.default_rng(seed)
     specs = []
-    for i in range(n_models):
-        depth = int(rng.integers(2, 10))
-        lr = float(10**rng.uniform(-2.3, -0.7))
-        est = int(rng.integers(200, 1200))
-        subsample = float(rng.uniform(0.6, 1.0))
-        colsample = float(rng.uniform(0.4, 1.0))
-        reg_alpha = float(10**rng.uniform(-4, -1))
-        reg_lambda = float(10**rng.uniform(-4, 1))
+    for _ in range(n_models):
+        depth = int(rng.integers(2, 6))  # Reduced max depth for small samples
+        lr = float(rng.uniform(0.1, 0.8))  # More aggressive learning rates for small datasets
+        est = int(rng.integers(20, 100))  # Fewer estimators to prevent overfitting on small data
+        subsample = float(rng.uniform(0.8, 1.0))  # Higher subsample for small datasets
+        colsample = float(rng.uniform(0.6, 1.0))  # Higher feature sampling
+        reg_alpha = 0.0  # Keep zero for small datasets  
+        reg_lambda = 0.0  # Keep zero for small datasets
+        min_child_weight = float(rng.uniform(0.001, 0.05))  # Even more aggressive for tiny samples
+        gamma = 0.0  # No gamma regularization for small datasets
+        
         specs.append({
             "max_depth": depth, "learning_rate": lr, "n_estimators": est,
             "subsample": subsample, "colsample_bytree": colsample,
             "reg_alpha": reg_alpha, "reg_lambda": reg_lambda,
-            "min_child_weight": float(rng.uniform(1.0, 6.0)),
-            "gamma": float(rng.uniform(0.0, 3.0)),
+            "min_child_weight": min_child_weight,
+            "gamma": gamma,
             "tree_method": "hist", "random_state": int(rng.integers(0, 2**31-1))
         })
     return specs
@@ -37,8 +41,19 @@ def generate_xgb_specs(n_models: int = 50, seed: int = 13) -> List[Dict[str, Any
 def fit_xgb_on_slice(X_tr: pd.DataFrame, y_tr: pd.Series, spec: Dict[str, Any]):
     if XGBRegressor is None:
         raise ImportError("xgboost is not installed. Please `pip install xgboost`.")
+    
     model = XGBRegressor(**spec)
     model.fit(X_tr.values, y_tr.values)
+    
+    # DIAGNOSTIC: Check if the model learned anything (only log for very small datasets)
+    if X_tr.shape[0] < 30:  # Only log for very small training sets
+        pred = model.predict(X_tr.values)
+        if pred.std() < 1e-10:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"XGB constant predictions - shape:{X_tr.shape}, y_std:{y_tr.std():.8f}, "
+                        f"depth:{spec.get('max_depth')}, min_child:{spec.get('min_child_weight'):.3f}")
+    
     return model
 
 # CHANGED: Helper function for multiprocessing XGB training
@@ -59,6 +74,7 @@ def _train_single_xgb(args):
     except Exception as e:
         logger.error(f"XGB training failed: {e}")
         # Return zeros if training fails
+        logger.warning("Returning zeros due to XGB failure!")
         return np.zeros(len(y_tr_values)), np.zeros(len(X_te_values)), tr_index, te_index
 
 def fold_train_predict(X_tr: pd.DataFrame, y_tr: pd.Series, X_te: pd.DataFrame, specs: List[Dict[str, Any]], use_multiprocessing: bool = True):

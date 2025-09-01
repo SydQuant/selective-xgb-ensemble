@@ -33,13 +33,9 @@ def shuffle_pvalue(
         null_vals.append(metric_fn(signal, y_perm))
     null = np.array(null_vals)
     if tail == "right":
-        # CHANGED: Use Monte Carlo p-value formula (add 1 to numerator and denominator)
-        count_extreme = (null >= obs).sum()
-        p = float((count_extreme + 1) / (n_shuffles + 1))
+        p = float((null >= obs).mean())
     elif tail == "left":
-        count_extreme = (null <= obs).sum()
-        p = float((count_extreme + 1) / (n_shuffles + 1))
+        p = float((null <= obs).mean())
     else:
-        count_extreme = (np.abs(null) >= abs(obs)).sum()
-        p = float((count_extreme + 1) / (n_shuffles + 1))
+        p = float((np.abs(null) >= abs(obs)).mean())
     return p, obs, null

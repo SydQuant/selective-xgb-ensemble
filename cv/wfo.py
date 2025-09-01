@@ -21,11 +21,19 @@ def wfo_splits(n: int, k_folds: int = 6, min_train: int = 252) -> List[Tuple[np.
         test_start = (f-1) * fold_size
         test_end = min(f * fold_size, n) if f < k_folds else n
         
-        # Ensure we have minimum training data, but don't exceed available data
-        train_end = min(max(test_start, min_train), n)
-        
+        # FIXED: For small datasets, use expanding window but avoid overlap
+        if test_start == 0:
+            # First fold: use early data for train, later for test
+            effective_min_train = min(min_train, test_end // 2)
+            train_end = max(10, effective_min_train)
+            test_start = max(train_end, fold_size)  # Ensure no overlap
+            test_end = min(test_start + fold_size, n)
+        else:
+            # Later folds: standard walk-forward
+            train_end = test_start  # No overlap allowed
+            
         # Skip if we don't have enough data for this fold
-        if train_end <= 10 or test_start >= n or test_end <= test_start:
+        if train_end <= 10 or test_start >= n or test_end <= test_start or test_start < train_end:
             continue
             
         train_idx = np.arange(0, train_end)
