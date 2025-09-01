@@ -227,7 +227,17 @@ def run_training_pipeline(X, y, args, dapy_fn):
         s_fold = combine_signals(test_sel, ww)
         oos_signal.iloc[te] = s_fold
 
-        fold_summaries.append({"fold": f, "chosen_idx": chosen_idx, "weights": ww.tolist(), "tau": tau})
+        # Store p-values for diagnostics
+        selected_pvals = [driver_pvals[i] for i in chosen_idx]
+        fold_summaries.append({
+            "fold": f, 
+            "chosen_idx": chosen_idx, 
+            "weights": ww.tolist(), 
+            "tau": tau,
+            "min_pvalue": min(driver_pvals) if driver_pvals else 1.0,
+            "max_pvalue": max(driver_pvals) if driver_pvals else 1.0,
+            "selected_pvals": selected_pvals
+        })
 
     # Check if we have any valid signal
     if len(fold_summaries) == 0 or oos_signal.abs().sum() < 1e-10:
