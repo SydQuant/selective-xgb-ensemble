@@ -14,6 +14,11 @@ from eval.target_shuffling import shuffle_pvalue
 # CHANGED: Added real data loading support
 from data.data_utils import prepare_real_data
 from data.symbol_loader import get_default_symbols
+# CHANGED: Added comprehensive performance reporting
+from metrics.performance_report import (
+    calculate_returns_metrics, format_performance_report, 
+    format_symbol_breakdown, save_performance_csv
+)
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -153,12 +158,29 @@ def main(args):
 
         fold_summaries.append({"fold": f, "chosen_idx": chosen_idx, "weights": ww.tolist(), "tau": tau, "J_train": J_star})
 
-    # Final OOS metrics
+    # Final OOS metrics - ORIGINAL LOGIC PRESERVED
     dapy_val = dapy_fn(oos_signal, y)
     ir = information_ratio(oos_signal, y)
     hr = hit_rate(oos_signal, y)
     print(f"OOS DAPY({args.dapy_style}): {dapy_val:.2f} | OOS IR: {ir:.2f} | OOS hit-rate: {hr:.3f}")
     save_oos_artifacts(oos_signal, y, block=args.block, final_shuffles=args.final_shuffles, dapy_fn=dapy_fn)
+    
+    # ENHANCED: Comprehensive performance analysis
+    logger.info("Calculating comprehensive performance metrics...")
+    
+    # Calculate enhanced performance metrics
+    performance_metrics = calculate_returns_metrics(oos_signal, y, freq=252)
+    
+    # Display comprehensive performance report
+    performance_report = format_performance_report(performance_metrics, "OUT-OF-SAMPLE PERFORMANCE")
+    print(performance_report)
+    
+    # Individual symbol analysis (if we have fold summaries with individual signals)
+    # For now, just show the ensemble performance
+    symbol_results = {'ENSEMBLE': performance_metrics}
+    
+    # Save performance summary
+    save_performance_csv(performance_metrics, symbol_results, "artifacts/performance_summary.csv")
 
     with open("artifacts/fold_summaries.json", "w", encoding="utf-8") as fsum:
         json.dump(fold_summaries, fsum, indent=2)

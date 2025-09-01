@@ -49,12 +49,20 @@ def create_sample_futures_data():
         else:
             base_price = 100 + np.random.uniform(-50, 50)
         
-        # Generate price series with realistic properties
-        returns = np.random.normal(0, 0.001, len(date_range))  # 0.1% hourly vol
+        # Generate price series with realistic properties and trends
+        returns = np.random.normal(0, 0.0015, len(date_range))  # 0.15% hourly vol
         
-        # Add autocorrelation manually
+        # Add autocorrelation and trending behavior
         for i in range(1, len(returns)):
-            returns[i] = returns[i] + 0.3 * returns[i-1]
+            returns[i] = returns[i] + 0.4 * returns[i-1]
+        
+        # Add some trending periods to create predictable patterns
+        trend_length = len(date_range) // 10  # 10% of data
+        for start in range(0, len(returns), trend_length * 3):
+            end = min(start + trend_length, len(returns))
+            trend_strength = np.random.choice([-0.0002, 0.0002])  # Up or down trend
+            for i in range(start, end):
+                returns[i] += trend_strength
         
         prices = [base_price]
         for r in returns[1:]:
