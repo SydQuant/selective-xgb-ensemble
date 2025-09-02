@@ -25,8 +25,12 @@ def pick_top_n_greedy_diverse(
     corr = np.zeros((M, M))
     for i in range(M):
         for j in range(i, M):
-            ci = np.corrcoef(train_signals[i].values, train_signals[j].values)[0,1]
-            if not np.isfinite(ci): ci = 0.0
+            # Check for zero variance (constant signals) before correlation calculation
+            if np.std(train_signals[i].values) < 1e-10 or np.std(train_signals[j].values) < 1e-10:
+                ci = 0.0
+            else:
+                ci = np.corrcoef(train_signals[i].values, train_signals[j].values)[0,1]
+                if not np.isfinite(ci): ci = 0.0
             corr[i, j] = corr[j, i] = ci
     while len(S) < n and remaining:
         best_score, best_idx = -1e18, None

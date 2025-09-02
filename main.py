@@ -5,6 +5,7 @@ import logging
 import yaml
 from cv.wfo import wfo_splits
 from model.xgb_drivers import generate_xgb_specs, fold_train_predict
+from model.feature_selection import apply_feature_selection
 from ensemble.combiner import build_driver_signals, combine_signals, softmax
 from ensemble.selection import pick_top_n_greedy_diverse
 from opt.grope import grope_optimize
@@ -158,6 +159,18 @@ def run_training_pipeline(X, y, args, dapy_fn):
         args.folds = max(2, len(X) // 100)  # Adjust folds for limited data
         logger.info(f"Reduced to {args.folds} folds")
 
+    # Apply block-wise feature selection BEFORE training
+    # For large datasets, reduce features more aggressively to prevent XGB overfitting
+    if X.shape[1] > 200:  # Only apply if we have many features
+        # Reduce features much more aggressively to prevent XGB overfitting
+        # For financial data, use ~20-50 features max to ensure sufficient observations per feature
+        target_features = max(30, min(50, len(X) // 20))  # 20:1 observation-to-feature ratio
+        logger.info(f"Applying smart block-wise feature selection: {X.shape[1]} -> {target_features} features")
+        X = apply_feature_selection(X, y, method='block_wise', 
+                                   block_size=100, features_per_block=15, 
+                                   max_total_features=target_features, corr_threshold=args.corr_threshold)
+        logger.info(f"Feature selection complete: {X.shape}")
+    
     splits = wfo_splits(len(X), k_folds=args.folds, min_train=max(252, len(X)//(args.folds*2)))
     specs = generate_xgb_specs(n_models=args.n_models, seed=7)
     os.makedirs("artifacts", exist_ok=True)
@@ -169,33 +182,35 @@ def run_training_pipeline(X, y, args, dapy_fn):
         X_tr, y_tr = X.iloc[tr], y.iloc[tr]
         X_te = X.iloc[te]  # Removed unused y_te
 
-        # DEBUG: Check input data to XGBoost
-        # Removed verbose fold logging
+        logger.info(f"[Fold {f}] Training data: X_tr{X_tr.shape}, y_tr{y_tr.shape}")
+        logger.info(f"[Fold {f}] Target stats: mean={y_tr.mean():.6f}, std={y_tr.std():.6f}")
+        logger.info(f"[Fold {f}] Feature stats: {X_tr.select_dtypes(include=[np.number]).mean().abs().sum():.6f} total magnitude")
         
-        # Check for degenerate cases
+        # Check for degenerate cases that could cause Fold 0 to fail
         if y_tr.std() < 1e-10:
-            logger.error(f"[Fold {f}] ❌ Target has no variance! Cannot train XGBoost.")
+            logger.error(f"[Fold {f}] Target has zero variance - skipping fold")
             continue
-            
-        # CHANGED: Added multiprocessing support for XGB training
-        train_preds, test_preds = fold_train_predict(X_tr, y_tr, X_te, specs, use_multiprocessing=args.use_multiprocessing)
         
-        # Check for constant predictions
-        if isinstance(train_preds, list) and len(train_preds) > 0:
-            train_arr = np.column_stack([p.values if hasattr(p, 'values') else p for p in train_preds])
-            constant_models = sum(1 for i in range(train_arr.shape[1]) if train_arr[:,i].std() < 1e-10)
-            if constant_models > 0:
-                logger.warning(f"❌ Fold {f}: {constant_models}/{train_arr.shape[1]} models have constant predictions")
+        if X_tr.select_dtypes(include=[np.number]).std().sum() < 1e-6:
+            logger.error(f"[Fold {f}] Features have near-zero variance - skipping fold") 
+            continue
+        
+        train_preds, test_preds = fold_train_predict(X_tr, y_tr, X_te, specs)
+        
+        # Debug: Check XGBoost predictions before signal generation
+        logger.info(f"Fold {f} XGBoost predictions: train_preds count={len(train_preds)}, test_preds count={len(test_preds)}")
+        if test_preds and len(test_preds) > 0:
+            pred_stats = []
+            for i, pred in enumerate(test_preds[:3]):
+                if pred is not None:
+                    pred_stats.append(f"model_{i}: mean={pred.mean():.6f}, std={pred.std():.6f}, range=[{pred.min():.6f}, {pred.max():.6f}]")
+            logger.info(f"Fold {f} test prediction stats: {'; '.join(pred_stats)}")
         
         s_tr, s_te = build_driver_signals(train_preds, test_preds, y_tr, z_win=args.z_win, beta=args.beta_pre)
 
-        # Check driver significance
-        driver_pvals = []
-        for sig in s_tr:
-            pval, _, _ = shuffle_pvalue(sig, y_tr, dapy_fn, n_shuffles=200, block=args.block)
-            driver_pvals.append(pval)
-        
         def gate(sig, y_local):
+            if args.bypass_pvalue_gating:
+                return True
             pval, _, _ = shuffle_pvalue(sig, y_local, dapy_fn, n_shuffles=200, block=args.block)
             return pval <= args.pmax
 
@@ -211,7 +226,7 @@ def run_training_pipeline(X, y, args, dapy_fn):
 
         bounds = {**{f"w{i}": (-2.0, 2.0) for i in range(len(train_sel))}, "tau": (0.2, 3.0)}
         fobj = weight_objective_factory(train_sel, y_tr, turnover_penalty=args.lambda_to, pmax=args.pmax, w_dapy=args.w_dapy, w_ir=args.w_ir, metric_fn_dapy=dapy_fn)
-        theta_star, _, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, seed=1234+f)  # Removed unused J_star
+        theta_star, J_star, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, seed=1234+f)
 
         w = np.array([theta_star[f"w{i}"] for i in range(len(train_sel))], dtype=float)
         tau = float(theta_star["tau"])
@@ -220,24 +235,25 @@ def run_training_pipeline(X, y, args, dapy_fn):
         # Show GROPE results for this fold
         logger.info(f"Fold {f}: Selected {len(chosen_idx)} models, weights: {[f'{w:.3f}' for w in ww]}, tau: {tau:.3f}")
         
+        # Debug: Check individual test signals before combining
+        logger.info(f"Fold {f} individual test signals: count={len(test_sel)}, lengths={[len(s) for s in test_sel[:3]]}, magnitudes={[s.abs().sum() for s in test_sel[:3]]}")
+        
         s_fold = combine_signals(test_sel, ww)
         oos_signal.iloc[te] = s_fold
+        
+        # Debug: Show fold signal statistics
+        logger.info(f"Fold {f} signal stats: mean={s_fold.mean():.6f}, std={s_fold.std():.6f}, sum={s_fold.sum():.6f}, magnitude={s_fold.abs().sum():.6f}")
 
-        # Store p-values for diagnostics
-        selected_pvals = [driver_pvals[i] for i in chosen_idx]
-        fold_summaries.append({
-            "fold": f, 
-            "chosen_idx": chosen_idx, 
-            "weights": ww.tolist(), 
-            "tau": tau,
-            "min_pvalue": min(driver_pvals) if driver_pvals else 1.0,
-            "max_pvalue": max(driver_pvals) if driver_pvals else 1.0,
-            "selected_pvals": selected_pvals
-        })
+        fold_summaries.append({"fold": f, "chosen_idx": chosen_idx, "weights": ww.tolist(), "tau": tau, "J_train": J_star})
 
     # Check if we have any valid signal
-    if len(fold_summaries) == 0 or oos_signal.abs().sum() < 1e-10:
-        logger.error("❌ No folds produced valid signals. All models failed p-value gating.")
+    logger.info(f"📋 Processing complete: {len(fold_summaries)} fold summaries created")
+    logger.info(f"📊 OOS signal magnitude: {oos_signal.abs().sum():.10f}")
+    if len(fold_summaries) == 0:
+        logger.error("❌ No fold summaries created. All folds failed p-value gating.")
+        return None
+    elif oos_signal.abs().sum() < 1e-10:
+        logger.error("❌ OOS signal has zero magnitude.")
         return None
 
     # Final OOS metrics - ORIGINAL LOGIC PRESERVED
@@ -331,6 +347,8 @@ def train_production_model(X: pd.DataFrame, y: pd.Series, args):
     s_tr, s_full = build_driver_signals(train_preds, test_preds, y, z_win=args.z_win, beta=args.beta_pre)
 
     def gate(sig, yy):
+        if args.bypass_pvalue_gating:
+            return True
         pval, _, _ = shuffle_pvalue(sig, yy, dapy_fn, n_shuffles=200, block=args.block)
         return pval <= args.pmax
 
@@ -411,6 +429,8 @@ def random_past_train_then_backtest(X: pd.DataFrame, y: pd.Series, args):
     s_tr, s_te = build_driver_signals(train_preds, test_preds, y_tr, z_win=args.z_win, beta=args.beta_pre)
 
     def gate(sig, yy):
+        if args.bypass_pvalue_gating:
+            return True
         pval, _, _ = shuffle_pvalue(sig, yy, dapy_fn, n_shuffles=200, block=args.block)
         return pval <= args.pmax
 
@@ -486,7 +506,7 @@ if __name__ == "__main__":
     ap.add_argument("--folds", type=int, help="Walk-forward CV folds")
     ap.add_argument("--n_models", type=int, help="Number of XGB models")
     ap.add_argument("--n_select", type=int, help="Number of drivers to select")
-    ap.add_argument("--use_multiprocessing", action="store_true", help="Use multiprocessing for XGB training")
+    # Removed multiprocessing option for original alignment
     
     # Signal processing
     ap.add_argument("--z_win", type=int, help="Z-score window")
@@ -505,6 +525,7 @@ if __name__ == "__main__":
     # Output options
     ap.add_argument("--train_production", action="store_true", help="Train production model")
     ap.add_argument("--dapy_style", type=str, help="DAPY style")
+    ap.add_argument("--bypass_pvalue_gating", action="store_true", help="Bypass p-value gating for testing purposes")
     
     # Random training options
     ap.add_argument("--test_start", type=str, help="Test start date for random training")

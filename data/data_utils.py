@@ -34,11 +34,10 @@ def cluster_features_by_correlation(corr_matrix: pd.DataFrame, threshold: float 
         for feature, label in zip(corr_matrix.columns, labels):
             clusters.setdefault(label, []).append(feature)
         
-        logger.info(f"🔗 Created {len(clusters)} feature clusters with threshold {threshold}")
         return clusters
         
     except Exception as e:
-        logger.warning(f"⚠️ Clustering failed: {e}, returning individual features")
+        logger.warning(f"Clustering failed: {e}, returning individual features")
         # Fallback: each feature is its own cluster
         return {i: [feat] for i, feat in enumerate(corr_matrix.columns)}
 
@@ -65,9 +64,7 @@ def select_representative_features(clusters: dict, target_col: str, df: pd.DataF
             if correlations:
                 best_feature = max(correlations.keys(), key=correlations.get)
                 representatives.append(best_feature)
-                logger.debug(f"   Cluster {cluster_id}: selected {best_feature} from {len(features)} features")
     
-    logger.info(f"📊 Selected {len(representatives)} representative features from {sum(len(feats) for feats in clusters.values())} total")
     return representatives
 
 def reduce_features_by_clustering(df: pd.DataFrame, target_col: str, corr_threshold: float = 0.7) -> pd.DataFrame:
@@ -75,10 +72,7 @@ def reduce_features_by_clustering(df: pd.DataFrame, target_col: str, corr_thresh
     feature_cols = [c for c in df.columns if c != target_col]
     
     if len(feature_cols) <= 1:
-        logger.info("🔄 Too few features for clustering, skipping reduction")
         return df
-    
-    logger.info(f"🔍 Feature clustering: {len(feature_cols)} features -> threshold {corr_threshold}")
     
     # Calculate correlation matrix for features only
     feature_df = df[feature_cols]
@@ -94,7 +88,6 @@ def reduce_features_by_clustering(df: pd.DataFrame, target_col: str, corr_thresh
     reduced_cols = [target_col] + [f for f in representatives if f in df.columns]
     reduced_df = df[reduced_cols]
     
-    logger.info(f"✅ Feature reduction: {len(feature_cols)} -> {len(reduced_df.columns)-1} features")
     return reduced_df
 
 def load_real_data(symbols: List[str], start_date: str = None, end_date: str = None, signal_hour: int = 12) -> Dict[str, pd.DataFrame]:
@@ -137,7 +130,7 @@ def load_real_data(symbols: List[str], start_date: str = None, end_date: str = N
                     data = data[data.index.hour == signal_hour]
                 
                 raw_data[symbol] = data[required_cols]
-                logger.info(f"Loaded {len(data)} records for {symbol}")
+                # logger.info(f"Loaded {len(data)} records for {symbol}")
                 
             except Exception as e:
                 logger.error(f"Failed to load {symbol}: {e}")
@@ -461,16 +454,14 @@ def prepare_real_data(target_symbol: str, symbols: List[str] = None, start_date:
     
     df = clean_data(df)
     
-    # Feature correlation clustering (reduce redundant features)
-    if len(df.columns) > 2:  # Only cluster if we have features beyond target
-        logger.info(f"🔗 Applying correlation clustering with threshold {corr_threshold}")
-        df = reduce_features_by_clustering(df, target_col, corr_threshold)
+    # Apply correlation clustering to reduce features (disabled for now)
+    # if len(df.columns) > 2:  # Only cluster if we have features beyond target
+    #     df = reduce_features_by_clustering(df, target_col, corr_threshold)
     
-    # Limit features for testing (after clustering)
+    # Limit features if specified
     if max_features and len(df.columns) > max_features + 1:
         feature_cols = [c for c in df.columns if c != target_col][:max_features]
         df = df[[target_col] + feature_cols]
-        logger.info(f"🔪 Limited to {max_features} features for testing")
     
     logger.info(f"✅ Final dataset: {df.shape} (target + {df.shape[1]-1} features)")
     
