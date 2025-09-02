@@ -463,6 +463,21 @@ def prepare_real_data(target_symbol: str, symbols: List[str] = None, start_date:
         feature_cols = [c for c in df.columns if c != target_col][:max_features]
         df = df[[target_col] + feature_cols]
     
+    # CRITICAL FIX: Standardize features to fix XGBoost constant predictions
+    # Features have vastly different scales (RSI: 0-100, momentum: ±0.006, breakouts: ±80)
+    feature_cols = [c for c in df.columns if c != target_col]
+    if len(feature_cols) > 0:
+        logger.info(f"🔧 Standardizing {len(feature_cols)} features to fix scale issues...")
+        # Standardize features to mean=0, std=1
+        for col in feature_cols:
+            col_data = df[col]
+            if col_data.std() > 1e-10:  # Only standardize if there's variance
+                df[col] = (col_data - col_data.mean()) / col_data.std()
+            else:
+                logger.warning(f"⚠️ Feature {col} has no variance, setting to zero")
+                df[col] = 0.0
+        logger.info(f"✅ Feature standardization complete")
+    
     logger.info(f"✅ Final dataset: {df.shape} (target + {df.shape[1]-1} features)")
     
     # Cache the result (AFTER clustering and feature reduction)

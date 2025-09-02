@@ -14,7 +14,7 @@ from metrics.dapy import hit_rate
 from metrics.perf import information_ratio
 from eval.target_shuffling import shuffle_pvalue
 # CHANGED: Added real data loading support
-from data.data_utils import prepare_real_data
+from data.data_utils_simple import prepare_real_data_simple
 from data.symbol_loader import get_default_symbols
 # CHANGED: Added comprehensive performance reporting
 from metrics.performance_report import (
@@ -112,16 +112,13 @@ def run_single_target(target_symbol: str, args, symbols: list, dapy_fn):
         logger.info(f"🔄 Loading real market data for target: {target_symbol}")
         
         # Prepare real data with feature engineering
-        df = prepare_real_data(
+        df = prepare_real_data_simple(
             target_symbol=target_symbol,
             symbols=symbols,
             start_date=args.start_date,
             end_date=args.end_date,
             n_hours=args.n_hours,
-            signal_hour=args.signal_hour,
-            max_features=args.max_features,
-            on_target_only=args.on_target_only,
-            corr_threshold=args.corr_threshold
+            signal_hour=args.signal_hour
         )
         
         if df.empty:
@@ -500,31 +497,31 @@ if __name__ == "__main__":
     
     # Feature selection options
     ap.add_argument("--on_target_only", action="store_true", help="Use only target symbol features")
-    ap.add_argument("--corr_threshold", type=float, help="Correlation threshold for feature clustering")
+    ap.add_argument("--corr_threshold", type=float, default=0.7, help="Correlation threshold for feature clustering")
     
     # Model parameters
-    ap.add_argument("--folds", type=int, help="Walk-forward CV folds")
-    ap.add_argument("--n_models", type=int, help="Number of XGB models")
-    ap.add_argument("--n_select", type=int, help="Number of drivers to select")
+    ap.add_argument("--folds", type=int, default=6, help="Walk-forward CV folds")
+    ap.add_argument("--n_models", type=int, default=50, help="Number of XGB models")
+    ap.add_argument("--n_select", type=int, default=12, help="Number of drivers to select")
     # Removed multiprocessing option for original alignment
     
     # Signal processing
-    ap.add_argument("--z_win", type=int, help="Z-score window")
-    ap.add_argument("--beta_pre", type=float, help="Tanh squash beta")
-    ap.add_argument("--lambda_to", type=float, help="Turnover penalty")
+    ap.add_argument("--z_win", type=int, default=100, help="Z-score window")
+    ap.add_argument("--beta_pre", type=float, default=1.0, help="Tanh squash beta")
+    ap.add_argument("--lambda_to", type=float, default=0.05, help="Turnover penalty")
     
     # Optimization parameters
-    ap.add_argument("--weight_budget", type=int, help="GROPE optimization budget")
-    ap.add_argument("--w_dapy", type=float, help="DAPY weight")
-    ap.add_argument("--w_ir", type=float, help="Information ratio weight")
-    ap.add_argument("--diversity_penalty", type=float, help="Diversity penalty")
-    ap.add_argument("--pmax", type=float, help="P-value threshold")
-    ap.add_argument("--final_shuffles", type=int, help="Final shuffle tests")
-    ap.add_argument("--block", type=int, help="Block size for permutation")
+    ap.add_argument("--weight_budget", type=int, default=80, help="GROPE optimization budget")
+    ap.add_argument("--w_dapy", type=float, default=1.0, help="DAPY weight")
+    ap.add_argument("--w_ir", type=float, default=1.0, help="Information ratio weight")
+    ap.add_argument("--diversity_penalty", type=float, default=0.2, help="Diversity penalty")
+    ap.add_argument("--pmax", type=float, default=0.8, help="P-value threshold")
+    ap.add_argument("--final_shuffles", type=int, default=200, help="Final shuffle tests")
+    ap.add_argument("--block", type=int, default=30, help="Block size for permutation")
     
     # Output options
     ap.add_argument("--train_production", action="store_true", help="Train production model")
-    ap.add_argument("--dapy_style", type=str, help="DAPY style")
+    ap.add_argument("--dapy_style", type=str, default="hits", help="DAPY style")
     ap.add_argument("--bypass_pvalue_gating", action="store_true", help="Bypass p-value gating for testing purposes")
     
     # Random training options
