@@ -8,12 +8,27 @@ except ImportError:
 
 def detect_gpu() -> str:
     """Detect if GPU is available for XGBoost."""
+    import platform
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    # Check for CUDA support
     try:
         import xgboost as xgb
         xgb.XGBRegressor(tree_method="hist", device="cuda", n_estimators=1).fit([[1]], [1])
+        logger.info("GPU detection: CUDA GPU available")
         return "cuda"
-    except:
-        return "cpu"
+    except Exception:
+        pass
+    
+    # Check if we're on Apple Silicon (future-proofing for MPS support)
+    if platform.system() == "Darwin" and platform.processor() == "arm":
+        logger.info("GPU detection: Apple Silicon detected, but XGBoost doesn't support MPS yet - using CPU")
+        # Future: could try device="mps" when XGBoost adds support
+    else:
+        logger.info("GPU detection: No CUDA GPU found - using CPU")
+    
+    return "cpu"
 
 def generate_xgb_specs(n_models: int = 50, seed: int = 13) -> List[Dict[str, Any]]:
     """Generate diverse XGBoost specs optimized for financial data."""
