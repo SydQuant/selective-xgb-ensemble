@@ -24,7 +24,8 @@ def compute_oos_model_diagnostics(
     objective_name: str = "unknown",
     fold_id: int = None,
     n_shuffles: int = 200,
-    show_top_n: int = 75
+    show_top_n: int = 75,
+    pvalue_threshold: float = 0.05
 ) -> Dict[str, Any]:
     """
     Comprehensive OOS diagnostics for all models in a fold.
@@ -37,6 +38,7 @@ def compute_oos_model_diagnostics(
         fold_id: Fold number for logging
         n_shuffles: Number of shuffles for p-value calculation
         show_top_n: Number of top models to display in logs
+        pvalue_threshold: P-value threshold for significance (default 0.05)
     
     Returns:
         Dictionary containing all model diagnostics
@@ -83,7 +85,7 @@ def compute_oos_model_diagnostics(
             'fold_id': fold_id,
             'objective_score': obj_score,
             'p_value': pval,
-            'p_value_passed': pval <= 0.05,  # Using 5% threshold
+            'p_value_passed': pval <= pvalue_threshold,  # Using configurable threshold
             'information_ratio': ir_score,
             'sharpe_ratio': sharpe_score,
             'hit_rate': hr_score,

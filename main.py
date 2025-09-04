@@ -247,6 +247,23 @@ def run_training_pipeline(X, y, args, dapy_fn, driver_selection_obj=None, weight
         
         s_tr, s_te = build_driver_signals(train_preds, test_preds, y_tr, z_win=args.z_win, beta=args.beta_pre)
 
+        # Add comprehensive OOS diagnostics for all models
+        try:
+            from ensemble.oos_diagnostics import compute_oos_model_diagnostics
+            y_te = y.iloc[te]  # Get actual test target for OOS analysis
+            compute_oos_model_diagnostics(
+                test_signals=s_te,
+                y_test=y_te,
+                objective_fn=driver_selection_obj,
+                objective_name=args.driver_selection,
+                fold_id=f,
+                n_shuffles=200,
+                show_top_n=75,
+                pvalue_threshold=args.pmax if hasattr(args, 'pmax') and args.pmax is not None else 0.05
+            )
+        except Exception as e:
+            logger.warning(f"OOS diagnostics failed: {e}")
+
         # Create gate function using new module
         gate = lambda sig, y_local: apply_pvalue_gating(sig, y_local, args)
 
