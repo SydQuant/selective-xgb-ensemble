@@ -1,5 +1,6 @@
-# Production Configuration  
-# Runtime: ~10-20 minutes
+# production.yaml - PRODUCTION CONFIG
+# Full production settings with comprehensive model ensemble
+# Runtime: ~10-20 minutes for full evaluation
 
 # Data Configuration
 target_symbol: "@ES#C"

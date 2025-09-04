@@ -213,10 +213,12 @@ def clean_data_simple(df: pd.DataFrame) -> pd.DataFrame:
         df_clean = df_clean.dropna(subset=[target_col])
         after_rows = len(df_clean)
         if before_rows != after_rows:
+            logger.info(f"Dropped {before_rows - after_rows} rows due to NaN in target column {target_col}")
     
     # 5. Final quality check - no NaNs should remain in features
     feature_nan_count = df_clean[df_clean.columns.difference(target_cols)].isna().sum().sum()
     if feature_nan_count > 0:
+        logger.warning(f"Found {feature_nan_count} NaN values in feature columns after cleaning")
     
     return df_clean
 
@@ -250,6 +252,7 @@ def prepare_real_data_simple(target_symbol: str, symbols: List[str] = None, star
                 if len(df) > 100:  # Only include symbols with sufficient data
                     raw_data[symbol] = df
             except Exception as e:
+                logger.warning(f"Failed to load data for symbol {symbol}: {e}")
         
         
         if not raw_data or target_symbol not in raw_data:
@@ -262,9 +265,9 @@ def prepare_real_data_simple(target_symbol: str, symbols: List[str] = None, star
         target_returns = prepare_target_returns(raw_data, target_symbol, n_hours, signal_hour)
         target_col = f"{target_symbol}_target_return"
         
-        # Combine
-        df = feature_df.copy()
-        df[target_col] = target_returns.reindex(df.index)
+        # Combine efficiently to avoid DataFrame fragmentation
+        target_reindexed = target_returns.reindex(feature_df.index)
+        df = pd.concat([feature_df, target_reindexed.to_frame(target_col)], axis=1)
         
         # Clean
         df = clean_data_simple(df)

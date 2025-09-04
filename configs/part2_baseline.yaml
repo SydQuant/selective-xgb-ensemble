@@ -1,0 +1,52 @@
+# part2_baseline.yaml - Test 1 Baseline Configuration
+# Matches EXPERIMENT_RESULTS.md Step 0a baseline for @ES#C
+# Expected Result: Sharpe 0.41, Total Return 13.75%, Max DD -16.61%
+
+target_symbol: "@ES#C"
+symbols: "@ES#C,@NQ#C,@YM#C,@RTY#C,@TY#C,@US#C,@FV#C,@TU#C,@EU#C,@BP#C,@JY#C,@AD#C,@C#C,@S#C,@W#C,@LE#C,@GF#C,@HE#C,@KC#C,@SB#C,@CC#C,@CT#C,@BO#C,@SM#C,@VX#C"
+start_date: "2020-07-01"
+end_date: "2024-08-01"
+signal_hour: 12
+n_hours: 24
+on_target_only: false
+corr_threshold: 0.7
+
+# Model ensemble configuration - baseline
+n_models: 50
+n_select: 12
+folds: 6        # Baseline 6-fold CV
+use_multiprocessing: true
+
+# Signal processing parameters - baseline
+z_win: 100
+beta_pre: 1.0
+lambda_to: 0.05
+weight_budget: 80
+w_dapy: 1.0
+w_ir: 1.0
+diversity_penalty: 0.2
+pmax: 0.05              # P-value gating enabled (not bypassed)
+p_value_gating: "dapy"  # P-value gating enabled
+final_shuffles: 600
+block: 10
+
+# Objective function configuration - baseline hits
+driver_selection_objective:
+  dapy:
+    dapy_style: "hits"
+    weight: 1.0
+  information_ratio:
+    weight: 1.0
+
+grope_weight_objective:
+  dapy:
+    dapy_style: "hits"
+    weight: 1.0
+  information_ratio:
+    weight: 1.0
+
+# Training configuration - baseline
+train_production: false
+dapy_style: "hits"
+test_start: "2023-10-01"
+random_train_pct: 0.0

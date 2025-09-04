@@ -1,6 +1,6 @@
 """
-Alternative performance metrics for XGBoost trading system validation
-Implements adjusted Sharpe ratio and CB_ratio as described in Step 8
+Simple Performance Metrics for XGBoost Trading System
+Consolidated metrics: Sharpe, Information Ratio, Adjusted Sharpe, CB_ratio, Max Drawdown, Turnover
 """
 import numpy as np
 import pandas as pd
@@ -65,17 +65,63 @@ def cb_ratio(sharpe, max_drawdown, l1_penalty=0.0, weights=None):
     
     return adjusted - penalty
 
-def sharpe_ratio(signal, returns):
-    """Calculate Sharpe ratio from signal and returns"""
+def sharpe_ratio(signal: pd.Series, returns: pd.Series) -> float:
+    """Calculate Sharpe ratio from signal and returns with proper temporal alignment"""
     pnl = (signal.shift(1).fillna(0.0) * returns.reindex_like(signal)).astype(float)
-    if pnl.std() == 0:
+    
+    # Handle edge cases
+    if len(pnl) == 0:
         return 0.0
-    return pnl.mean() / pnl.std() * np.sqrt(252)
+    
+    mu = pnl.mean()
+    sd = pnl.std(ddof=0)  # Population std for consistency with other metrics
+    
+    # Robust edge case handling
+    if sd == 0 or np.isnan(sd) or np.isnan(mu):
+        return 0.0
+    
+    return float((mu / sd) * np.sqrt(252))
 
-def max_drawdown(signal, returns):
-    """Calculate maximum drawdown from signal and returns"""
+def max_drawdown(signal: pd.Series, returns: pd.Series) -> float:
+    """Calculate maximum drawdown from signal and returns with proper temporal alignment"""
     pnl = (signal.shift(1).fillna(0.0) * returns.reindex_like(signal)).astype(float)
+    
+    # Handle edge cases
+    if len(pnl) == 0:
+        return 0.0
+    
     equity = pnl.cumsum()
     peak = equity.expanding().max()
     drawdown = equity - peak
-    return float(drawdown.min())
+    
+    min_dd = drawdown.min()
+    
+    # Handle NaN case
+    if np.isnan(min_dd):
+        return 0.0
+    
+    return float(min_dd)
+
+def information_ratio(signal: pd.Series, target_ret: pd.Series, annual_trading_days: int = 252, **kwargs) -> float:
+    """Information Ratio with proper temporal alignment - simplified and GROPE compatible"""
+    if len(signal) == 0 or len(target_ret) == 0:
+        return 0.0
+    
+    # Calculate PnL with temporal lag: signal T-1 applied to return T
+    pnl = (signal.shift(1).fillna(0.0) * target_ret.reindex_like(signal)).astype(float)
+    
+    pnl_clean = pnl.dropna()
+    if len(pnl_clean) == 0:
+        return 0.0
+    
+    mu = pnl_clean.mean()
+    sd = pnl_clean.std(ddof=0)
+    
+    if sd == 0 or np.isnan(sd) or np.isnan(mu):
+        return 0.0
+    
+    return float((mu / sd) * np.sqrt(annual_trading_days))
+
+def turnover(signal: pd.Series) -> float:
+    """Calculate signal turnover rate"""
+    return float(np.abs(signal.diff().fillna(0.0)).mean())

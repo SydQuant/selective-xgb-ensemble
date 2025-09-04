@@ -8,11 +8,13 @@ from model.xgb_drivers import generate_xgb_specs, fold_train_predict, stratified
 from model.feature_selection import apply_feature_selection
 from ensemble.combiner import build_driver_signals, combine_signals, softmax
 from ensemble.selection import pick_top_n_greedy_diverse
+from ensemble.gating import apply_pvalue_gating
 from opt.grope import grope_optimize
 from opt.weight_objective import weight_objective_factory
 from metrics.dapy import hit_rate
-from metrics.perf import information_ratio
+from metrics.simple_metrics import information_ratio
 from eval.target_shuffling import shuffle_pvalue
+from metrics.objective_registry import OBJECTIVE_REGISTRY, create_composite_objective
 # CHANGED: Added real data loading support
 from data.data_utils_simple import prepare_real_data_simple
 from data.symbol_loader import get_default_symbols
@@ -32,17 +34,79 @@ def get_dapy_fn(style: str):
         from metrics.dapy import dapy_from_binary_hits as fn
         return fn
     elif style == "eri_long":
-        from metrics.dapy_eri import dapy_eri_long as fn
+        from metrics.dapy import dapy_eri_long as fn
         return fn
     elif style == "eri_short":
-        from metrics.dapy_eri import dapy_eri_short as fn
+        from metrics.dapy import dapy_eri_short as fn
         return fn
     elif style == "eri_both":
-        from metrics.dapy_eri import dapy_eri_both as fn
+        from metrics.dapy import dapy_eri_both as fn
         return fn
+    elif style in ['adjusted_sharpe', 'cb_ratio', 'information_ratio', 'predictive_icir_logscore']:
+        # Support all 5 universal objective functions in driver selection
+        try:
+            return OBJECTIVE_REGISTRY.get(style)
+        except:
+            logger.warning(f"Unknown driver_selection objective: {style}, falling back to hits")
+            from metrics.dapy import dapy_from_binary_hits as fn
+            return fn
     else:
         from metrics.dapy import dapy_from_binary_hits as fn
         return fn
+
+def get_grope_objective_function(grope_objective: str):
+    """Get GROPE weight optimization objective function."""
+    if not grope_objective:
+        return None
+    
+    grope_objective = grope_objective.lower()
+    
+    if grope_objective == "hits":
+        from metrics.dapy import dapy_from_binary_hits
+        return dapy_from_binary_hits
+    elif grope_objective == "eri_both":
+        from metrics.dapy import dapy_eri_both
+        return dapy_eri_both
+    elif grope_objective in ['adjusted_sharpe', 'cb_ratio', 'information_ratio', 'predictive_icir_logscore']:
+        try:
+            return OBJECTIVE_REGISTRY.get(grope_objective)
+        except:
+            logger.warning(f"Unknown GROPE objective: {grope_objective}, using default")
+            return None
+    else:
+        logger.warning(f"Unknown GROPE objective: {grope_objective}, using default")
+        return None
+
+def get_objective_functions(args):
+    """Create objective functions from config - STRICT MODE: NO FALLBACKS."""
+    from metrics.objective_registry import OBJECTIVE_REGISTRY
+    
+    driver_selection_obj = None
+    weight_optimization_obj = None
+    
+    # Try new config structure first
+    if hasattr(args, 'driver_selection_objective') and args.driver_selection_objective:
+        driver_selection_obj = create_composite_objective(args.driver_selection_objective, OBJECTIVE_REGISTRY)
+    elif args.driver_selection:
+        # Use CLI argument directly with OBJECTIVE_REGISTRY
+        driver_selection_obj = OBJECTIVE_REGISTRY[args.driver_selection]
+    
+    if hasattr(args, 'grope_weight_objective') and args.grope_weight_objective:
+        weight_optimization_obj = create_composite_objective(args.grope_weight_objective, OBJECTIVE_REGISTRY)
+    elif hasattr(args, 'grope_objective') and args.grope_objective:
+        weight_optimization_obj = OBJECTIVE_REGISTRY[args.grope_objective]
+    else:
+        # Default to same as driver selection
+        weight_optimization_obj = driver_selection_obj
+    
+    # STRICT MODE: No fallbacks, require valid objectives
+    if not driver_selection_obj:
+        raise ValueError(f"Invalid or missing driver_selection objective: {getattr(args, 'driver_selection', None)}")
+    if not weight_optimization_obj:
+        raise ValueError(f"Invalid or missing grope_objective: {getattr(args, 'grope_objective', None)}")
+    
+    # No dapy_fn in strict mode
+    return None, driver_selection_obj, weight_optimization_obj
 
 def save_timeseries(path: str, signal: pd.Series, y: pd.Series):
     os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
@@ -61,27 +125,33 @@ def save_oos_artifacts(signal: pd.Series, y: pd.Series, block: int, final_shuffl
 
 def main(args):
     """Main dispatcher - handles single or multiple targets."""
-    dapy_fn = get_dapy_fn(args.dapy_style)
+    dapy_fn, driver_selection_obj, weight_optimization_obj = get_objective_functions(args)
     
     target_symbols = [s.strip() for s in args.target_symbol.split(',')]
     logger.info(f"Starting analysis for targets: {target_symbols}")
     
     if args.symbols:
-        symbols = args.symbols.split(',')
+        # Handle both string and list formats
+        if isinstance(args.symbols, str):
+            symbols = args.symbols.split(',')
+        else:
+            symbols = args.symbols  # Already a list from YAML
+        # Clean up symbol names
+        symbols = [s.strip() for s in symbols]
     else:
         symbols = get_default_symbols()
     
     results = {}
     for target_symbol in target_symbols:
         logger.info(f"Processing {target_symbol}...")
-        result = run_single_target(target_symbol, args, symbols, dapy_fn)
+        result = run_single_target(target_symbol, args, symbols, dapy_fn, driver_selection_obj, weight_optimization_obj)
         results[target_symbol] = result
     
     successful = sum(1 for r in results.values() if r is not None)
     logger.info(f"Completed {successful}/{len(target_symbols)} targets")
     return results
 
-def run_single_target(target_symbol: str, args, symbols: list, dapy_fn):
+def run_single_target(target_symbol: str, args, symbols: list, dapy_fn, driver_selection_obj=None, weight_optimization_obj=None):
     """Run analysis for a single target symbol."""
     original_target = args.target_symbol
     args.target_symbol = target_symbol
@@ -109,13 +179,19 @@ def run_single_target(target_symbol: str, args, symbols: list, dapy_fn):
         X = df.drop(columns=[target_col])
         
         logger.info(f"Data loaded: {X.shape}, date range {X.index.min()} to {X.index.max()}")
-        return run_training_pipeline(X, y, args, dapy_fn)
+        return run_training_pipeline(X, y, args, dapy_fn, driver_selection_obj, weight_optimization_obj)
     
     finally:
         args.target_symbol = original_target
 
-def run_training_pipeline(X, y, args, dapy_fn):
+def run_training_pipeline(X, y, args, dapy_fn, driver_selection_obj=None, weight_optimization_obj=None):
     """Run the XGB training pipeline."""
+    
+    # STRICT MODE: Require valid objectives
+    if not driver_selection_obj:
+        raise ValueError("driver_selection_obj is required")
+    if not weight_optimization_obj:
+        raise ValueError("weight_optimization_obj is required")
     
     # Adjust folds for limited data
     if len(X) < args.folds * 100:
@@ -138,7 +214,8 @@ def run_training_pipeline(X, y, args, dapy_fn):
         train_size = int(0.7 * n_data)
         splits = [(np.arange(0, train_size), np.arange(train_size, n_data))]
     else:
-        splits = wfo_splits(len(X), k_folds=args.folds, min_train=max(252, len(X)//(args.folds*2)))
+        # UPDATED: wfo_splits now returns generator, convert to list for compatibility
+        splits = list(wfo_splits(len(X), k_folds=args.folds, min_train=max(252, len(X)//(args.folds*2))))
     
     if args.tiered_xgb:
         specs, col_slices = stratified_xgb_bank(X.columns.tolist(), n_models=args.n_models, seed=7)
@@ -168,15 +245,13 @@ def run_training_pipeline(X, y, args, dapy_fn):
         
         s_tr, s_te = build_driver_signals(train_preds, test_preds, y_tr, z_win=args.z_win, beta=args.beta_pre)
 
-        def gate(sig, y_local):
-            if args.bypass_pvalue_gating:
-                return True
-            pval, _, _ = shuffle_pvalue(sig, y_local, dapy_fn, n_shuffles=200, block=args.block)
-            return pval <= args.pmax
+        # Create gate function using new module
+        gate = lambda sig, y_local: apply_pvalue_gating(sig, y_local, args)
 
+        # Use the required driver selection objective
         chosen_idx = pick_top_n_greedy_diverse(
             s_tr, y_tr, n=args.n_select, pval_gate=gate,
-            w_dapy=args.w_dapy, w_ir=args.w_ir, diversity_penalty=args.diversity_penalty, dapy_fn=dapy_fn
+            objective_fn=driver_selection_obj, diversity_penalty=args.diversity_penalty
         )
         if len(chosen_idx) == 0:
             continue
@@ -190,7 +265,7 @@ def run_training_pipeline(X, y, args, dapy_fn):
             J_star = 0.0
         else:
             bounds = {**{f"w{i}": (-2.0, 2.0) for i in range(len(train_sel))}, "tau": (0.2, 3.0)}
-            fobj = weight_objective_factory(train_sel, y_tr, turnover_penalty=args.lambda_to, pmax=args.pmax, w_dapy=args.w_dapy, w_ir=args.w_ir, metric_fn_dapy=dapy_fn)
+            fobj = weight_objective_factory(train_sel, y_tr, turnover_penalty=args.lambda_to, pmax=args.pmax, w_dapy=args.w_dapy, w_ir=args.w_ir, objective_fn=weight_optimization_obj)
             theta_star, J_star, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, seed=1234+f)
 
             w = np.array([theta_star[f"w{i}"] for i in range(len(train_sel))], dtype=float)
@@ -206,12 +281,12 @@ def run_training_pipeline(X, y, args, dapy_fn):
         logger.error("No valid signal generated")
         return None
 
-    # Final OOS metrics - ORIGINAL LOGIC PRESERVED
-    dapy_val = dapy_fn(oos_signal, y)
+    # Final OOS metrics
+    dapy_val = driver_selection_obj(oos_signal, y)
     ir = information_ratio(oos_signal, y)
     hr = hit_rate(oos_signal, y)
-    logger.info(f"OOS DAPY({args.dapy_style}): {dapy_val:.2f} | OOS IR: {ir:.2f} | OOS hit-rate: {hr:.3f}")
-    save_oos_artifacts(oos_signal, y, block=args.block, final_shuffles=args.final_shuffles, dapy_fn=dapy_fn)
+    logger.info(f"OOS DAPY({args.driver_selection}): {dapy_val:.2f} | OOS IR: {ir:.2f} | OOS hit-rate: {hr:.3f}")
+    save_oos_artifacts(oos_signal, y, block=args.block, final_shuffles=args.final_shuffles, dapy_fn=driver_selection_obj)
     
     performance_metrics = calculate_returns_metrics(oos_signal, y, freq=252)
     performance_report = format_performance_report(performance_metrics, "OUT-OF-SAMPLE PERFORMANCE")
@@ -241,7 +316,16 @@ def run_training_pipeline(X, y, args, dapy_fn):
             "max_drawdown": performance_metrics.get('max_drawdown', 0)
         }
         
-        save_comprehensive_diagnostics(vars(args), X.shape, feature_info, model_performance)
+        # Pass ensemble information to diagnostics
+        ensemble_info = {
+            "fold_summaries": fold_summaries,
+            "total_folds": len(fold_summaries),
+            "dapy_value": dapy_val,
+            "information_ratio": ir,
+            "hit_rate": hr
+        }
+        
+        save_comprehensive_diagnostics(vars(args), X.shape, feature_info, model_performance, ensemble_info)
     except Exception:
         pass
 
@@ -261,7 +345,7 @@ def run_training_pipeline(X, y, args, dapy_fn):
 
 def train_production_model(X: pd.DataFrame, y: pd.Series, args):
     import numpy as np
-    dapy_fn = get_dapy_fn(args.dapy_style)
+    dapy_fn = get_dapy_fn(args.driver_selection)
     from model.xgb_drivers import generate_xgb_specs, fold_train_predict, stratified_xgb_bank, fold_train_predict_tiered, generate_deep_xgb_specs
     from ensemble.combiner import build_driver_signals, softmax, combine_signals
     from ensemble.selection import pick_top_n_greedy_diverse
@@ -287,7 +371,7 @@ def train_production_model(X: pd.DataFrame, y: pd.Series, args):
         pval, _, _ = shuffle_pvalue(sig, yy, dapy_fn, n_shuffles=200, block=args.block)
         return pval <= args.pmax
 
-    chosen_idx = pick_top_n_greedy_diverse(s_tr, y, n=args.n_select, pval_gate=gate, w_dapy=args.w_dapy, w_ir=args.w_ir, diversity_penalty=args.diversity_penalty, dapy_fn=dapy_fn)
+    chosen_idx = pick_top_n_greedy_diverse(s_tr, y, n=args.n_select, pval_gate=gate, w_dapy=args.w_dapy, w_ir=args.w_ir, diversity_penalty=args.diversity_penalty, dapy_fn=dapy_fn, objective_fn=None)
     if len(chosen_idx) == 0:
         return
     train_sel = [s_tr[i] for i in chosen_idx]
@@ -300,7 +384,8 @@ def train_production_model(X: pd.DataFrame, y: pd.Series, args):
         J_star = 0.0
     else:
         bounds = {**{f"w{i}": (-2.0, 2.0) for i in range(len(train_sel))}, "tau": (0.2, 3.0)}
-        fobj = weight_objective_factory(train_sel, y, turnover_penalty=args.lambda_to, pmax=args.pmax, w_dapy=args.w_dapy, w_ir=args.w_ir, metric_fn_dapy=dapy_fn)
+        grope_obj = get_grope_objective_function(getattr(args, 'grope_objective', None))
+        fobj = weight_objective_factory(train_sel, y, turnover_penalty=args.lambda_to, pmax=args.pmax, w_dapy=args.w_dapy, w_ir=args.w_ir, metric_fn_dapy=dapy_fn, objective_fn=grope_obj)
         theta_star, J_star, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, seed=5678)
 
         w = np.array([theta_star[f"w{i}"] for i in range(len(train_sel))], dtype=float)
@@ -315,13 +400,13 @@ def train_production_model(X: pd.DataFrame, y: pd.Series, args):
         "n_models_total": args.n_models, "n_select": args.n_select,
         "z_win": args.z_win, "beta_pre": args.beta_pre, "lambda_to": args.lambda_to,
         "w_dapy": args.w_dapy, "w_ir": args.w_ir, "pmax": args.pmax, "weight_budget": args.weight_budget,
-        "diversity_penalty": args.diversity_penalty, "dapy_style": args.dapy_style
+        "diversity_penalty": args.diversity_penalty, "driver_selection": args.driver_selection
     }
     with open("artifacts/production_model.json", "w", encoding="utf-8") as f:
         json.dump(prod, f, indent=2)
 
 def random_past_train_then_backtest(X: pd.DataFrame, y: pd.Series, args):
-    dapy_fn = get_dapy_fn(args.dapy_style)
+    dapy_fn = get_dapy_fn(args.driver_selection)
     from model.xgb_drivers import generate_xgb_specs, fold_train_predict, stratified_xgb_bank, fold_train_predict_tiered, generate_deep_xgb_specs
     from ensemble.combiner import build_driver_signals, softmax, combine_signals
     from ensemble.selection import pick_top_n_greedy_diverse
@@ -363,7 +448,7 @@ def random_past_train_then_backtest(X: pd.DataFrame, y: pd.Series, args):
         pval, _, _ = shuffle_pvalue(sig, yy, dapy_fn, n_shuffles=200, block=args.block)
         return pval <= args.pmax
 
-    chosen_idx = pick_top_n_greedy_diverse(s_tr, y_tr, n=args.n_select, pval_gate=gate, w_dapy=args.w_dapy, w_ir=args.w_ir, diversity_penalty=args.diversity_penalty, dapy_fn=dapy_fn)
+    chosen_idx = pick_top_n_greedy_diverse(s_tr, y_tr, n=args.n_select, pval_gate=gate, w_dapy=args.w_dapy, w_ir=args.w_ir, diversity_penalty=args.diversity_penalty, dapy_fn=dapy_fn, objective_fn=None)
     if len(chosen_idx) == 0:
         return
     train_sel = [s_tr[i] for i in chosen_idx]
@@ -375,7 +460,8 @@ def random_past_train_then_backtest(X: pd.DataFrame, y: pd.Series, args):
         ww = softmax(w, temperature=tau)
     else:
         bounds = {**{f"w{i}": (-2.0, 2.0) for i in range(len(train_sel))}, "tau": (0.2, 3.0)}
-        fobj = weight_objective_factory(train_sel, y_tr, turnover_penalty=args.lambda_to, pmax=args.pmax, w_dapy=args.w_dapy, w_ir=args.w_ir, metric_fn_dapy=dapy_fn)
+        grope_obj = get_grope_objective_function(getattr(args, 'grope_objective', None))
+        fobj = weight_objective_factory(train_sel, y_tr, turnover_penalty=args.lambda_to, pmax=args.pmax, w_dapy=args.w_dapy, w_ir=args.w_ir, metric_fn_dapy=dapy_fn, objective_fn=grope_obj)
         theta_star, _, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, seed=2468)
 
         w = np.array([theta_star[f"w{i}"] for i in range(len(train_sel))], dtype=float)
@@ -393,8 +479,18 @@ def load_config(config_path: str) -> dict:
     logger.info(f"📄 Loaded configuration from {config_path}")
     return config
 
-def merge_args_with_config(args, config: dict):
+def merge_args_with_config(args, config: dict, cli_args=None):
     """Merge command line arguments with config file, CLI takes precedence."""
+    # Get list of arguments that were explicitly provided via CLI
+    explicitly_set = set()
+    if cli_args:
+        # Parse the actual CLI arguments to see what was explicitly provided
+        import sys
+        for i, arg in enumerate(sys.argv[1:]):
+            if arg.startswith('--'):
+                param_name = arg[2:].replace('-', '_')
+                explicitly_set.add(param_name)
+    
     for key, value in config.items():
         # Handle boolean flags specially
         if key == 'on_target_only' and isinstance(value, bool):
@@ -406,8 +502,11 @@ def merge_args_with_config(args, config: dict):
                 setattr(args, key, value)
         elif hasattr(args, key):
             current_value = getattr(args, key)
-            # Only override if CLI value is None/default
-            if current_value is None:
+            # Only override if CLI value wasn't explicitly provided
+            if key not in explicitly_set and current_value is None:
+                setattr(args, key, value)
+            elif key not in explicitly_set:
+                # For parameters with defaults, also allow config override
                 setattr(args, key, value)
         else:
             setattr(args, key, value)
@@ -460,8 +559,10 @@ if __name__ == "__main__":
     ap.add_argument("--train_test_split", action="store_true", help="Use single train-test split instead of 6-fold cross-validation")
     ap.add_argument("--tiered_xgb", action="store_true", help="Use tiered XGBoost architecture (Tier A/B/C with different complexity)")
     ap.add_argument("--deep_xgb", action="store_true", help="Use deeper XGBoost trees (8-10 depth vs baseline 2-6)")
-    ap.add_argument("--dapy_style", type=str, default="hits", help="DAPY style")
-    ap.add_argument("--bypass_pvalue_gating", action="store_true", help="Bypass p-value gating for testing purposes")
+    ap.add_argument("--driver_selection", type=str, default="hits", help="Driver selection objective function: 'hits', 'eri_both', 'adjusted_sharpe', 'cb_ratio', 'information_ratio', 'predictive_icir_logscore'")
+    ap.add_argument("--bypass_pvalue_gating", action="store_true", help="[DEPRECATED] Use --p_value_gating instead") 
+    ap.add_argument("--p_value_gating", type=str, help="P-value gating method: 'dapy', 'predictive_icir_logscore', 'adjusted_sharpe', 'information_ratio', 'cb_ratio', or null to disable")
+    ap.add_argument("--grope_objective", type=str, help="GROPE weight optimization objective: 'hits', 'eri_both', 'adjusted_sharpe', 'cb_ratio', 'information_ratio', 'predictive_icir_logscore', or null for default DAPY+IR")
     ap.add_argument("--equal_weights", action="store_true", help="Use equal weights instead of GROPE optimization for ensemble combination")
     
     # Random training options
@@ -478,7 +579,12 @@ if __name__ == "__main__":
         if not os.path.exists(args.config):
             raise FileNotFoundError(f"Configuration file not found: {args.config}")
         config = load_config(args.config)
-        args = merge_args_with_config(args, config)
+        args = merge_args_with_config(args, config, cli_args=True)
     
     
     main(args)
+
+
+
+
+        

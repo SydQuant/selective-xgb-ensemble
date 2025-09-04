@@ -1,5 +1,7 @@
-# Production Individual Target Testing Configuration
-# Based on original parameter defaults with optimizations
+# individual_target_test.yaml - PRIMARY CONFIG
+# Most commonly used configuration for testing individual symbols
+# Used in all CLAUDE.md examples and most experiments
+# Optimal settings: 50 models, 6 folds, bypass p-value gating
 
 target_symbol: "@AD#C"  # Override via CLI
 symbols: "@ES#C,@NQ#C,@YM#C,@RTY#C,@TY#C,@US#C,@FV#C,@TU#C,@EU#C,@BP#C,@JY#C,@AD#C,@C#C,@S#C,@W#C,@LE#C,@GF#C,@HE#C,@KC#C,@SB#C,@CC#C,@CT#C,@BO#C,@SM#C,@VX#C"
@@ -16,8 +18,8 @@ n_select: 12   # Original default
 folds: 6       # Original default
 use_multiprocessing: true
 
-# Original parameter values (conservative)
-z_win: 100           # Original default
+# Signal processing parameters
+z_win: 100           # Rolling z-score window (configurable)
 beta_pre: 1.0        # Original default  
 lambda_to: 0.05      # Original default
 weight_budget: 80    # Original default
@@ -25,11 +27,27 @@ w_dapy: 1.0          # Original default
 w_ir: 1.0            # Original default
 diversity_penalty: 0.2  # Original default
 pmax: 0.05           # Proper statistical significance (5% level)
+p_value_gating: null # P-value gating: null (disabled), 'dapy', 'predictive_icir_logscore', 'adjusted_sharpe', 'information_ratio', 'cb_ratio' 
 final_shuffles: 600  # Original default
 block: 10            # Original default
 
+# Objective function configuration
+driver_selection_objective:
+  dapy:
+    dapy_style: "hits"
+    weight: 1.0
+  information_ratio:
+    weight: 1.0
+
+grope_weight_objective:
+  dapy:
+    dapy_style: "hits"
+    weight: 1.0
+  information_ratio:
+    weight: 1.0
+
 # Training configuration
 train_production: false
-dapy_style: "hits"
+dapy_style: "hits"  # Legacy support - will be deprecated
 test_start: "2023-10-01" 
 random_train_pct: 0.0
