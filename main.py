@@ -202,6 +202,9 @@ def run_training_pipeline(X, y, args, dapy_fn, driver_selection_obj=None, weight
 
     # Apply block-wise feature selection BEFORE training
     # For large datasets, reduce features more aggressively to prevent XGB overfitting
+    original_feature_count = X.shape[1]
+    features_after_selection = X.shape[1]
+    
     if X.shape[1] > 200:  # Only apply if we have many features
         # Use CLI max_features if provided, otherwise use adaptive calculation
         target_features = args.max_features if args.max_features else max(30, min(50, len(X) // 20))
@@ -209,7 +212,8 @@ def run_training_pipeline(X, y, args, dapy_fn, driver_selection_obj=None, weight
         X = apply_feature_selection(X, y, method='block_wise', 
                                    block_size=100, features_per_block=15, 
                                    max_total_features=target_features, corr_threshold=args.corr_threshold)
-        logger.info(f"Feature selection: {X.shape[1]} -> {target_features} features")
+        features_after_selection = X.shape[1]
+        logger.info(f"Feature selection: {original_feature_count} -> {features_after_selection} features")
     
     if args.train_test_split:
         n_data = len(X)
@@ -342,7 +346,13 @@ def run_training_pipeline(X, y, args, dapy_fn, driver_selection_obj=None, weight
             "total_folds": len(fold_summaries),
             "dapy_value": dapy_val,
             "information_ratio": ir,
-            "hit_rate": hr
+            "hit_rate": hr,
+            "feature_selection": {
+                "original_features": original_feature_count,
+                "features_after_selection": features_after_selection,
+                "reduction_count": original_feature_count - features_after_selection,
+                "reduction_percentage": round((original_feature_count - features_after_selection) / original_feature_count * 100, 1) if original_feature_count > 0 else 0
+            }
         }
         
         save_comprehensive_diagnostics(vars(args), X.shape, feature_info, model_performance, ensemble_info)

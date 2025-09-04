@@ -68,6 +68,15 @@ def save_comprehensive_diagnostics(config, data_shape, feature_info, model_perfo
         if len(feature_info) > 0:
             f.write(f"  Feature Names: {[f.get('name', f'feat_{i}') for i, f in enumerate(feature_info[:5])]}{'...' if len(feature_info) > 5 else ''}\n")
         
+        # Add feature selection information if available
+        if ensemble_info and ensemble_info.get('feature_selection'):
+            fs_info = ensemble_info['feature_selection']
+            f.write(f"\nFEATURE SELECTION DETAILS:\n")
+            f.write(f"  Original Features: {fs_info.get('original_features', 'N/A')}\n")
+            f.write(f"  Features After Selection: {fs_info.get('features_after_selection', 'N/A')}\n")
+            f.write(f"  Features Removed: {fs_info.get('reduction_count', 'N/A')}\n")
+            f.write(f"  Reduction Percentage: {fs_info.get('reduction_percentage', 'N/A')}%\n")
+        
         f.write(f"\nFINAL PERFORMANCE:\n")
         perf = model_performance
         f.write(f"  DAPY: {perf.get('dapy', perf.get('total_return', 'N/A'))}\n")
