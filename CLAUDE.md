@@ -136,6 +136,10 @@ Key parameters:
 - `--tiered_xgb` - Use tiered XGBoost configuration (breakthrough for underperformers: +0.24 to +0.37 Sharpe)
 - `--deep_xgb` - Use deep XGBoost configuration (advanced architecture option)
 - `--dapy_style` - DAPY calculation method: "hits" (default), "eri_long", "eri_short", "eri_both" (asset-specific optimization)
+- `--driver_selection` - Driver selection objective function: "hybrid_sharpe_ir" (0.7×Adjusted_Sharpe + 0.3×Information_Ratio), "hits", "eri_both", "adjusted_sharpe", "cb_ratio", "predictive_icir_logscore", "information_ratio"
+- `--grope_objective` - GROPE weight optimization objective: same options as driver_selection
+- `--pmax` - P-value threshold for statistical significance gating (e.g., 0.05, 0.1, 0.2)
+- `--max_features` - Override feature count after selection (optimal: 100 for diagnostics, 50 for production)
 
 ## Development Commands
 
@@ -206,6 +210,7 @@ grep "Processing complete:" logs/
 - `cv/wfo.py` - Walk-forward cross-validation splits
 - `eval/target_shuffling.py` - Statistical significance testing (Monte Carlo)
 - `metrics/` - Performance calculation (DAPY, IR, Sharpe, drawdown)
+- `ensemble/oos_diagnostics.py` - **NEW**: Comprehensive out-of-sample diagnostics for all 75 models per fold with p-value testing and performance metrics
 
 ## Performance Artifacts
 
@@ -329,9 +334,16 @@ Sharpe = (PnL.mean() * 252) / (PnL.std() * sqrt(252))  # Annualized
 
 ## Known Critical Issues
 
-### Test 2 Analysis: Driver Selection Objective Bug (September 2024)
+### ✅ P-Value Gating Bug - RESOLVED (September 2024)
 
-**CRITICAL BUG DISCOVERED**: All driver selection objectives produce identical results despite using different algorithms.
+**Issue**: P-value gating was non-functional - all 75 models always passed regardless of threshold
+**Root Cause**: `apply_pvalue_gating()` function returned `True` when `args.p_value_gating` was `None`, even if `pmax` was set
+**Fix**: Modified logic to enable p-value gating when `pmax` is provided, using DAPY as default objective with appropriate logging
+**Status**: ✅ **RESOLVED** - P-value gating now works correctly, showing expected model filtering
+
+### ❌ Driver Selection Objective Bug - UNRESOLVED (September 2024)
+
+**CRITICAL BUG**: All driver selection objectives produce identical results despite using different algorithms.
 
 **Issue Details**:
 - **Test 2a-2e**: All 5 different driver selection objectives (`hits`, `eri_both`, `adjusted_sharpe`, `cb_ratio`, `predictive_icir_logscore`) produce identical performance metrics
@@ -339,38 +351,37 @@ Sharpe = (PnL.mean() * 252) / (PnL.std() * sqrt(252))  # Annualized
 - **Configuration**: @ES#C, 3 models, 2 folds, bypassed p-value gating
 - **Bug Persistence**: Issue exists even after removing all fallback logic (strict mode implementation)
 
-**Root Cause Investigation**:
-1. **Initial Discovery**: `driver_selection_obj` was None when using CLI arguments, causing fallback to same function
-2. **Fallback Removal**: Implemented strict mode to remove all fallbacks in 3 locations:
-   - P-value gating objective functions
-   - Driver selection objective functions  
-   - GROPE weight optimization objective functions
-3. **Bug Persistence**: Even with strict mode (no fallbacks), different objectives still produce identical results
-
 **Code Locations Affected**:
 - `main.py:get_objective_functions()` - Fixed CLI argument mapping but bug persists
 - `ensemble/selection.py:pick_top_n_greedy_diverse()` - Driver selection algorithm
 - `opt/grope.py` - Weight optimization uses different objectives but same driver selection results
 
-**Test Results Summary**:
-```
-Test 2a (hits):              Sharpe: 0.38, Hit Rate: 24.41%, Return: 8.36%
-Test 2b (eri_both):          Sharpe: 0.38, Hit Rate: 24.41%, Return: 8.36%  
-Test 2c (adjusted_sharpe):   Sharpe: 0.38, Hit Rate: 24.41%, Return: 8.36%
-Test 2d (cb_ratio):          Sharpe: 0.38, Hit Rate: 24.41%, Return: 8.36%
-Test 2e (predictive_icir):   Sharpe: 0.38, Hit Rate: 24.41%, Return: 8.36%
-```
-
 **Status**: ❌ **UNRESOLVED** - Deeper architectural issue requires investigation
-- All objective functions are correctly defined in `metrics/objective_registry.py`
-- Strict mode correctly raises errors for invalid objectives
-- Issue appears to be in driver selection execution, not objective function mapping
-
 **Impact**: High - Undermines driver selection optimization and algorithm comparison validity
 
-**Next Steps Required**:
-1. Debug driver selection algorithm to verify objective function is actually being used
-2. Add diagnostic logging to trace objective function calls during driver selection
-3. Verify that different objectives produce different scores during greedy selection process
+## Pending Tasks (September 2024)
+
+### Task 7 Series - Advanced XGBoost Architecture Testing (In Progress)
+
+**Completed Tasks**:
+- ✅ Task 7a: @ES#C hybrid_sharpe_ir with pmax=0.1, max_features=100
+- ✅ Task 7b: @ES#C hybrid_sharpe_ir with bypass_pvalue_gating, max_features=100  
+- ✅ Task 7c: @TY#C hybrid_sharpe_ir with pmax=0.1, max_features=100
+- ✅ Task 7d: @TY#C hybrid_sharpe_ir with bypass_pvalue_gating, max_features=100
+- ✅ Task 7e: @ES#C tiered XGBoost with pmax=0.1, max_features=100
+
+**Pending Tasks**:
+```bash
+# Task 7f: Deep XGBoost with p-value gating
+~/anaconda3/python.exe main.py --config configs/test_objectives.yaml --target_symbol "@ES#C" --driver_selection hybrid_sharpe_ir --grope_objective hybrid_sharpe_ir --n_models 75 --n_select 20 --folds 10 --pmax 0.1 --max_features 100 --deep_xgb
+
+# Task 7g: Tiered XGBoost without p-value gating  
+~/anaconda3/python.exe main.py --config configs/test_objectives.yaml --target_symbol "@ES#C" --driver_selection hybrid_sharpe_ir --grope_objective hybrid_sharpe_ir --n_models 75 --n_select 20 --folds 10 --bypass_pvalue_gating --max_features 100 --tiered_xgb
+
+# Task 7h: Deep XGBoost without p-value gating
+~/anaconda3/python.exe main.py --config configs/test_objectives.yaml --target_symbol "@ES#C" --driver_selection hybrid_sharpe_ir --grope_objective hybrid_sharpe_ir --n_models 75 --n_select 20 --folds 10 --bypass_pvalue_gating --max_features 100 --deep_xgb
+```
+
+**Objective**: Compare tiered vs deep XGBoost architectures with/without p-value gating using the validated hybrid_sharpe_ir objective (0.7×Adjusted_Sharpe + 0.3×Information_Ratio) and comprehensive OOS diagnostics for all 75 models.
 
 Framework optimized for financial data. Validated across bonds, commodities, equities, volatility.
