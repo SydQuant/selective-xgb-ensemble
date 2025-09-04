@@ -47,23 +47,18 @@ def normalize_objective_score(
     Returns:
         Normalized score in [0,1] range (higher is always better)
     """
-    # Use custom range if provided, otherwise use data-derived range
-    if custom_range is not None:
-        min_val, max_val = custom_range
-    elif data_range is not None:
-        min_val, max_val = data_range
-    else:
+    # Determine range source
+    range_tuple = custom_range or data_range
+    if range_tuple is None:
         warnings.warn(f"No range provided for normalization of '{obj_name}', using raw score")
         return score
     
-    # Handle edge case where min == max
+    min_val, max_val = range_tuple
     if max_val == min_val:
         return 0.5
     
-    # Normalize to [0,1] range
+    # Normalize and clip to [0,1]
     normalized = (score - min_val) / (max_val - min_val)
-    
-    # Clip to [0,1] to handle values outside observed range
     return float(np.clip(normalized, 0.0, 1.0))
 
 def create_auto_normalized_objective(
@@ -87,35 +82,30 @@ def create_auto_normalized_objective(
         Normalized objective function that returns values in [0,1]
     """
     # Pre-compute range if calibration data provided
-    precomputed_range = None
-    if calibration_data is not None and custom_range is None:
-        signal_cal, returns_cal = calibration_data
-        precomputed_range = estimate_dynamic_range(base_objective, signal_cal, returns_cal, n_samples)
+    precomputed_range = (
+        estimate_dynamic_range(base_objective, calibration_data[0], calibration_data[1], n_samples)
+        if calibration_data is not None and custom_range is None else None
+    )
     
     def normalized_objective(signal: pd.Series, returns: pd.Series, **kwargs) -> float:
-        # Call original objective function
         raw_score = base_objective(signal, returns, **kwargs)
         
-        # Determine range for normalization
-        if custom_range is not None:
-            data_range = custom_range
-        elif precomputed_range is not None:
-            data_range = precomputed_range
-        else:
-            # Dynamic range estimation from current data
-            data_range = estimate_dynamic_range(base_objective, signal, returns, n_samples)
+        # Determine normalization range
+        data_range = (
+            custom_range or
+            precomputed_range or
+            estimate_dynamic_range(base_objective, signal, returns, n_samples)
+        )
         
-        # Normalize to [0,1] range
         return normalize_objective_score(raw_score, obj_name, data_range=data_range)
     
-    # Preserve docstring and add normalization info
-    if hasattr(base_objective, '__doc__'):
-        normalized_objective.__doc__ = (
-            f"DYNAMIC AUTO-NORMALIZED VERSION: {base_objective.__doc__}\n"
-            f"Returns normalized score in [0,1] range using dynamic data-based scaling."
-        )
-    else:
-        normalized_objective.__doc__ = f"Dynamic auto-normalized {obj_name} objective (returns [0,1] range)"
+    # Add docstring with normalization info
+    base_doc = getattr(base_objective, '__doc__', None)
+    normalized_objective.__doc__ = (
+        f"DYNAMIC AUTO-NORMALIZED VERSION: {base_doc}\n"
+        f"Returns normalized score in [0,1] range using dynamic data-based scaling."
+        if base_doc else f"Dynamic auto-normalized {obj_name} objective (returns [0,1] range)"
+    )
     
     return normalized_objective
 
@@ -149,17 +139,15 @@ def estimate_dynamic_range(
     n_obs = len(signal)
     sample_size = max(10, int(n_obs * bootstrap_fraction))
     
-    # Use different random seeds for reproducible but varied sampling
+    # Bootstrap sampling with reproducible seeds
     for i in range(n_samples):
         try:
-            # Bootstrap sample from actual data
             np.random.seed(i)  # Reproducible sampling
             indices = np.random.choice(n_obs, size=sample_size, replace=True)
             
             sample_signal = signal.iloc[indices] if hasattr(signal, 'iloc') else signal[indices]
             sample_returns = returns.iloc[indices] if hasattr(returns, 'iloc') else returns[indices]
             
-            # Calculate objective on bootstrap sample
             score = objective_fn(sample_signal, sample_returns)
             if np.isfinite(score):
                 scores.append(score)
@@ -175,11 +163,10 @@ def estimate_dynamic_range(
     min_score = float(np.percentile(scores, 10))
     max_score = float(np.percentile(scores, 90))
     
-    # Ensure min < max
+    # Ensure valid range (min < max)
     if min_score >= max_score:
         score_mean = np.mean(scores)
-        score_std = np.std(scores)
-        range_width = max(0.1, score_std * 2.0)  # Use 2-sigma range if needed
+        range_width = max(0.1, np.std(scores) * 2.0)  # Use 2-sigma range
         min_score = score_mean - range_width / 2
         max_score = score_mean + range_width / 2
     
@@ -214,9 +201,9 @@ def create_scale_aware_composite_objective(
     """
     from metrics.objective_registry import OBJECTIVE_REGISTRY
     
-    # Pre-compute ranges if calibration data provided
+    # Pre-compute ranges for normalization
     precomputed_ranges = {}
-    if calibration_data is not None and auto_normalize:
+    if calibration_data and auto_normalize:
         signal_cal, returns_cal = calibration_data
         for obj_name, config in objectives_config.items():
             if config.get('auto_normalize', auto_normalize) and 'custom_range' not in config:
@@ -224,7 +211,7 @@ def create_scale_aware_composite_objective(
                     obj_fn = OBJECTIVE_REGISTRY.get(obj_name)
                     precomputed_ranges[obj_name] = estimate_dynamic_range(obj_fn, signal_cal, returns_cal)
                 except:
-                    pass  # Skip if pre-computation fails
+                    pass  # Skip failed pre-computation
     
     def composite_objective(signal: pd.Series, returns: pd.Series, **kwargs) -> float:
         total_score = 0.0
@@ -235,28 +222,20 @@ def create_scale_aware_composite_objective(
             use_normalize = config.get('auto_normalize', auto_normalize)
             
             try:
-                # Get base objective function
                 obj_fn = OBJECTIVE_REGISTRY.get(obj_name)
-                
-                # Calculate raw score
                 raw_score = obj_fn(signal, returns, **kwargs)
                 
-                # Apply dynamic normalization if enabled
+                # Apply normalization if enabled
                 if use_normalize:
-                    custom_range = config.get('custom_range', None)
-                    if custom_range is not None:
-                        data_range = custom_range
-                    elif obj_name in precomputed_ranges:
-                        data_range = precomputed_ranges[obj_name]
-                    else:
-                        # Dynamic range from current data
-                        data_range = estimate_dynamic_range(obj_fn, signal, returns)
-                    
+                    data_range = (
+                        config.get('custom_range') or
+                        precomputed_ranges.get(obj_name) or
+                        estimate_dynamic_range(obj_fn, signal, returns)
+                    )
                     final_score = normalize_objective_score(raw_score, obj_name, data_range=data_range)
                 else:
                     final_score = raw_score
                 
-                # Add weighted contribution
                 total_score += weight * final_score
                 total_weight += weight
                 
@@ -264,7 +243,6 @@ def create_scale_aware_composite_objective(
                 warnings.warn(f"Error in objective '{obj_name}': {e}")
                 continue
         
-        # Return weighted average if any objectives succeeded
         return total_score / total_weight if total_weight > 0 else 0.0
     
     composite_objective.__doc__ = (
@@ -289,16 +267,10 @@ def test_dynamic_normalization():
     print("Raw scores vs Dynamically Normalized scores:")
     
     for obj_name in OBJECTIVE_REGISTRY.list_functions():
-        obj_fn = OBJECTIVE_REGISTRY.get(obj_name)
-        
         try:
-            # Calculate raw score
+            obj_fn = OBJECTIVE_REGISTRY.get(obj_name)
             raw_score = obj_fn(signal, returns)
-            
-            # Calculate dynamic range from actual data
             data_range = estimate_dynamic_range(obj_fn, signal, returns)
-            
-            # Calculate normalized score using dynamic range
             norm_score = normalize_objective_score(raw_score, obj_name, data_range=data_range)
             
             print(f"{obj_name:>25}: {raw_score:>8.4f} → {norm_score:>6.4f} (range: {data_range[0]:.3f} to {data_range[1]:.3f})")
@@ -308,29 +280,23 @@ def test_dynamic_normalization():
     
     print("\n=== DYNAMIC COMPOSITE OBJECTIVE TEST ===")
     
-    # Test composite objective with dynamic auto-normalization
+    # Test normalized composite objective
     config = {
         'dapy_hits': {'weight': 1.0, 'auto_normalize': True},
-        'adjusted_sharpe': {'weight': 1.0, 'auto_normalize': True},  # Equal weights work!
+        'adjusted_sharpe': {'weight': 1.0, 'auto_normalize': True},
         'information_ratio': {'weight': 1.0, 'auto_normalize': True}
     }
     
     composite_fn = create_scale_aware_composite_objective(config, calibration_data=(signal, returns))
     composite_score = composite_fn(signal, returns)
-    
     print(f"Composite score (dynamic normalized): {composite_score:.4f}")
     
-    # Test without normalization for comparison
-    config_raw = {
-        'dapy_hits': {'weight': 1.0, 'auto_normalize': False},
-        'adjusted_sharpe': {'weight': 1.0, 'auto_normalize': False},  # This would be dominated!
-        'information_ratio': {'weight': 1.0, 'auto_normalize': False}
-    }
-    
+    # Test raw composite for comparison
+    config_raw = {k: {**v, 'auto_normalize': False} for k, v in config.items()}
     composite_fn_raw = create_scale_aware_composite_objective(config_raw)
     composite_score_raw = composite_fn_raw(signal, returns)
-    
     print(f"Composite score (raw scales):       {composite_score_raw:.4f}")
+    
     print("\nNEW FEATURE: Dynamic normalization uses actual data distribution")
     print("             No more hard-coded ranges - adapts to any dataset!")
     print("             Normalized version gives balanced contribution from all objectives")
