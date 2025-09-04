@@ -24,7 +24,7 @@ weight_budget: 80    # Original default
 w_dapy: 1.0          # Original default
 w_ir: 1.0            # Original default
 diversity_penalty: 0.2  # Original default
-pmax: 0.80           # Relaxed for 5-year data testing
+pmax: 0.05           # Proper statistical significance (5% level)
 final_shuffles: 600  # Original default
 block: 10            # Original default
 

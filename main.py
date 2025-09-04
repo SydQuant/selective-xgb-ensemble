@@ -4,7 +4,7 @@ import argparse, numpy as np, pandas as pd, os, json
 import logging
 import yaml
 from cv.wfo import wfo_splits
-from model.xgb_drivers import generate_xgb_specs, fold_train_predict
+from model.xgb_drivers import generate_xgb_specs, fold_train_predict, stratified_xgb_bank, fold_train_predict_tiered, generate_deep_xgb_specs
 from model.feature_selection import apply_feature_selection
 from ensemble.combiner import build_driver_signals, combine_signals, softmax
 from ensemble.selection import pick_top_n_greedy_diverse
@@ -159,17 +159,46 @@ def run_training_pipeline(X, y, args, dapy_fn):
     # Apply block-wise feature selection BEFORE training
     # For large datasets, reduce features more aggressively to prevent XGB overfitting
     if X.shape[1] > 200:  # Only apply if we have many features
-        # Reduce features much more aggressively to prevent XGB overfitting
-        # For financial data, use ~20-50 features max to ensure sufficient observations per feature
-        target_features = max(30, min(50, len(X) // 20))  # 20:1 observation-to-feature ratio
+        # Use CLI max_features if provided, otherwise use adaptive calculation
+        if args.max_features:
+            target_features = args.max_features
+            logger.info(f"Using CLI specified feature count: {target_features}")
+        else:
+            # Reduce features much more aggressively to prevent XGB overfitting
+            # For financial data, use ~20-50 features max to ensure sufficient observations per feature
+            target_features = max(30, min(50, len(X) // 20))  # 20:1 observation-to-feature ratio
+        
         logger.info(f"Applying smart block-wise feature selection: {X.shape[1]} -> {target_features} features")
         X = apply_feature_selection(X, y, method='block_wise', 
                                    block_size=100, features_per_block=15, 
                                    max_total_features=target_features, corr_threshold=args.corr_threshold)
         logger.info(f"Feature selection complete: {X.shape}")
     
-    splits = wfo_splits(len(X), k_folds=args.folds, min_train=max(252, len(X)//(args.folds*2)))
-    specs = generate_xgb_specs(n_models=args.n_models, seed=7)
+    # Create either single train-test split or 6-fold cross-validation
+    if args.train_test_split:
+        logger.info("Using single train-test split (70%-30%)")
+        n_data = len(X)
+        train_size = int(0.7 * n_data)
+        train_idx = np.arange(0, train_size)
+        test_idx = np.arange(train_size, n_data)
+        splits = [(train_idx, test_idx)]  # Single split
+    else:
+        logger.info(f"Using {args.folds}-fold walk-forward cross-validation")
+        splits = wfo_splits(len(X), k_folds=args.folds, min_train=max(252, len(X)//(args.folds*2)))
+    
+    # Generate XGB specs based on architecture choice
+    if args.tiered_xgb:
+        logger.info(f"Using tiered XGBoost architecture (Tier A/B/C) with {args.n_models} models")
+        specs, col_slices = stratified_xgb_bank(X.columns.tolist(), n_models=args.n_models, seed=7)
+    elif args.deep_xgb:
+        logger.info(f"Using deep XGBoost architecture (8-10 depth) with {args.n_models} models")
+        specs = generate_deep_xgb_specs(n_models=args.n_models, seed=7)
+        col_slices = None
+    else:
+        logger.info(f"Using standard XGBoost architecture with {args.n_models} models")
+        specs = generate_xgb_specs(n_models=args.n_models, seed=7)
+        col_slices = None
+        
     os.makedirs("artifacts", exist_ok=True)
 
     oos_signal = pd.Series(0.0, index=X.index)
@@ -192,7 +221,11 @@ def run_training_pipeline(X, y, args, dapy_fn):
             logger.error(f"[Fold {f}] Features have near-zero variance - skipping fold") 
             continue
         
-        train_preds, test_preds = fold_train_predict(X_tr, y_tr, X_te, specs)
+        # Use tiered or standard training based on architecture choice
+        if args.tiered_xgb:
+            train_preds, test_preds = fold_train_predict_tiered(X_tr, y_tr, X_te, specs, col_slices)
+        else:
+            train_preds, test_preds = fold_train_predict(X_tr, y_tr, X_te, specs)
         
         # Debug: Check XGBoost predictions before signal generation
         logger.info(f"Fold {f} XGBoost predictions: train_preds count={len(train_preds)}, test_preds count={len(test_preds)}")
@@ -221,13 +254,20 @@ def run_training_pipeline(X, y, args, dapy_fn):
         train_sel = [s_tr[i] for i in chosen_idx]
         test_sel  = [s_te[i] for i in chosen_idx]
 
-        bounds = {**{f"w{i}": (-2.0, 2.0) for i in range(len(train_sel))}, "tau": (0.2, 3.0)}
-        fobj = weight_objective_factory(train_sel, y_tr, turnover_penalty=args.lambda_to, pmax=args.pmax, w_dapy=args.w_dapy, w_ir=args.w_ir, metric_fn_dapy=dapy_fn)
-        theta_star, J_star, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, seed=1234+f)
+        if args.equal_weights:
+            logger.info(f"Using equal weights (bypassing GROPE optimization)")
+            w = np.ones(len(train_sel))
+            tau = 1.0  # Standard temperature for equal weights
+            ww = softmax(w, temperature=tau)
+            J_star = 0.0  # No optimization objective for equal weights
+        else:
+            bounds = {**{f"w{i}": (-2.0, 2.0) for i in range(len(train_sel))}, "tau": (0.2, 3.0)}
+            fobj = weight_objective_factory(train_sel, y_tr, turnover_penalty=args.lambda_to, pmax=args.pmax, w_dapy=args.w_dapy, w_ir=args.w_ir, metric_fn_dapy=dapy_fn)
+            theta_star, J_star, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, seed=1234+f)
 
-        w = np.array([theta_star[f"w{i}"] for i in range(len(train_sel))], dtype=float)
-        tau = float(theta_star["tau"])
-        ww = softmax(w, temperature=tau)
+            w = np.array([theta_star[f"w{i}"] for i in range(len(train_sel))], dtype=float)
+            tau = float(theta_star["tau"])
+            ww = softmax(w, temperature=tau)
         
         # Show GROPE results for this fold
         logger.info(f"Fold {f}: Selected {len(chosen_idx)} models, weights: {[f'{w:.3f}' for w in ww]}, tau: {tau:.3f}")
@@ -315,10 +355,10 @@ def run_training_pipeline(X, y, args, dapy_fn):
     except Exception as e:
         logger.warning(f"⚠️ Failed to save comprehensive diagnostics: {e}")
 
-    # Production model (unrealistic backtest)
-    if args.train_production:
-        print("\n[Production] Training production model on all data (for deployment only, not for backtest)...")
-        train_production_model(X, y, args)
+    # COMMENTED OUT: Misleading production model that doesn't change validation methodology
+    # if args.train_production:
+    #     print("\n[Production] Training production model on all data (for deployment only, not for backtest)...")
+    #     train_production_model(X, y, args)
 
     # Random past-train then test from test_start
     if args.random_train_pct > 0.0:
@@ -332,15 +372,23 @@ def run_training_pipeline(X, y, args, dapy_fn):
 def train_production_model(X: pd.DataFrame, y: pd.Series, args):
     import numpy as np
     dapy_fn = get_dapy_fn(args.dapy_style)
-    from model.xgb_drivers import generate_xgb_specs, fold_train_predict
+    from model.xgb_drivers import generate_xgb_specs, fold_train_predict, stratified_xgb_bank, fold_train_predict_tiered, generate_deep_xgb_specs
     from ensemble.combiner import build_driver_signals, softmax, combine_signals
     from ensemble.selection import pick_top_n_greedy_diverse
     from opt.grope import grope_optimize
     from opt.weight_objective import weight_objective_factory
     from eval.target_shuffling import shuffle_pvalue
 
-    specs = generate_xgb_specs(n_models=args.n_models, seed=7)
-    train_preds, test_preds = fold_train_predict(X, y, X, specs)  # predict on full
+    # Generate XGB specs based on architecture choice
+    if args.tiered_xgb:
+        specs, col_slices = stratified_xgb_bank(X.columns.tolist(), n_models=args.n_models, seed=7)
+        train_preds, test_preds = fold_train_predict_tiered(X, y, X, specs, col_slices)  # predict on full
+    elif args.deep_xgb:
+        specs = generate_deep_xgb_specs(n_models=args.n_models, seed=7)
+        train_preds, test_preds = fold_train_predict(X, y, X, specs)  # predict on full
+    else:
+        specs = generate_xgb_specs(n_models=args.n_models, seed=7)
+        train_preds, test_preds = fold_train_predict(X, y, X, specs)  # predict on full
     s_tr, s_full = build_driver_signals(train_preds, test_preds, y, z_win=args.z_win, beta=args.beta_pre)
 
     def gate(sig, yy):
@@ -356,12 +404,19 @@ def train_production_model(X: pd.DataFrame, y: pd.Series, args):
     train_sel = [s_tr[i] for i in chosen_idx]
     full_sel  = [s_full[i] for i in chosen_idx]
 
-    bounds = {**{f"w{i}": (-2.0, 2.0) for i in range(len(train_sel))}, "tau": (0.2, 3.0)}
-    fobj = weight_objective_factory(train_sel, y, turnover_penalty=args.lambda_to, pmax=args.pmax, w_dapy=args.w_dapy, w_ir=args.w_ir, metric_fn_dapy=dapy_fn)
-    theta_star, J_star, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, seed=5678)
+    if args.equal_weights:
+        logger.info(f"Using equal weights (bypassing GROPE optimization)")
+        w = np.ones(len(train_sel))
+        tau = 1.0  # Standard temperature for equal weights
+        ww = softmax(w, temperature=tau)
+        J_star = 0.0  # No optimization objective for equal weights
+    else:
+        bounds = {**{f"w{i}": (-2.0, 2.0) for i in range(len(train_sel))}, "tau": (0.2, 3.0)}
+        fobj = weight_objective_factory(train_sel, y, turnover_penalty=args.lambda_to, pmax=args.pmax, w_dapy=args.w_dapy, w_ir=args.w_ir, metric_fn_dapy=dapy_fn)
+        theta_star, J_star, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, seed=5678)
 
-    w = np.array([theta_star[f"w{i}"] for i in range(len(train_sel))], dtype=float)
-    tau = float(theta_star["tau"]); ww = softmax(w, temperature=tau)
+        w = np.array([theta_star[f"w{i}"] for i in range(len(train_sel))], dtype=float)
+        tau = float(theta_star["tau"]); ww = softmax(w, temperature=tau)
     s_full_ens = combine_signals(full_sel, ww)
 
     save_timeseries("artifacts/production_timeseries.csv", s_full_ens, y)
@@ -380,7 +435,7 @@ def train_production_model(X: pd.DataFrame, y: pd.Series, args):
 
 def random_past_train_then_backtest(X: pd.DataFrame, y: pd.Series, args):
     dapy_fn = get_dapy_fn(args.dapy_style)
-    from model.xgb_drivers import generate_xgb_specs, fold_train_predict
+    from model.xgb_drivers import generate_xgb_specs, fold_train_predict, stratified_xgb_bank, fold_train_predict_tiered, generate_deep_xgb_specs
     from ensemble.combiner import build_driver_signals, softmax, combine_signals
     from ensemble.selection import pick_top_n_greedy_diverse
     from opt.grope import grope_optimize
@@ -421,8 +476,16 @@ def random_past_train_then_backtest(X: pd.DataFrame, y: pd.Series, args):
         print(f"[RandTrain] Not enough valid training samples: {len(X_tr)}")
         return
     
-    specs = generate_xgb_specs(n_models=args.n_models, seed=7)
-    train_preds, test_preds = fold_train_predict(X_tr, y_tr, X_te, specs)
+    # Generate XGB specs based on architecture choice
+    if args.tiered_xgb:
+        specs, col_slices = stratified_xgb_bank(X_tr.columns.tolist(), n_models=args.n_models, seed=7)
+        train_preds, test_preds = fold_train_predict_tiered(X_tr, y_tr, X_te, specs, col_slices)
+    elif args.deep_xgb:
+        specs = generate_deep_xgb_specs(n_models=args.n_models, seed=7)
+        train_preds, test_preds = fold_train_predict(X_tr, y_tr, X_te, specs)
+    else:
+        specs = generate_xgb_specs(n_models=args.n_models, seed=7)
+        train_preds, test_preds = fold_train_predict(X_tr, y_tr, X_te, specs)
     s_tr, s_te = build_driver_signals(train_preds, test_preds, y_tr, z_win=args.z_win, beta=args.beta_pre)
 
     def gate(sig, yy):
@@ -438,12 +501,18 @@ def random_past_train_then_backtest(X: pd.DataFrame, y: pd.Series, args):
     train_sel = [s_tr[i] for i in chosen_idx]
     test_sel  = [s_te[i] for i in chosen_idx]
 
-    bounds = {**{f"w{i}": (-2.0, 2.0) for i in range(len(train_sel))}, "tau": (0.2, 3.0)}
-    fobj = weight_objective_factory(train_sel, y_tr, turnover_penalty=args.lambda_to, pmax=args.pmax, w_dapy=args.w_dapy, w_ir=args.w_ir, metric_fn_dapy=dapy_fn)
-    theta_star, _, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, seed=2468)
+    if args.equal_weights:
+        logger.info(f"Using equal weights (bypassing GROPE optimization)")
+        w = np.ones(len(train_sel))
+        tau = 1.0  # Standard temperature for equal weights
+        ww = softmax(w, temperature=tau)
+    else:
+        bounds = {**{f"w{i}": (-2.0, 2.0) for i in range(len(train_sel))}, "tau": (0.2, 3.0)}
+        fobj = weight_objective_factory(train_sel, y_tr, turnover_penalty=args.lambda_to, pmax=args.pmax, w_dapy=args.w_dapy, w_ir=args.w_ir, metric_fn_dapy=dapy_fn)
+        theta_star, _, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, seed=2468)
 
-    w = np.array([theta_star[f"w{i}"] for i in range(len(train_sel))], dtype=float)
-    tau = float(theta_star["tau"]); ww = softmax(w, temperature=tau)
+        w = np.array([theta_star[f"w{i}"] for i in range(len(train_sel))], dtype=float)
+        tau = float(theta_star["tau"]); ww = softmax(w, temperature=tau)
 
     s_test_ens = combine_signals(test_sel, ww)
     y_test = y[y.index >= ts]
@@ -520,9 +589,14 @@ if __name__ == "__main__":
     ap.add_argument("--block", type=int, default=30, help="Block size for permutation")
     
     # Output options
-    ap.add_argument("--train_production", action="store_true", help="Train production model")
+    # COMMENTED OUT: Misleading flag that doesn't change validation methodology
+    # ap.add_argument("--train_production", action="store_true", help="Train production model")
+    ap.add_argument("--train_test_split", action="store_true", help="Use single train-test split instead of 6-fold cross-validation")
+    ap.add_argument("--tiered_xgb", action="store_true", help="Use tiered XGBoost architecture (Tier A/B/C with different complexity)")
+    ap.add_argument("--deep_xgb", action="store_true", help="Use deeper XGBoost trees (8-10 depth vs baseline 2-6)")
     ap.add_argument("--dapy_style", type=str, default="hits", help="DAPY style")
     ap.add_argument("--bypass_pvalue_gating", action="store_true", help="Bypass p-value gating for testing purposes")
+    ap.add_argument("--equal_weights", action="store_true", help="Use equal weights instead of GROPE optimization for ensemble combination")
     
     # Random training options
     ap.add_argument("--test_start", type=str, help="Test start date for random training")

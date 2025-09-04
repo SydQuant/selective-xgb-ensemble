@@ -1,0 +1,134 @@
+2025-09-03 16:38:26,168 - __main__ - INFO - \U0001f4c4 Loaded configuration from configs/individual_target_test.yaml
+2025-09-03 16:38:26,168 - __main__ - INFO - \U0001f4c4 Using configuration: configs/individual_target_test.yaml
+2025-09-03 16:38:26,168 - __main__ - INFO - \U0001f680 Starting XGB Ensemble Analysis
+2025-09-03 16:38:26,169 - __main__ - INFO - \U0001f3af Target symbols: ['@EU#C']
+2025-09-03 16:38:26,169 - __main__ - INFO - 
+================================================================================
+2025-09-03 16:38:26,169 - __main__ - INFO - \U0001f504 PROCESSING TARGET 1/1: @EU#C
+2025-09-03 16:38:26,169 - __main__ - INFO - ================================================================================
+2025-09-03 16:38:26,169 - __main__ - INFO - \U0001f504 Loading real market data for target: @EU#C
+2025-09-03 16:38:26,169 - data.data_utils_simple - INFO - Preparing data for @EU#C, period 2020-07-01 to 2024-08-01
+2025-09-03 16:38:26,381 - data.data_utils_simple - INFO - Loaded data for 10 symbols
+C:\Users\zhang\Desktop\Steve\bond_ls_xgb_grope_full_v6\data\data_utils_simple.py:279: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df[target_col] = target_returns.reindex(df.index)
+2025-09-03 16:38:27,172 - data.data_utils_simple - INFO - Cleaning data: (1057, 523)
+2025-09-03 16:38:27,328 - data.data_utils_simple - INFO - Cleaned data: (1057, 523) (dropped 0 features)
+2025-09-03 16:38:27,331 - data.data_utils_simple - INFO - Final dataset: (1057, 523), target mean=-0.000115, target std=0.004623
+2025-09-03 16:38:27,341 - __main__ - INFO - \u2705 Loaded data: X shape (1057, 522), y shape (1057,)
+2025-09-03 16:38:27,341 - __main__ - INFO - \U0001f4c5 Date range: 2020-07-01 12:00:00 to 2024-07-31 12:00:00
+2025-09-03 16:38:27,341 - __main__ - INFO - Loaded real data: X shape (1057, 522), y shape (1057,)
+2025-09-03 16:38:27,341 - __main__ - INFO - Date range: 2020-07-01 12:00:00 to 2024-07-31 12:00:00
+2025-09-03 16:38:27,341 - __main__ - INFO - Using CLI specified feature count: 100
+2025-09-03 16:38:27,341 - __main__ - INFO - Applying smart block-wise feature selection: 522 -> 100 features
+2025-09-03 16:38:27,341 - model.feature_selection - INFO - Smart block-wise selection: 522 -> blocks of 100 -> local clustering -> global deduplication
+2025-09-03 16:38:27,341 - model.feature_selection - INFO - Processing block 1/6: 100 features
+2025-09-03 16:38:28,432 - model.feature_selection - INFO - Block 100: Selected 15 features (best: 0.1072)
+2025-09-03 16:38:28,432 - model.feature_selection - INFO - Processing block 2/6: 100 features
+2025-09-03 16:38:28,880 - model.feature_selection - INFO - Block 100: Selected 15 features (best: 0.0865)
+2025-09-03 16:38:28,880 - model.feature_selection - INFO - Processing block 3/6: 100 features
+2025-09-03 16:38:29,287 - model.feature_selection - INFO - Block 100: Selected 15 features (best: 0.1039)
+2025-09-03 16:38:29,287 - model.feature_selection - INFO - Processing block 4/6: 100 features
+2025-09-03 16:38:29,728 - model.feature_selection - INFO - Block 100: Selected 15 features (best: 0.1061)
+2025-09-03 16:38:29,728 - model.feature_selection - INFO - Processing block 5/6: 100 features
+2025-09-03 16:38:30,151 - model.feature_selection - INFO - Block 100: Selected 15 features (best: 0.0713)
+2025-09-03 16:38:30,151 - model.feature_selection - INFO - Processing block 6/6: 22 features
+2025-09-03 16:38:30,253 - model.feature_selection - INFO - Block 22: Selected 8 features (best: 0.0779)
+2025-09-03 16:38:30,253 - model.feature_selection - INFO - Global deduplication: 83 candidates -> removing cross-block correlations
+2025-09-03 16:38:50,607 - model.feature_selection - INFO - \u2705 Smart block-wise selection complete: 72 features selected
+2025-09-03 16:38:50,607 - model.feature_selection - INFO -    Local clustering: 0.7, Global clustering: 0.85
+2025-09-03 16:38:50,609 - __main__ - INFO - Feature selection complete: (1057, 72)
+2025-09-03 16:38:51,066 - __main__ - INFO - [Fold 0] Training data: X_tr(252, 72), y_tr(252,)
+2025-09-03 16:38:51,066 - __main__ - INFO - [Fold 0] Target stats: mean=0.000149, std=0.003674
+2025-09-03 16:38:51,068 - __main__ - INFO - [Fold 0] Feature stats: 526.725673 total magnitude
+C:\Users\zhang\anaconda3\Lib\site-packages\xgboost\core.py:729: UserWarning: [16:38:51] WARNING: C:\actions-runner\_work\xgboost\xgboost\src\common\error_msg.cc:58: Falling back to prediction using DMatrix due to mismatched devices. This might lead to higher memory usage and slower performance. XGBoost is running on: cuda:0, while the input data is on: cpu.
+Potential solutions:
+- Use a data structure that matches the device ordinal in the booster.
+- Set the device for booster before call to inplace_predict.
+
+This warning will only be shown once.
+
+  return func(**kwargs)
+2025-09-03 16:39:41,542 - __main__ - INFO - Fold 0 XGBoost predictions: train_preds count=50, test_preds count=50
+2025-09-03 16:39:41,543 - __main__ - INFO - Fold 0 test prediction stats: model_0: mean=0.000188, std=0.003038, range=[-0.008868, 0.006988]; model_1: mean=0.000194, std=0.003441, range=[-0.010887, 0.008280]; model_2: mean=0.000193, std=0.002477, range=[-0.006994, 0.005231]
+2025-09-03 16:39:48,238 - __main__ - INFO - Fold 0: Selected 12 models, weights: ['0.004', '0.006', '0.003', '0.472', '0.081', '0.002', '0.006', '0.364', '0.020', '0.002', '0.032', '0.007'], tau: 0.753
+2025-09-03 16:39:48,238 - __main__ - INFO - Fold 0 individual test signals: count=12, lengths=[176, 176, 176], magnitudes=[90.07154648016034, 90.07323053227938, 89.18952477225457]
+2025-09-03 16:39:48,239 - __main__ - INFO - Fold 0 signal stats: mean=-0.042508, std=0.599973, sum=-7.481324, magnitude=90.243694
+2025-09-03 16:39:48,240 - __main__ - INFO - [Fold 1] Training data: X_tr(252, 72), y_tr(252,)
+2025-09-03 16:39:48,240 - __main__ - INFO - [Fold 1] Target stats: mean=0.000149, std=0.003674
+2025-09-03 16:39:48,242 - __main__ - INFO - [Fold 1] Feature stats: 526.725673 total magnitude
+2025-09-03 16:40:35,888 - __main__ - INFO - Fold 1 XGBoost predictions: train_preds count=50, test_preds count=50
+2025-09-03 16:40:35,889 - __main__ - INFO - Fold 1 test prediction stats: model_0: mean=0.000199, std=0.002359, range=[-0.011337, 0.006142]; model_1: mean=0.000176, std=0.002666, range=[-0.016407, 0.007969]; model_2: mean=0.000150, std=0.001921, range=[-0.008944, 0.004472]
+2025-09-03 16:40:42,145 - __main__ - INFO - Fold 1: Selected 12 models, weights: ['0.047', '0.288', '0.126', '0.001', '0.001', '0.001', '0.008', '0.295', '0.061', '0.003', '0.000', '0.170'], tau: 0.589
+2025-09-03 16:40:42,145 - __main__ - INFO - Fold 1 individual test signals: count=12, lengths=[176, 176, 176], magnitudes=[80.85165349726756, 81.85329140851218, 70.54794911597558]
+2025-09-03 16:40:42,146 - __main__ - INFO - Fold 1 signal stats: mean=0.038454, std=0.476048, sum=6.767865, magnitude=68.643709
+2025-09-03 16:40:42,147 - __main__ - INFO - [Fold 2] Training data: X_tr(352, 72), y_tr(352,)
+2025-09-03 16:40:42,147 - __main__ - INFO - [Fold 2] Target stats: mean=0.000019, std=0.003443
+2025-09-03 16:40:42,148 - __main__ - INFO - [Fold 2] Feature stats: 531.805565 total magnitude
+2025-09-03 16:41:34,254 - __main__ - INFO - Fold 2 XGBoost predictions: train_preds count=50, test_preds count=50
+2025-09-03 16:41:34,255 - __main__ - INFO - Fold 2 test prediction stats: model_0: mean=-0.000177, std=0.001476, range=[-0.004451, 0.003471]; model_1: mean=-0.000368, std=0.001975, range=[-0.004991, 0.004369]; model_2: mean=-0.000166, std=0.001353, range=[-0.003519, 0.003582]
+2025-09-03 16:41:41,159 - __main__ - INFO - Fold 2: Selected 12 models, weights: ['0.028', '0.169', '0.182', '0.030', '0.055', '0.047', '0.179', '0.061', '0.052', '0.022', '0.110', '0.065'], tau: 1.835
+2025-09-03 16:41:41,159 - __main__ - INFO - Fold 2 individual test signals: count=12, lengths=[176, 176, 176], magnitudes=[93.63130057796258, 93.14322047650548, 94.94409087036097]
+2025-09-03 16:41:41,161 - __main__ - INFO - Fold 2 signal stats: mean=0.010357, std=0.466903, sum=1.822889, magnitude=68.194648
+2025-09-03 16:41:41,162 - __main__ - INFO - [Fold 3] Training data: X_tr(528, 72), y_tr(528,)
+2025-09-03 16:41:41,162 - __main__ - INFO - [Fold 3] Target stats: mean=-0.000277, std=0.004259
+2025-09-03 16:41:41,163 - __main__ - INFO - [Fold 3] Feature stats: 527.079453 total magnitude
+2025-09-03 16:42:42,091 - __main__ - INFO - Fold 3 XGBoost predictions: train_preds count=50, test_preds count=50
+2025-09-03 16:42:42,091 - __main__ - INFO - Fold 3 test prediction stats: model_0: mean=-0.000631, std=0.002360, range=[-0.008801, 0.005982]; model_1: mean=-0.001091, std=0.002784, range=[-0.009153, 0.009111]; model_2: mean=-0.000519, std=0.002222, range=[-0.007018, 0.004654]
+2025-09-03 16:42:49,422 - __main__ - INFO - Fold 3: Selected 12 models, weights: ['0.095', '0.027', '0.020', '0.278', '0.021', '0.032', '0.032', '0.035', '0.164', '0.263', '0.016', '0.018'], tau: 1.377
+2025-09-03 16:42:49,423 - __main__ - INFO - Fold 3 individual test signals: count=12, lengths=[176, 176, 176], magnitudes=[93.0368013767935, 92.95545357069666, 98.03713565778796]
+2025-09-03 16:42:49,424 - __main__ - INFO - Fold 3 signal stats: mean=-0.023555, std=0.479703, sum=-4.145661, magnitude=68.792263
+2025-09-03 16:42:49,425 - __main__ - INFO - [Fold 4] Training data: X_tr(704, 72), y_tr(704,)
+2025-09-03 16:42:49,425 - __main__ - INFO - [Fold 4] Target stats: mean=-0.000164, std=0.004850
+2025-09-03 16:42:49,427 - __main__ - INFO - [Fold 4] Feature stats: 526.490496 total magnitude
+2025-09-03 16:43:53,807 - __main__ - INFO - Fold 4 XGBoost predictions: train_preds count=50, test_preds count=50
+2025-09-03 16:43:53,807 - __main__ - INFO - Fold 4 test prediction stats: model_0: mean=-0.000533, std=0.002344, range=[-0.005696, 0.007727]; model_1: mean=-0.000551, std=0.002776, range=[-0.008312, 0.016104]; model_2: mean=-0.000471, std=0.002185, range=[-0.008721, 0.009332]
+2025-09-03 16:44:01,653 - __main__ - INFO - Fold 4: Selected 12 models, weights: ['0.449', '0.449', '0.003', '0.046', '0.003', '0.009', '0.003', '0.003', '0.003', '0.024', '0.004', '0.003'], tau: 0.795
+2025-09-03 16:44:01,653 - __main__ - INFO - Fold 4 individual test signals: count=12, lengths=[176, 176, 176], magnitudes=[90.1724015845212, 86.4891807797655, 86.01892290066687]
+2025-09-03 16:44:01,654 - __main__ - INFO - Fold 4 signal stats: mean=0.082062, std=0.476154, sum=14.442975, magnitude=69.491643
+2025-09-03 16:44:01,656 - __main__ - INFO - [Fold 5] Training data: X_tr(880, 72), y_tr(880,)
+2025-09-03 16:44:01,656 - __main__ - INFO - [Fold 5] Target stats: mean=-0.000122, std=0.004803
+2025-09-03 16:44:01,658 - __main__ - INFO - [Fold 5] Feature stats: 524.804269 total magnitude
+2025-09-03 16:44:59,722 - __main__ - INFO - Fold 5 XGBoost predictions: train_preds count=50, test_preds count=50
+2025-09-03 16:44:59,722 - __main__ - INFO - Fold 5 test prediction stats: model_0: mean=0.000155, std=0.001942, range=[-0.004990, 0.006083]; model_1: mean=-0.000386, std=0.002469, range=[-0.006942, 0.007262]; model_2: mean=-0.000203, std=0.002178, range=[-0.008456, 0.007041]
+2025-09-03 16:45:07,687 - __main__ - INFO - Fold 5: Selected 12 models, weights: ['0.813', '0.003', '0.001', '0.001', '0.001', '0.152', '0.001', '0.001', '0.003', '0.001', '0.001', '0.023'], tau: 0.568
+2025-09-03 16:45:07,687 - __main__ - INFO - Fold 5 individual test signals: count=12, lengths=[177, 177, 177], magnitudes=[93.30715305123488, 92.75983203840443, 93.89798830853942]
+2025-09-03 16:45:07,689 - __main__ - INFO - Fold 5 signal stats: mean=-0.063350, std=0.551917, sum=-11.213025, magnitude=83.900317
+2025-09-03 16:45:07,689 - __main__ - INFO - \U0001f4cb Processing complete: 6 fold summaries created
+2025-09-03 16:45:07,689 - __main__ - INFO - \U0001f4ca OOS signal magnitude: 449.2662736498
+2025-09-03 16:45:07,689 - __main__ - INFO - OOS DAPY(hits): 39.81 | OOS IR: 0.30 | OOS hit-rate: 0.579
+2025-09-03 16:45:07,714 - __main__ - INFO - Calculating comprehensive performance metrics...
+2025-09-03 16:45:07,716 - metrics.performance_report - INFO - Performance summary saved to artifacts/performance_summary.csv
+2025-09-03 16:45:07,724 - diagnostics.diagnostic_output - INFO - \U0001f4be Saved comprehensive diagnostics to artifacts/diagnostics/diagnostic_EUC_20250903_164507.json
+2025-09-03 16:45:07,725 - diagnostics.diagnostic_output - INFO - \U0001f4c4 Saved diagnostic summary to artifacts/diagnostics/summary_EUC_20250903_164507.txt
+2025-09-03 16:45:07,727 - __main__ - INFO - \u2705 Completed @EU#C
+2025-09-03 16:45:07,727 - __main__ - INFO - 
+================================================================================
+2025-09-03 16:45:07,727 - __main__ - INFO - \U0001f4ca FINAL SUMMARY: 1/1 targets completed successfully
+2025-09-03 16:45:07,727 - __main__ - INFO - ================================================================================
+GPU acceleration enabled for XGBoost
+OOS Shuffling p-value (DAPY): 0.0049751244 (obs=39.81)
+
+==================================================
+            OUT-OF-SAMPLE PERFORMANCE             
+==================================================
+
+RETURNS:
+  Total Return:           4.63%
+  Annualized Return:      1.10%
+  Volatility:             3.65%
+  Sharpe Ratio:            0.30
+
+RISK:
+  Max Drawdown:          -8.36%
+
+ACCURACY:
+  Win Rate:              47.30%
+  Hit Rate:              47.30%
+  Avg Win:               0.0016
+  Avg Loss:             -0.0015
+
+TRADES:
+  Total Trades:            1057
+  Winning Trades:           500
+  Losing Trades:            487
+==================================================

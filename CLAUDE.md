@@ -38,8 +38,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Required Python Packages
 ```bash
+# Install via Anaconda pip (recommended on Windows)
+~/anaconda3/Scripts/pip.exe install numpy pandas scikit-learn xgboost scipy pyyaml
+
+# Alternative installation methods
 python -m pip install numpy pandas scikit-learn xgboost scipy pyyaml
+conda install numpy pandas scikit-learn xgboost scipy pyyaml
 ```
+
+**Note**: ArcticDB may need separate installation: `~/anaconda3/Scripts/pip.exe install arcticdb`
 
 ### Core Dependencies
 - **XGBoost**: Main ML algorithm for driver predictions
@@ -52,30 +59,36 @@ No requirements.txt or setup.py files exist - dependencies must be installed man
 
 ## Usage Examples
 
+**Important**: On Windows, use the Anaconda Python executable to ensure all dependencies are available:
+
 ```bash
 # Basic single symbol testing
-python main.py --config configs/individual_target_test.yaml --target_symbol "@ES#C"
+~/anaconda3/python.exe main.py --config configs/individual_target_test.yaml --target_symbol "@ES#C"
 
 # Train-production method (faster, single train-test split)
-python main.py --config configs/individual_target_test.yaml --target_symbol "@ES#C" --train_production
+~/anaconda3/python.exe main.py --config configs/individual_target_test.yaml --target_symbol "@ES#C" --train_production
 
 # Bypass p-value gating (recommended for 4+ year periods)
-python main.py --config configs/individual_target_test.yaml --target_symbol "@ES#C" --bypass_pvalue_gating
+~/anaconda3/python.exe main.py --config configs/individual_target_test.yaml --target_symbol "@ES#C" --bypass_pvalue_gating
 
 # Quick test with fewer models
-python main.py --config configs/individual_target_test.yaml --target_symbol "@ES#C" --n_models 10
+~/anaconda3/python.exe main.py --config configs/individual_target_test.yaml --target_symbol "@ES#C" --n_models 10
 
 # Custom date range testing
-python main.py --config configs/individual_target_test.yaml --target_symbol "@VX#C" \
-  --start_date "2022-01-01" --end_date "2024-01-01"
+~/anaconda3/python.exe main.py --config configs/individual_target_test.yaml --target_symbol "@VX#C" --start_date "2022-01-01" --end_date "2024-01-01"
 
 # Long-term testing with all optimizations
-python main.py --config configs/individual_target_test.yaml --target_symbol "@TY#C" \
-  --start_date "2020-07-01" --end_date "2024-08-01" --bypass_pvalue_gating --train_production
+~/anaconda3/python.exe main.py --config configs/individual_target_test.yaml --target_symbol "@TY#C" --start_date "2020-07-01" --end_date "2024-08-01" --bypass_pvalue_gating --train_production
 
 # Full universe testing (all 25 symbols)
-python main.py --config configs/individual_target_test.yaml
+~/anaconda3/python.exe main.py --config configs/individual_target_test.yaml
 ```
+
+### Alternative Python Execution Methods
+If `~/anaconda3/python.exe` doesn't work, try:
+- `python main.py` (if Python is in PATH)
+- `py main.py` (Windows Python launcher)
+- `conda run python main.py` (if using conda environment)
 
 ## Configuration Files
 
@@ -92,10 +105,16 @@ Key parameters:
 
 ### Key CLI Parameters
 
-- `--bypass_pvalue_gating` - Skip statistical significance tests (useful for long periods)
-- `--train_production` - Use train-test split instead of cross-validation
+- `--bypass_pvalue_gating` - Skip statistical significance tests (recommended for long periods, identical performance with 3x speed)
+- `--train_production` - Use train-test split instead of cross-validation (NOT recommended - consistently underperforms CV by -0.17 to -1.23 Sharpe)
 - `--target_symbol` - Override config to test single symbol
-- `--n_models` - Override number of XGBoost models (default: 50)
+- `--n_models` - Override number of XGBoost models (optimal: 75, default: 50)
+- `--max_features` - Limit number of features after selection (optimal: 50, max useful: ~78)
+- `--start_date` / `--end_date` - Custom date range (format: "YYYY-MM-DD")
+- `--equal_weights` - Use equal weighting instead of GROPE optimization (asset-dependent effectiveness)
+- `--tiered_xgb` - Use tiered XGBoost configuration (breakthrough for underperformers: +0.24 to +0.37 Sharpe)
+- `--deep_xgb` - Use deep XGBoost configuration (advanced architecture option)
+- `--dapy_style` - DAPY calculation method: "hits" (default), "eri_long", "eri_short", "eri_both" (asset-specific optimization)
 
 ## Focus Areas for Inspection
 
@@ -139,41 +158,50 @@ grep "GROPE optimization" logs/
 - **Observation ratio**: 20:1 observations-to-features minimum
 - **P-value bypass**: Recommended for periods > 4 years
 
-## Recent Test Results (2019-07-01 to 2024-07-01) - 5 Year Period
+## Recent Test Results and Optimization Guidelines
 
-### @TY#C (10-Year Treasury) - Optimized Configuration ⭐
-**Outstanding Fixed Income Performance:**
-- **Sharpe Ratio**: 0.86, **Total Return**: 14.37%, **Annualized**: 2.80%
-- **Max Drawdown**: -3.48%, **Win Rate**: 49.03%
-- **Volatility**: 3.27% (excellent for bonds)
-- **Signal Magnitude**: 540.86 ✅
+### Systematic Experimental Validation (4.1 Year Period: 2020-07-01 to 2024-08-01)
 
-### @VX#C (VIX) - Optimized Configuration 🚀
-**Exceptional Volatility Performance:**
-- **Sharpe Ratio**: 1.20, **Total Return**: 105.31%, **Annualized**: 20.53%
-- **Max Drawdown**: -20.94%, **Win Rate**: 49.03%
-- **Volatility**: 17.18% (strong risk-adjusted returns)
-- **Signal Magnitude**: 495.60 ✅
+**Framework Status**: Production-ready with comprehensive optimization guidelines established across 8+ symbols and 12+ experimental configurations.
 
-### @ES#C (S&P 500 E-mini) - Standard Configuration
-**Baseline Equity Performance:**
-- Sharpe Ratio: 0.03-0.13, Total Return: 1.67-6.45%
-- Max Drawdown: -25.64% to -27.69%
-- Win Rate: 46-47%, Signal Magnitude: 469-494 ✅
+#### Validated Optimizations (Step-by-Step Results)
 
-### QGC#C (Gold) - Metals Configuration
-**Mixed Metals Performance:**
-- Sharpe Ratio: -0.12, Total Return: -4.3%
-- Max Drawdown: -27.2%, Win Rate: 46.0%
-- Signal Magnitude: 554.20 ✅ (strong signals despite negative returns)
+1. **P-Value Bypass (Step 1)**: ✅ **Recommended** - Identical performance with 3x speed improvement
+2. **Feature Count (Steps 2a/2b)**: ✅ **50 features confirmed optimal** - expansion to 70+ consistently degrades performance
+3. **Model Count (Step 5b)**: ✅ **75 models optimal** - breakthrough configuration with +0.02 to +0.50 Sharpe improvements
+4. **Cross-Validation Method**: ✅ **6-fold CV required** - train-test split underperforms by -0.17 to -1.23 Sharpe
+5. **Architecture Variants**:
+   - **Tiered XGBoost**: Major breakthrough for underperformers (+0.24 to +0.37 Sharpe on @TY#C/@RTY#C)
+   - **Equal Weights**: Asset-dependent alternative (competitive for bonds/commodities, inferior for equities)
+   - **ERI_both Objective**: Asset-class specific (+0.59 for volatiles, -0.21 for stable assets)
 
-### Performance Summary
-- **Framework Status**: Production ready - validated across multiple asset classes
-- **Top Performers**: @VX#C (Sharpe: 1.20) > @TY#C (Sharpe: 0.86) > Standard configs
-- **Processing Speed**: 522 → 50 features in ~1 second, 8-fold CV in ~10-15 minutes  
-- **XGBoost Optimization**: Specialized hyperparameters eliminate constant prediction issues
-- **Asset-Specific Tuning**: Different GROPE parameters optimized per asset class
-- **Signal Quality**: Strong signal magnitudes (400-550) across all tested instruments
+#### Asset-Specific Performance Baselines
+
+**@TY#C (10-Year Treasury) - Conservative Fixed Income:**
+- Baseline: Sharpe 0.40, Return 5.22%, Max DD -6.36%, Win Rate 47.97%
+- **Optimized (Tiered XGB)**: Sharpe 0.77 (+0.37), Return 10.13%, Max DD -5.89%
+- Signal Magnitude: 441.92, P-value: 0.0049 ✅
+
+**@ES#C (S&P 500 E-mini) - Equity Benchmark:**
+- Baseline: Sharpe 0.41, Return 13.75%, Max DD -16.61%, Win Rate 47.87%  
+- **Optimized (75 models)**: Sharpe 0.51 (+0.10), consistent signal strength
+- Signal Magnitude: 454.45, P-value: 0.0049 ✅
+
+**@EU#C (EUR/USD) - Currency Pair:**
+- Baseline: Sharpe 0.15, Return 2.52%, Max DD -8.28%, Win Rate 45.98%
+- Optimization responsive to equal weights and ERI objectives
+- Signal Magnitude: 456.30, P-value: 0.0049 ✅
+
+**QGC#C (Gold) - Commodities:**
+- Baseline: Sharpe -0.42, Return -11.78%, Max DD -22.15%, Win Rate 47.78%
+- **Strong signal generation despite negative returns** (magnitude: 466.12)
+- Responds well to alternative architectures and objectives
+
+#### Processing Performance Metrics
+- **Feature Selection**: 1316 → 50 features in ~1 second (10x faster than full clustering)
+- **Training Speed**: 6-fold CV in ~10-15 minutes per symbol
+- **Signal Quality**: Consistent 400-550 magnitude across all tested instruments
+- **Statistical Significance**: All configurations achieve p-value < 0.01 with Monte Carlo validation
 
 ## Next Steps
 
@@ -222,19 +250,25 @@ grep "test prediction stats.*model_0:" logs/
 ```
 
 ### Common Development Tasks
-- **Modify XGBoost parameters**: Edit `model/xgb_drivers.py:generate_xgb_specs()`
-- **Adjust feature selection**: Modify parameters in `model/feature_selection.py`
-- **Change optimization settings**: Update GROPE parameters in `opt/grope.py`
-- **Add new metrics**: Extend functions in `metrics/` directory
-- **Debug signals**: Check `ensemble/combiner.py:build_driver_signals()`
+- **Modify XGBoost parameters**: Edit `model/xgb_drivers.py:generate_xgb_specs()` for standard or `generate_deep_xgb_specs()` for advanced
+- **Adjust feature selection**: Modify parameters in `model/feature_selection.py` (optimal: 50 features, correlation threshold 0.7)
+- **Change optimization settings**: Update GROPE parameters in `opt/grope.py` (asset-specific tuning recommended)
+- **Add new metrics**: Extend functions in `metrics/` directory (supports DAPY variants and adjusted Sharpe)
+- **Debug signals**: Check `ensemble/combiner.py:build_driver_signals()` for z-score/tanh transformation pipeline
+- **Analyze alternative metrics**: Run `analyze_task8_metrics.py` for multi-metric validation (Adjusted Sharpe, CB_ratio)
 
 ### Performance Artifacts
 Generated in `artifacts/` directory:
-- `oos_timeseries.csv` - Out-of-sample equity curve
-- `production_timeseries.csv` - Production method results  
-- `performance_summary.csv` - Key metrics summary
-- `fold_summaries.json` - Detailed fold-by-fold results
-- `diagnostics/` - Timestamped diagnostic summaries
+- `oos_timeseries.csv` - Out-of-sample equity curve with signal/PnL/equity columns
+- `production_timeseries.csv` - Production method results (not recommended for primary use)
+- `performance_summary.csv` - Key metrics summary with DAPY, IR, Sharpe, drawdown
+- `fold_summaries.json` - Detailed fold-by-fold results for cross-validation analysis
+- `diagnostics/` - Timestamped diagnostic summaries for troubleshooting
+
+### Analysis Scripts
+- `analyze_task8_metrics.py` - Alternative metrics validation (Adjusted Sharpe, CB_ratio, DAPY comparison)
+- View `EXPERIMENT_RESULTS.md` - Comprehensive systematic validation results across 12 experimental configurations
+- Check `logs/` directory for detailed execution diagnostics and signal quality monitoring
 
 ## Architecture
 
@@ -290,9 +324,9 @@ Cross-validation Splits (6 folds)
 - `model/block_ensemble.py` - Ensemble model coordination
 
 **Data Pipeline:**
-- `data/data_utils.py` - Feature engineering and data preparation
+- `data/data_utils_simple.py` - **CRITICAL**: Enhanced feature engineering with time-series respecting data cleaning
 - `data/loaders.py` - ArcticDB connection and data loading
-- `data/symbol_loader.py` - Trading symbol management and defaults
+- `data/symbol_loader.py` - Trading symbol management and defaults  
 - `data/symbols.yaml` - Symbol configuration
 
 **Signal Processing:**

@@ -1,0 +1,93 @@
+def stratified_xgb_bank(all_cols, n_models=50, seed=13):
+    """
+    Returns:
+      specs: list of dicts (XGB params)
+      col_slices: list of column name lists, one per model
+    """
+    import numpy as np
+    rng = np.random.default_rng(seed)
+    nA = int(round(0.30 * n_models))  # Tier A count
+    nC = int(round(0.20 * n_models))  # Tier C count
+    nB = n_models - nA - nC           # Tier B count
+
+    def logu(lo, hi):
+        return float(10 ** rng.uniform(np.log10(lo), np.log10(hi)))
+
+    def tier_A_spec():
+        spec = {
+            "max_depth": int(rng.integers(3, 5)),                 # 3-4
+            "learning_rate": float(rng.uniform(0.03, 0.08)),
+            "n_estimators": int(rng.integers(250, 501)),
+            "subsample": float(rng.uniform(0.7, 0.95)),
+            "colsample_bytree": float(rng.uniform(0.5, 0.8)),
+            "colsample_bylevel": float(rng.uniform(0.7, 1.0)),
+            "colsample_bynode": float(rng.uniform(0.7, 1.0)),
+            "reg_alpha": logu(1e-5, 1e-2),
+            "reg_lambda": logu(1e-4, 0.3),
+            "gamma": float(rng.uniform(0.5, 2.0)),
+            "min_child_weight": float(rng.uniform(2.0, 6.0)),
+            "tree_method": "hist",
+            "random_state": int(rng.integers(0, 2**31-1)),
+        }
+        K = int(rng.integers(20, 36))
+        return spec, K
+
+    def tier_B_spec():
+        spec = {
+            "max_depth": int(rng.integers(3, 6)),                 # 3-5
+            "learning_rate": float(rng.uniform(0.05, 0.12)),
+            "n_estimators": int(rng.integers(180, 401)),
+            "subsample": float(rng.uniform(0.6, 0.95)),
+            "colsample_bytree": float(rng.uniform(0.5, 0.8)),
+            "colsample_bylevel": float(rng.uniform(0.7, 1.0)),
+            "colsample_bynode": float(rng.uniform(0.7, 1.0)),
+            "reg_alpha": logu(1e-5, 1e-1),
+            "reg_lambda": logu(1e-4, 1.0),
+            "gamma": float(rng.uniform(0.0, 3.0)),
+            "min_child_weight": float(rng.uniform(1.0, 6.0)),
+            "tree_method": "hist",
+            "random_state": int(rng.integers(0, 2**31-1)),
+        }
+        K = int(rng.integers(40, 71))
+        return spec, K
+
+    def tier_C_spec():
+        spec = {
+            "max_depth": int(rng.integers(4, 7)),                 # 4-6
+            "learning_rate": float(rng.uniform(0.08, 0.18)),
+            "n_estimators": int(rng.integers(120, 301)),
+            "subsample": float(rng.uniform(0.6, 0.9)),
+            "colsample_bytree": float(rng.uniform(0.3, 0.6)),     # lower when K is big
+            "colsample_bylevel": float(rng.uniform(0.6, 1.0)),
+            "colsample_bynode": float(rng.uniform(0.6, 1.0)),
+            "reg_alpha": logu(1e-5, 1e-1),
+            "reg_lambda": logu(1e-4, 1.0),
+            "gamma": float(rng.uniform(0.0, 3.0)),
+            "min_child_weight": float(rng.uniform(1.0, 4.0)),
+            "tree_method": "hist",
+            "random_state": int(rng.integers(0, 2**31-1)),
+        }
+        K = int(rng.integers(60, 91))
+        return spec, K
+
+    tiers = (["A"] * nA) + (["B"] * nB) + (["C"] * nC)
+    rng.shuffle(tiers)
+
+    specs, col_slices = [], []
+    for _t in tiers:
+        spec, K = (tier_A_spec() if _t == "A" else tier_B_spec() if _t == "B" else tier_C_spec())
+        cols = list(rng.choice(all_cols, size=K, replace=False))
+        specs.append(spec)
+        col_slices.append(cols)
+
+    return specs, col_slices
+
+
+####
+Practical tips
+
+Reseeding per fold (e.g., seed + fold_id) keeps the bank diverse across WFO folds.
+
+If you find drivers are still too correlated, reduce Tier C share or shrink K in Tier C.
+
+If you need even more diversity: add a tiny fraction (5–10%) with grow_policy="lossguide" & max_leaves 8–48 (still keeping depth ≤6 on most).
