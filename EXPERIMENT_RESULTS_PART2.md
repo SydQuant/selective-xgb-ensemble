@@ -38,9 +38,7 @@
 
 ## 📋 Test 2: @ES#C p_value Objective Comparison
 
-not enough models passing throught he pvalue checks. 
-
-
+not enough models passing throught he pvalue checks.
 
 ## 📊 Critical Findings: Extended Analysis Results
 
@@ -156,18 +154,6 @@ not enough models passing throught he pvalue checks.
 
 **Expected Impact**: **+22-25% improvement** in trading strategy performance by switching from suboptimal objectives to proven hybrid approach (vs previous adjusted_sharpe recommendation).
 
-### Why P-Value Gating "Doesn't Work" for Weak Objectives
-
-**User's Observation**: "p value not working for these three?" (cb_ratio, hits, eri_both)
-
-**Root Cause Analysis**: P-value gating works correctly by filtering statistically insignificant models, but **the underlying objective functions are fundamentally mismatched** to @ES#C's return characteristics:
-
-- **cb_ratio**: Optimizes for drawdown control vs return generation (too conservative)
-- **hits**: Binary accuracy ignores return magnitude (misses large moves)
-- **eri_both**: Balances long/short when @ES#C has directional bias (fights the trend)
-
-Even statistically significant models selected by these objectives will have poor economic performance because the objectives themselves don't align with the asset's predictive patterns.
-
-**Conclusion**: The breakthrough demonstrates that **objective function selection is critical** - proper driver selection can improve performance by 39.41% over suboptimal choices.
+### **Conclusion**: The breakthrough demonstrates that **objective function selection is critical** - proper driver selection can improve performance by 39.41% over suboptimal choices.
 
 *Last Updated: 2025-09-04 (Task 3 Breakthrough Analysis Completed)*

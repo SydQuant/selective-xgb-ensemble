@@ -34,7 +34,6 @@ Thumbs.db
 
 # Artifacts and outputs
 artifacts/
-*.log
 *.csv
 
 # Arctic Database - ADDED: Ignore database files

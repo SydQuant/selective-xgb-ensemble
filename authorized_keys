@@ -1,0 +1,36 @@
+
+  Next Steps
+
+  Now you need to add this key to your Windows machine. Since you don't know the password, you'll need
+  physical access to the Windows machine:
+
+  1. Go to the Windows machine physically
+  2. Log in locally (using Windows Hello, PIN, or local account)
+  3. Open PowerShell as Administrator
+  4. Run this command to set up your SSH key:
+
+  # Create .ssh directory
+  mkdir $env:USERPROFILE\.ssh -Force
+
+  # Add your public key (replace with the key above)
+  @"
+  ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCm5MqD3WO/M2/Nrv+ZqJaak4bO3rp4EEkCJfwAXcDKU+Hb0lBaXmii2OCNnwX4BouYcf
+  DZTSzcOW5wc/cHIsEs5rGw8FHyPSF4a3tFRGQ90OZaDlfukVayRneCfYC4O+UFtlWYHswZbDWsabxiGuID9BWoHy+KAEzhW1iLhQbiH7fz
+  mqAC5vvLDFdhdqBU4ZaJOiNi/VFXPXjqx295olB+gBAiPC54TKPHKpMii6Ka/bqUxrfTof1QwrMCTVoOS9V35pjEYy+t9FfXWGRNz+vzij
+  i37xmcupuqoUwhiQzeQAbRX4pcf+tyOj5KjwOsE8paFmbmRWX7b0CeV9KFJA9FnKYjkR18mnzuAriivvlWPDHr1j7FZ5PG7FpP5pSeAh2A
+  YHQUoTA3SWvGGAlAQNgBASM+GxDrYydZMM2RbRYFip0UxYDxGsbMlFVbDYeCXodCFht8ndd107r5hejTvkUnRdLpeBmfeZLn/NO/i8XvUG
+  TVVVxX0DtXt9+IcMQqpp5E65+JrjwkCV+cBrwVViL784jABB8vqoTpn7quapGFsJMyRGSUDPlTwDjm99DX1GGuIv513MW2D6pmbHpqiFZJ
+  ZDCdlF2ldolA1a000KyxuaPCG9G4GGhWJqsXs4LL3iIhM5GAH8UjpEIG6PURwryXp2Y2NT8FkN3ccHRCMKAoqw== 
+  stevendong27@outlook.com
+  "@ | Out-File -FilePath "$env:USERPROFILE\.ssh\authorized_keys" -Encoding ASCII
+
+  # Set permissions
+  icacls "$env:USERPROFILE\.ssh" /inheritance:r
+  icacls "$env:USERPROFILE\.ssh" /grant:r "$env:USERNAME:(F)"
+  icacls "$env:USERPROFILE\.ssh\authorized_keys" /inheritance:r
+  icacls "$env:USERPROFILE\.ssh\authorized_keys" /grant:r "$env:USERNAME:(R)"
+
+  Then test from your Mac:
+  ssh zhang@192.168.0.3
+
+  It should connect without asking for a password!
