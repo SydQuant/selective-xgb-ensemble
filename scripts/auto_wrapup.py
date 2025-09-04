@@ -22,8 +22,6 @@ Options:
 """
 
 import argparse
-import json
-import os
 import re
 import subprocess
 import sys
@@ -354,12 +352,14 @@ class AutoWrapupManager:
         """Update known issues section if fixes are detected."""
         # This is a placeholder - in practice, you'd analyze commit messages 
         # and file changes to detect specific bug fixes
+        _ = status, date  # Mark as intentionally unused
         return content
     
     def _update_completed_testing_section(self, content: str, change_types: Set[str], 
                                         analysis: Dict[str, any]) -> str:
         """Update completed testing section with new experimental results."""
         # This would be expanded based on specific experimental frameworks
+        _ = change_types, analysis  # Mark as intentionally unused
         return content
     
     def generate_commit_message(self, status: Dict[str, List[str]], 
