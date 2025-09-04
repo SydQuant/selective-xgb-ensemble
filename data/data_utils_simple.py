@@ -150,7 +150,6 @@ def prepare_target_returns(raw_data: Dict[str, pd.DataFrame], target_symbol: str
 
 def clean_data_simple(df: pd.DataFrame) -> pd.DataFrame:
     """Intelligent data cleaning that preserves high-quality features."""
-    logger.info(f"Cleaning data: {df.shape}")
     
     target_cols = [c for c in df.columns if c.endswith('_target_return')]
     feature_cols = [c for c in df.columns if c not in target_cols]
@@ -178,11 +177,9 @@ def clean_data_simple(df: pd.DataFrame) -> pd.DataFrame:
         finite_vals = series.dropna()
         if len(finite_vals) > 0 and finite_vals.std() < 1e-12:
             features_to_drop.append(col)
-            logger.info(f"Dropping constant feature: {col} (value={finite_vals.iloc[0]:.2e})")
             continue
     
     if features_to_drop:
-        logger.info(f"Dropping {len(features_to_drop)} low-quality features")
         df_clean = df_clean.drop(columns=features_to_drop)
     
     # 3. Time-series respecting missing value handling
@@ -202,15 +199,12 @@ def clean_data_simple(df: pd.DataFrame) -> pd.DataFrame:
             
             if nan_pct > 0.1:  # >10% NaN - drop the feature
                 features_to_drop_nan.append(col)
-                logger.info(f"Dropping feature with excessive NaNs: {col} ({nan_pct:.1%})")
             else:
                 # Small number of NaNs (likely at start) - fill with 0 (no forward-looking bias)
                 df_clean[col] = series.fillna(0.0)
-                logger.info(f"Filled {nan_count} NaNs with 0 in {col}")
     
     if features_to_drop_nan:
         df_clean = df_clean.drop(columns=features_to_drop_nan)
-        logger.info(f"Dropped {len(features_to_drop_nan)} features with excessive NaNs")
     
     # 4. Remove rows where target is NaN (essential for ML)
     if target_cols:
@@ -219,14 +213,11 @@ def clean_data_simple(df: pd.DataFrame) -> pd.DataFrame:
         df_clean = df_clean.dropna(subset=[target_col])
         after_rows = len(df_clean)
         if before_rows != after_rows:
-            logger.info(f"Dropped {before_rows - after_rows} rows with missing target")
     
     # 5. Final quality check - no NaNs should remain in features
     feature_nan_count = df_clean[df_clean.columns.difference(target_cols)].isna().sum().sum()
     if feature_nan_count > 0:
-        logger.warning(f"Still have {feature_nan_count} NaN values in features after cleaning")
     
-    logger.info(f"Cleaned data: {df_clean.shape} (dropped {len(features_to_drop)} features)")
     return df_clean
 
 def prepare_real_data_simple(target_symbol: str, symbols: List[str] = None, start_date: str = None, 
@@ -237,7 +228,6 @@ def prepare_real_data_simple(target_symbol: str, symbols: List[str] = None, star
     Returns DataFrame with target returns + features, ready for XGB training.
     No scaling applied - uses raw pct_change features as per original.
     """
-    logger.info(f"Preparing data for {target_symbol}, period {start_date} to {end_date}")
     
     if symbols is None:
         symbols = get_default_symbols()
@@ -260,9 +250,7 @@ def prepare_real_data_simple(target_symbol: str, symbols: List[str] = None, star
                 if len(df) > 100:  # Only include symbols with sufficient data
                     raw_data[symbol] = df
             except Exception as e:
-                logger.warning(f"Could not load {symbol}: {e}")
         
-        logger.info(f"Loaded data for {len(raw_data)} symbols")
         
         if not raw_data or target_symbol not in raw_data:
             raise ValueError(f"Could not load data for target symbol {target_symbol}")
@@ -282,7 +270,6 @@ def prepare_real_data_simple(target_symbol: str, symbols: List[str] = None, star
         df = clean_data_simple(df)
         df = df.dropna(subset=[target_col])
         
-        logger.info(f"Final dataset: {df.shape}, target mean={df[target_col].mean():.6f}, target std={df[target_col].std():.6f}")
         
         return df
         

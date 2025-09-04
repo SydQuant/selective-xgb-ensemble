@@ -30,10 +30,7 @@ def block_wise_feature_selection(X: pd.DataFrame, y: pd.Series,
     feature_names = X.columns.tolist()
     
     if len(feature_names) <= max_total_features:
-        logger.info(f"Feature count ({len(feature_names)}) <= max ({max_total_features}), using all features")
         return feature_names
-    
-    logger.info(f"Smart block-wise selection: {len(feature_names)} -> blocks of {block_size} -> local clustering -> global deduplication")
     
     # Step 1: Create blocks
     blocks = []
@@ -45,7 +42,6 @@ def block_wise_feature_selection(X: pd.DataFrame, y: pd.Series,
     all_candidates = []
     
     for i, block in enumerate(blocks):
-        logger.info(f"Processing block {i+1}/{len(blocks)}: {len(block)} features")
         
         # Get block data
         X_block = X[block]
@@ -55,7 +51,6 @@ def block_wise_feature_selection(X: pd.DataFrame, y: pd.Series,
         valid_features = X_block.columns[non_zero_var].tolist()
         
         if len(valid_features) == 0:
-            logger.warning(f"Block {i+1}: No valid features (zero variance)")
             continue
         
         X_block = X_block[valid_features]
@@ -116,10 +111,8 @@ def block_wise_feature_selection(X: pd.DataFrame, y: pd.Series,
                     break
         
         all_candidates.extend(block_selected)
-        logger.info(f"Block {i+1}: Selected {len(block_selected)} features (best: {target_correlations[ranked_features[0]]:.4f})")
     
     # Step 3: Global deduplication - remove correlated features across blocks
-    logger.info(f"Global deduplication: {len(all_candidates)} candidates -> removing cross-block correlations")
     
     # Recalculate target correlations for all candidates
     final_correlations = {}
@@ -161,7 +154,6 @@ def block_wise_feature_selection(X: pd.DataFrame, y: pd.Series,
         if keep_feature:
             final_selected.append(feat)
     
-    logger.info(f"✅ Smart block-wise selection complete: {len(final_selected)} features selected")
     logger.info(f"   Local clustering: {corr_threshold}, Global clustering: {global_corr_threshold}")
     return final_selected
 

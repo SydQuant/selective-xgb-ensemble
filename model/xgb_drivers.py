@@ -6,6 +6,15 @@ try:
 except ImportError:
     XGBRegressor = None
 
+def detect_gpu() -> str:
+    """Detect if GPU is available for XGBoost."""
+    try:
+        import xgboost as xgb
+        xgb.XGBRegressor(tree_method="hist", device="cuda", n_estimators=1).fit([[1]], [1])
+        return "cuda"
+    except:
+        return "cpu"
+
 def generate_xgb_specs(n_models: int = 50, seed: int = 13) -> List[Dict[str, Any]]:
     """
     Generate diverse XGBoost specs with stability constraints for financial data.
@@ -14,17 +23,8 @@ def generate_xgb_specs(n_models: int = 50, seed: int = 13) -> List[Dict[str, Any
     rng = np.random.default_rng(seed)
     specs = []
     
-    # Determine optimal tree method (GPU if available, CPU fallback)
-    tree_method = "hist"  # Default CPU method
-    device = "cpu"  # Default device
-    try:
-        import xgboost as xgb
-        # Test if GPU is available with modern syntax
-        xgb.XGBRegressor(tree_method="hist", device="cuda", n_estimators=1).fit([[1]], [1])
-        device = "cuda"
-        print("GPU acceleration enabled for XGBoost")
-    except:
-        print("Using CPU-based XGBoost (GPU not available or not configured)")
+    tree_method = "hist"
+    device = detect_gpu()
     
     for i in range(n_models):
         # Broader but stable parameter ranges
@@ -135,7 +135,7 @@ def stratified_xgb_bank(all_cols, n_models=50, seed=13):
 
     # Determine optimal tree method (GPU if available, CPU fallback)
     tree_method = "hist"
-    device = "cpu"
+    device = detect_gpu()
     try:
         import xgboost as xgb
         xgb.XGBRegressor(tree_method="hist", device="cuda", n_estimators=1).fit([[1]], [1])
