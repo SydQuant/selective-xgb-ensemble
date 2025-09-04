@@ -96,7 +96,7 @@ def get_objective_functions(args):
     if hasattr(args, 'grope_weight_objective') and args.grope_weight_objective:
         weight_optimization_obj = create_composite_objective(args.grope_weight_objective, OBJECTIVE_REGISTRY)
     elif hasattr(args, 'grope_objective') and args.grope_objective:
-        weight_optimization_obj = OBJECTIVE_REGISTRY[args.grope_objective]
+        weight_optimization_obj = OBJECTIVE_REGISTRY.get(args.grope_objective)
     else:
         # Default to same as driver selection
         weight_optimization_obj = driver_selection_obj

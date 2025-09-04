@@ -21,6 +21,7 @@ else:
 ```
 
 **What happens here:**
+
 - **Input**: Feature matrices `X_tr` (train), `X_te` (test), target `y_tr`, XGBoost specs (typically 50 models)
 - **Process**: Runs 50+ XGBoost models in parallel, each with different hyperparameters
 - **Output**: `train_preds` and `test_preds` - lists of raw predictions from each model
@@ -42,19 +43,20 @@ def build_driver_signals(train_preds, test_preds, y_tr, z_win=100, beta=1.0):
     for i, (p_tr, p_te) in enumerate(zip(train_preds, test_preds)):
         if p_tr is None or p_te is None:
             continue
-        
+      
         # Step 1: Rolling z-score normalization (window=100)
         z_tr = zscore(p_tr, win=z_win)
         z_te = zscore(p_te, win=z_win)
-        
+      
         # Step 2: Tanh squashing to [-1,1] range
         s_tr.append(tanh_squash(z_tr, beta=beta))
         s_te.append(tanh_squash(z_te, beta=beta))
-    
+  
     return s_tr, s_te
 ```
 
 **What each signal becomes:**
+
 - **Raw prediction**: e.g., 0.00234 (small return prediction)
 - **After z-score**: e.g., 1.2 (standardized, shows how extreme vs recent predictions)
 - **After tanh**: e.g., 0.83 (bounded trading signal in [-1,1])
@@ -77,6 +79,7 @@ def gate(sig, y_local):
 ```
 
 **Purpose**: Statistical significance test
+
 - **Input**: A trading signal and target returns
 - **Process**: Shuffles target returns 200 times, calculates DAPY each time
 - **Logic**: If signal performs better than 95% of random shuffles (p-value ≤ 0.05), pass the gate
@@ -100,24 +103,24 @@ chosen_idx = pick_top_n_greedy_diverse(
 def pick_top_n_greedy_diverse(train_signals, y_tr, n, pval_gate, objective_fn=None, ...):
     S = []  # Selected signal indices
     remaining = list(range(len(train_signals)))  # Available signals [0,1,2,...,49]
-    
+  
     # Step 1: Pre-compute correlation matrix between all signals
     corr = np.zeros((M, M))
     for i in range(M):
         for j in range(i, M):
             corr[i, j] = corr[j, i] = np.corrcoef(train_signals[i], train_signals[j])
-    
+  
     # Step 2: Greedy selection loop
     while len(S) < n and remaining:  # Select up to n=12 signals
         best_score, best_idx = -1e18, None
-        
+      
         for i in remaining:  # Consider each unused signal
             signal = train_signals[i]
-            
+          
             # Gate: Skip if not statistically significant
             if not pval_gate(signal, y_tr):
                 continue
-            
+          
             # Calculate base objective score
             if objective_fn is not None:
                 # NEW: Use configurable objective (e.g., predictive_icir_logscore)
@@ -125,28 +128,29 @@ def pick_top_n_greedy_diverse(train_signals, y_tr, n, pval_gate, objective_fn=No
             else:
                 # LEGACY: Use DAPY + Information Ratio
                 base = w_dapy * dapy_fn(signal, y_tr) + w_ir * information_ratio(signal, y_tr)
-            
+          
             # Diversity penalty: Penalize correlation with already-selected signals
             penalty = 0.0 if len(S) == 0 else max(abs(corr[i, j]) for j in S)
-            
+          
             # Final score = base objective - diversity penalty
             score = base - diversity_penalty * penalty
-            
+          
             if score > best_score:
                 best_score, best_idx = score, i
-        
+      
         if best_idx is None: 
             break  # No more valid signals
-        
+      
         S.append(best_idx)
         remaining.remove(best_idx)
-    
+  
     return S  # e.g., [3, 17, 24, 31, 45] - indices of selected signals
 ```
 
 **Example walkthrough:**
+
 - **Round 1**: All 50 signals available. Signal #17 has highest objective score → Select #17
-- **Round 2**: Signal #3 has good score and low correlation with #17 → Select #3  
+- **Round 2**: Signal #3 has good score and low correlation with #17 → Select #3
 - **Round 3**: Signal #24 would have high score but corr(24,17)=0.8, so gets penalty → Skip
 - **Continue**: Until 12 diverse, high-performing signals selected
 
@@ -168,7 +172,7 @@ def icir(signal: pd.Series, returns: pd.Series, eras: pd.Series) -> float:
         # Calculate Spearman correlation for this era (e.g., monthly)
         era_ic = spearman_corr(signal[era], returns[era])
         ics.append(era_ic)
-    
+  
     ic_mean = mean(ics)
     ic_std = std(ics)
     return 0.0 if ic_std == 0 else ic_mean / ic_std
@@ -188,11 +192,11 @@ def calibrated_logscore(train_signal, train_returns, val_signal, val_returns) ->
     train_directions = (train_returns > 0).astype(int)  # 0=down, 1=up
     calibrator = LogisticRegression()
     calibrator.fit(train_signal.values.reshape(-1, 1), train_directions)
-    
+  
     # Step 2: Predict probabilities on validation data
     val_directions = (val_returns > 0).astype(int)
     predicted_probs = calibrator.predict_proba(val_signal.values.reshape(-1, 1))[:, 1]
-    
+  
     # Step 3: Calculate LogScore (log-likelihood)
     logscore = mean(val_directions * log(predicted_probs) + 
                    (1 - val_directions) * log(1 - predicted_probs))
@@ -210,15 +214,16 @@ def predictive_icir_logscore(signal: pd.Series, returns: pd.Series, **kwargs) ->
     # Default equal weighting
     icir_weight = kwargs.get('icir_weight', 1.0)
     logscore_weight = kwargs.get('logscore_weight', 1.0)
-    
+  
     # Calculate both components
     icir_score = icir(signal, returns, monthly_eras)
     logscore = calibrated_logscore(train_split, train_returns, val_split, val_returns)
-    
+  
     return icir_weight * icir_score + logscore_weight * logscore
 ```
 
 **Key Advantages**:
+
 - **Robustness**: ICIR handles non-stationarity, LogScore handles calibration
 - **Forward-looking**: Uses proper train/validation splits to prevent overfitting
 - **Scale-independent**: Both components are standardized metrics
@@ -226,7 +231,92 @@ def predictive_icir_logscore(signal: pd.Series, returns: pd.Series, **kwargs) ->
 
 This advanced objective often outperforms simpler metrics like DAPY or basic Sharpe ratios because it explicitly tests for both predictive consistency and probability calibration quality.
 
-### Step 2C: Extract Selected Signals
+### **🔬 PREDICTIVE_ICIR_LOGSCORE OVERVIEW**
+
+Advanced objective combining era-based consistency (ICIR) with probability calibration (LogScore).
+
+**Formula**: `Final_Score = ICIR + LogScore`
+
+#### **Component 1: ICIR (Information Coefficient Information Ratio)**
+```python
+# Monthly correlation consistency
+monthly_ics = []
+for era in ['2020-01', '2020-02', ...]:
+    ic = spearman_corr(signal_lagged, returns)  # Temporal lag applied
+    monthly_ics.append(ic)
+icir = mean(monthly_ics) / std(monthly_ics)  # e.g., 2.0 (consistent prediction)
+```
+
+#### **Component 2: Calibrated LogScore** 
+```python
+# Train calibrator: signal → P(return > 0)
+calibrator = LogisticRegression()
+calibrator.fit(train_signal_lagged, (train_returns > 0))
+
+# Score probability quality on validation
+val_probs = calibrator.predict_proba(val_signal_lagged)[:, 1]
+logscore = mean(actual_directions * log(val_probs))  # e.g., -0.21 (good calibration)
+```
+
+#### **Combined Example**
+```python
+# @ES#C evaluation result:
+final_score = 2.0 + (-0.21) = 1.79  # Strong predictive signal
+```
+
+**Key Advantages**: Tests both consistency across time periods and probability calibration quality. Superior to simple accuracy metrics.
+
+#### **Practical Example: Understanding the Scores**
+
+Consider a trading signal evaluated on S&P 500 futures (@ES#C) over 2020-2024:
+
+```python
+# Example signal evaluation
+signal = [0.2, 0.5, -0.3, 0.1, 0.8, -0.2, ...]  # XGBoost predictions
+returns = [0.01, -0.005, 0.02, -0.01, 0.015, ...]  # Next-day returns
+
+# Component 1: ICIR calculation
+# Split into monthly eras: Jan 2020, Feb 2020, Mar 2020, ...
+monthly_ics = []
+for month in [Jan_2020, Feb_2020, Mar_2020, ...]:
+    ic = spearman_corr(signal[month], returns[month])
+    monthly_ics.append(ic)
+    # Jan: ic=0.15, Feb: ic=0.08, Mar: ic=0.22, ...
+
+icir = mean(monthly_ics) / std(monthly_ics)
+# icir = 0.12 / 0.06 = 2.0 (high consistency!)
+
+# Component 2: Calibrated LogScore
+# Train logistic regression: signal → P(return > 0)
+calibrator = LogisticRegression()
+train_directions = (train_returns > 0)  # [1, 0, 1, 0, 1, ...]
+calibrator.fit(train_signal, train_directions)
+
+# Predict on validation data
+val_probs = calibrator.predict_proba(val_signal)[:, 1]  # [0.6, 0.3, 0.7, 0.4, ...]
+val_actual = (val_returns > 0)  # [1, 0, 1, 1, ...]
+
+# LogScore = mean(actual * log(prob) + (1-actual) * log(1-prob))
+# Perfect prediction: LogScore = 0, Random: LogScore = -0.693
+logscore = -0.2  # Good calibration
+
+# Combined Score
+final_score = 1.0 * icir + 1.0 * logscore = 2.0 + (-0.2) = 1.8
+```
+
+**Interpretation**:
+
+- **ICIR = 2.0**: Signal consistently predicts return direction across different months
+- **LogScore = -0.2**: Good probability calibration (closer to 0 is better)
+- **Combined = 1.8**: Strong predictive signal with good calibration
+
+**Typical Score Ranges**:
+
+- **ICIR**: 0.5 to 3.0 (higher = more consistent)
+- **LogScore**: -1.0 to -0.1 (closer to 0 = better calibrated)
+- **Combined**: -0.5 to +2.5 (higher = better overall predictive quality)
+
+#### Step 2C: Extract Selected Signals
 
 **Location**: `main.py:208-209`
 
@@ -240,22 +330,24 @@ test_sel = [s_te[i] for i in chosen_idx]     # Selected test signals
 The driver selection process works as follows:
 
 1. **Selection Decision**: Uses ONLY training signals (`s_tr`) to decide which drivers to pick
+
    - Evaluates performance on training data
-   - Applies p-value gating on training data  
+   - Applies p-value gating on training data
    - Calculates diversity penalties on training data
    - **Result**: Indices of best performing diverse signals (e.g., [3, 17, 24, ...])
-
 2. **Application**: Applies the same selection to BOTH train and test signals
+
    - `train_sel = [s_tr[i] for i in chosen_idx]` → Training signals for GROPE optimization
    - `test_sel = [s_te[i] for i in chosen_idx]` → Test signals for out-of-sample prediction
    - **Same models**: If signal #17 was selected, we use model #17's predictions on both train and test
-
 3. **Why this works**:
+
    - Selection based on training performance only (no peeking at test)
    - Test signals are unseen during selection decision
    - Creates proper out-of-sample validation
 
 **Example**:
+
 ```python
 # 50 models generate 50 signals each for train/test
 s_tr = [signal_0_train, signal_1_train, ..., signal_49_train]
@@ -290,19 +382,20 @@ This creates a **continuous optimization problem** with the following structure:
 #### **Parameters to Optimize (13 total)**:
 
 1. **Raw Weights**: `w0, w1, w2, ..., w11` (12 parameters)
-   - **Range**: Each weight ∈ [-2.0, +2.0] 
+
+   - **Range**: Each weight ∈ [-2.0, +2.0]
    - **Purpose**: How much to emphasize each selected signal
-   - **Interpretation**: 
+   - **Interpretation**:
      - `w3 = +1.5` → Signal #3 gets high positive weight
      - `w7 = -0.8` → Signal #7 gets moderate negative weight
      - `w11 = 0.1` → Signal #11 gets minimal weight
+2. **Temperature**: `tau` (1 parameter)
 
-2. **Temperature**: `tau` (1 parameter)  
    - **Range**: τ ∈ [0.2, 3.0]
    - **Purpose**: Controls weight concentration via softmax
    - **Effect**:
      - `tau = 0.2` → Concentrated (winner-take-all): [0.85, 0.12, 0.02, 0.01, ...]
-     - `tau = 1.0` → Balanced: [0.35, 0.28, 0.15, 0.12, ...]  
+     - `tau = 1.0` → Balanced: [0.35, 0.28, 0.15, 0.12, ...]
      - `tau = 3.0` → Uniform: [0.09, 0.08, 0.08, 0.09, ...]
 
 #### **Objective Function Structure**:
@@ -314,6 +407,7 @@ J(w₀, w₁, ..., w₁₁, τ) = Performance_Score - Turnover_Penalty
 ```
 
 Where:
+
 - **Performance_Score**: Configurable objective (predictive_icir_logscore, DAPY+IR, etc.)
 - **Turnover_Penalty**: λ × turnover_rate (prevents excessive trading)
 
@@ -349,6 +443,7 @@ J = performance - 0.05 × turnover  # λ=0.05 turnover penalty
 5. **Bounded search**: Prevents extreme weight values that could destabilize the system
 
 **Concrete Example**:
+
 ```python
 # 12 selected signals, GROPE optimizes:
 w = [-0.23, 1.76, 0.34, -1.42, 0.89, 0.12, -0.67, 1.23, -0.08, 0.45, -0.91, 0.33]
@@ -372,13 +467,13 @@ def f(theta: Dict[str, float]) -> float:
     # Step 1: Extract weights and temperature
     w = np.array([theta[f"w{i}"] for i in range(k)], dtype=float)  # [w0, w1, ..., w11]
     tau = float(theta["tau"])  # temperature
-    
+  
     # Step 2: Apply softmax to get normalized weights
     ww = softmax(w, temperature=tau)  # Converts raw weights to probabilities
-    
+  
     # Step 3: Combine signals using normalized weights
     s = combine_signals(train_signals, ww)  # Weighted combination
-    
+  
     # Step 4: Calculate objective score
     if objective_fn is not None:
         # NEW: Use configurable objective
@@ -386,15 +481,16 @@ def f(theta: Dict[str, float]) -> float:
     else:
         # LEGACY: DAPY + Information Ratio
         val = w_dapy * dapy_fn(s, y_tr) + w_ir * information_ratio(s, y_tr)
-    
+  
     # Step 5: Apply turnover penalty
     turnover = sig_turnover(s)  # How much signal changes day-to-day
     val -= turnover_penalty * turnover
-    
+  
     return val  # Higher = better
 ```
 
 **Softmax transformation example:**
+
 ```python
 # Raw weights: w = [-0.5, 2.1, 0.3, -1.2, ...] (12 values)
 # Temperature: tau = 1.5
@@ -414,6 +510,7 @@ theta_star, J_star, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, 
 **What GROPE Does Step-by-Step:**
 
 1. **Initial Exploration Phase (Latin Hypercube Sampling)**:
+
    ```python
    # Generate 20-30 diverse starting points across 13D space (12 weights + 1 temperature)
    initial_samples = latin_hypercube_sample(
@@ -421,35 +518,35 @@ theta_star, J_star, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, 
        n_samples=25,
        bounds=[(-2,2)]*12 + [(0.2,3)]  # Weight bounds + temp bounds
    )
-   
+
    # Example initial samples:
    sample_1 = [0.45, -1.2, 0.78, ..., 1.34, 0.85]  # 12 weights + temp=0.85
    sample_2 = [-0.63, 1.45, -0.21, ..., 0.67, 2.1]  # 12 weights + temp=2.1
    ```
-   
-   Each sample is evaluated: `objective_score = composite_objective(weights, temp, signals, returns)`
 
+   Each sample is evaluated: `objective_score = composite_objective(weights, temp, signals, returns)`
 2. **RBF Surrogate Model Construction**:
+
    ```python
    # Build a "surrogate model" - mathematical approximation of the objective function
    # Think of it as learning the "landscape" of performance across weight combinations
-   
+
    rbf_model = RadialBasisFunction()
    rbf_model.fit(
        X=all_evaluated_points,    # All [w₁,...,w₁₂,τ] combinations tried so far
        y=all_objective_scores     # Their corresponding performance scores
    )
-   
+
    # Now we can predict performance for ANY weight combination without expensive evaluation
    predicted_score = rbf_model.predict([new_weights, new_temp])
    ```
-
 3. **Intelligent Search Phase (Acquisition Function)**:
+
    ```python
    # Instead of random search, use acquisition function to balance:
    # - Exploitation: Areas where we predict high performance
    # - Exploration: Areas where we're uncertain (could have hidden gems)
-   
+
    for iteration in range(remaining_evaluations):
        # Find the most promising next point to evaluate
        next_point = optimize_acquisition_function(
@@ -457,10 +554,10 @@ theta_star, J_star, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, 
            evaluated_points=all_previous_points,
            exploration_weight=0.3  # Balance exploration vs exploitation
        )
-       
+
        # Evaluate the actual objective at this promising point
        actual_score = composite_objective(next_point)
-       
+
        # Update our surrogate model with new information
        rbf_model.update(next_point, actual_score)
    ```
@@ -468,6 +565,7 @@ theta_star, J_star, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, 
 **Concrete Example Trace:**
 
 Imagine optimizing 3 signals (simplified from 12):
+
 ```python
 # Iteration 1-5: Initial exploration
 Point 1: weights=[0.5, -1.0, 0.8], temp=1.0 → Score = 0.245
@@ -489,7 +587,7 @@ Final optimum: weights=[1.38, 0.15, -0.95], temp=1.85 → Score = 0.331
 **Why GROPE Works Better Than Alternatives:**
 
 - **Grid Search**: Would need 10¹³ evaluations to cover 13D space densely
-- **Random Search**: Wastes evaluations on unpromising regions  
+- **Random Search**: Wastes evaluations on unpromising regions
 - **GROPE**: Learns from each evaluation to focus search on promising areas
 
 **Detailed Algorithm Implementation:**
@@ -498,23 +596,23 @@ Final optimum: weights=[1.38, 0.15, -0.95], temp=1.85 → Score = 0.331
 def grope_optimize(bounds, f, budget=80):
     rng = np.random.default_rng(seed)
     history = []
-    
+  
     # Phase 1: Latin Hypercube Sampling (exploration)
     n_init = max(8, min(16, budget//2))  # Usually 8-16 initial points
     for theta in latin_hypercube(n_init, bounds, rng):
         y = f(theta)  # Evaluate objective function
         history.append((theta, y))
-    
+  
     # Phase 2: RBF-guided optimization (exploitation)
     while len(history) < budget:  # Continue until budget exhausted
         # Fit RBF surrogate model to all evaluations so far
         X = np.array([[t[k] for k in bounds.keys()] for t, _ in history])
         y = np.array([s for _, s in history])
         model = rbf_fit(X, y)  # Radial Basis Function model
-        
+      
         # Generate candidate points
         cands = suggest_candidates(bounds, n_cand=24, rng=rng)  # Random candidates
-        
+      
         # Add local search around best point found so far
         best_idx = int(np.argmax(y))
         x_best = X[best_idx]
@@ -522,11 +620,11 @@ def grope_optimize(bounds, f, budget=80):
             eps = rng.normal(scale=rad, size=len(bounds))
             local_search = perturb_around_best(x_best, eps, bounds)
             cands.append(local_search)
-        
+      
         # Use RBF model to predict which candidate looks most promising
         preds = [rbf_predict(model, candidate) for candidate in cands]
         order = np.argsort(preds)[::-1]  # Sort by predicted value
-        
+      
         # Evaluate most promising candidate (that we haven't tried before)
         for idx in order:
             theta = cands[idx]
@@ -534,7 +632,7 @@ def grope_optimize(bounds, f, budget=80):
                 yv = f(theta)  # Expensive evaluation
                 history.append((theta, yv))
                 break
-    
+  
     # Return best point found
     best_theta, best_y = max(history, key=lambda ty: ty[1])
     return best_theta, best_y, history
@@ -567,19 +665,21 @@ s_fold = combine_signals(test_sel, ww)
 ```
 
 **Signal combination process:**
+
 ```python
 def combine_signals(signals, weights):
     weights = weights / (weights.sum() + 1e-12)  # Ensure normalization
-    
+  
     result = None
     for signal, weight in zip(signals, weights):
         weighted_signal = signal * weight
         result = weighted_signal if result is None else result + weighted_signal
-    
+  
     return result.clip(-1, 1).fillna(0.0)  # Final signal bounded [-1,1]
 ```
 
 **Example combination:**
+
 ```
 Signal 3:  [ 0.2,  0.8, -0.3,  0.1, ...]  × weight 0.25 = [ 0.05,  0.20, -0.075, 0.025, ...]
 Signal 17: [-0.1,  0.4,  0.6, -0.2, ...]  × weight 0.52 = [-0.052, 0.208, 0.312, -0.104, ...]
@@ -597,6 +697,7 @@ oos_signal.iloc[te] = s_fold  # Store this fold's signal in the OOS series
 ```
 
 **What this builds:**
+
 - `oos_signal` starts as zeros for all dates
 - Each fold fills in its test period with the optimized signal
 - Final result: Complete out-of-sample signal covering entire time series
@@ -616,6 +717,7 @@ for f, (tr, te) in enumerate(splits):  # Usually 6 folds
 ```
 
 **Timeline example (6-fold CV):**
+
 ```
 Fold 0: Train[2020-01 to 2020-12] → Test[2021-01 to 2021-04] → OOS signal
 Fold 1: Train[2020-01 to 2021-04] → Test[2021-05 to 2021-08] → OOS signal  
@@ -631,6 +733,7 @@ Final: Complete OOS signal from 2021-01 to 2024-01
 ### Driver Selection Objectives
 
 **New configurable approach** (`ensemble/selection.py:43-46`):
+
 ```python
 if objective_fn is not None:
     # Use new objective system
@@ -643,19 +746,20 @@ else:
 **Examples of objectives in action:**
 
 1. **Traditional DAPY + IR**:
+
    ```python
    base = 1.0 * dapy_hits(signal, returns) + 1.0 * information_ratio(signal, returns)
    # Typical values: base = 5.2 + (-0.3) = 4.9
    ```
-
 2. **Predictive ICIR+LogScore**:
+
    ```python
    base = predictive_icir_logscore(signal, returns, icir_weight=1.0, logscore_weight=1.0)
    # Calculates ICIR across monthly eras + calibrated LogScore
    # Typical values: base = 0.4 + (-0.7) = -0.3
    ```
-
 3. **Adjusted Sharpe**:
+
    ```python
    base = adjusted_sharpe(signal, returns, adj_sharpe_n=10)
    # Typical values: base = 0.05
@@ -664,6 +768,7 @@ else:
 ### Weight Optimization Objectives
 
 **New configurable approach** (`opt/weight_objective.py:27-33`):
+
 ```python
 if objective_fn is not None:
     val = objective_fn(combined_signal, returns, weights=normalized_weights)
@@ -676,6 +781,7 @@ val -= turnover_penalty * turnover_rate
 ```
 
 **Key differences:**
+
 - **Driver selection**: Evaluates individual signals
 - **Weight optimization**: Evaluates the combined weighted signal
 - **Both stages**: Can use completely different objectives if desired
@@ -692,6 +798,7 @@ ir = information_ratio(oos_signal, y)  # Overall Information Ratio
 ```
 
 **What gets reported:**
+
 - **Out-of-sample performance**: Using the legacy DAPY function for consistency
 - **Walk-forward methodology**: True out-of-sample - each prediction made without future knowledge
 - **Complete pipeline**: From 1000+ features → 50 XGB models → 12 selected drivers → 1 optimized signal
@@ -701,24 +808,28 @@ ir = information_ratio(oos_signal, y)  # Overall Information Ratio
 ## 🔧 KEY DESIGN PRINCIPLES
 
 ### 1. **Separation of Concerns**
+
 - **Signal generation**: Pure mathematical transformation (z-score + tanh)
 - **Driver selection**: Objective-based ranking with diversity
 - **Weight optimization**: Global optimization with regularization
 - **Evaluation**: Consistent out-of-sample methodology
 
 ### 2. **Objective Function Flexibility**
+
 - **Configurable**: Can use different objectives for selection vs optimization
 - **Composable**: Can combine multiple metrics with custom weights
 - **Backward compatible**: Legacy DAPY+IR approach still works
 - **Scale aware**: New objectives designed with compatible scales
 
 ### 3. **Statistical Rigor**
+
 - **P-value gating**: Ensures statistical significance
 - **Cross-validation**: True out-of-sample testing
 - **Diversity penalty**: Prevents over-correlation
 - **Turnover control**: Prevents excessive trading
 
 ### 4. **Optimization Efficiency**
+
 - **Global optimization**: GROPE finds good local optima
 - **Budget control**: Limits expensive objective evaluations
 - **Parallel execution**: XGBoost models run in parallel
@@ -740,6 +851,7 @@ oos_signal.iloc[te] = s_fold  # Fill in this fold's test period
 ```
 
 **Walk-forward stitching process:**
+
 ```python
 # Timeline example with 6 folds on 2020-2024 data:
 Fold 0: Train[2020-01 to 2021-06] → Test[2021-07 to 2021-12] → oos_signal[2021-07:2021-12] = signals_fold_0
@@ -754,6 +866,7 @@ Fold 5: Train[2020-01 to 2023-12] → Test[2024-01 to 2024-06] → oos_signal[20
 ```
 
 **Example final signal structure:**
+
 ```python
 oos_signal = pd.Series([
     0.0,      # 2020-01-01 (no prediction - training period)
@@ -780,6 +893,7 @@ if len(fold_summaries) == 0 or oos_signal.abs().sum() < 1e-10:
 ```
 
 **Quality checks performed:**
+
 1. **Non-zero folds**: At least one fold must produce valid signals
 2. **Non-degenerate signal**: Signal must have meaningful variance (not all zeros)
 3. **Fold consistency**: Each fold should contribute reasonable signals
@@ -801,6 +915,7 @@ def save_timeseries(path: str, signal: pd.Series, y: pd.Series):
 ```
 
 **Backtesting logic with example:**
+
 ```python
 # Example data for 5 consecutive days:
 dates        = ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05']
@@ -840,30 +955,30 @@ def calculate_returns_metrics(signal, target_returns, freq=252):
     # Step 1: Create lagged signal (remove look-ahead)
     aligned_signal = signal.shift(1).fillna(0.0)
     aligned_returns = target_returns.reindex_like(aligned_signal).fillna(0.0)
-    
+  
     # Step 2: Calculate strategy returns
     strategy_returns = aligned_signal * aligned_returns  # Daily PnL
-    
+  
     # Example strategy_returns for 1000 days:
     # [-0.0009, 0.0024, -0.0048, 0.0067, -0.0023, ..., 0.0045]
-    
+  
     # Step 3: Core metrics
     total_return = strategy_returns.sum()              # e.g., 0.234 = +23.4%
     annualized_return = strategy_returns.mean() * 252 # e.g., 0.089 = +8.9% per year
     volatility = strategy_returns.std() * sqrt(252)   # e.g., 0.145 = 14.5% annual vol
-    
+  
     # Step 4: Risk-adjusted performance
     sharpe_ratio = annualized_return / volatility      # e.g., 0.089/0.145 = 0.61
-    
+  
     # Step 5: Drawdown analysis
     equity_curve = (1 + strategy_returns).cumprod()   # [1.0, 0.9991, 1.0015, 0.9967, ...]
     running_max = equity_curve.expanding().max()      # [1.0, 1.0, 1.0015, 1.0015, ...]  
     drawdown = (equity_curve - running_max) / running_max
     max_drawdown = drawdown.min()                      # e.g., -0.087 = -8.7% max loss
-    
+  
     # Step 6: Hit rate (directional accuracy)
     hit_rate = (np.sign(aligned_signal) == np.sign(aligned_returns)).mean()  # e.g., 0.524 = 52.4%
-    
+  
     return {
         'total_return': total_return,           # 23.4%
         'annualized_return': annualized_return, # 8.9%
@@ -884,11 +999,12 @@ print(f"OOS Shuffling p-value (DAPY): {pval:.10f} (obs={obs:.2f})")
 ```
 
 **Significance testing process:**
+
 ```python
 def shuffle_pvalue(signal, returns, dapy_fn, n_shuffles=600, block=30):
     # Step 1: Calculate observed DAPY
     observed_dapy = dapy_fn(signal, returns)  # e.g., 15.23
-    
+  
     # Step 2: Generate null distribution
     null_dapys = []
     for i in range(n_shuffles):  # 600 random shuffles
@@ -896,15 +1012,15 @@ def shuffle_pvalue(signal, returns, dapy_fn, n_shuffles=600, block=30):
         shuffled_returns = block_shuffle(returns, block_size=30)
         null_dapy = dapy_fn(signal, shuffled_returns)
         null_dapys.append(null_dapy)
-    
+  
     # null_dapys = [2.34, -5.67, 8.91, -1.23, ..., 3.45]  # 600 values
-    
+  
     # Step 3: Calculate p-value
     better_count = sum(1 for null_dapy in null_dapys if null_dapy >= observed_dapy)
     p_value = better_count / n_shuffles
-    
+  
     return p_value, observed_dapy, null_dapys
-    
+  
 # Example interpretation:
 # observed_dapy = 15.23, null_dapys range [-12.3, 8.9], better_count = 2
 # p_value = 2/600 = 0.0033 = 0.33%
@@ -925,6 +1041,7 @@ print(performance_report)
 ```
 
 **Example output:**
+
 ```
 =================== OUT-OF-SAMPLE PERFORMANCE ===================
 
@@ -956,12 +1073,14 @@ CONSISTENCY METRICS:
 **Location**: `main.py:245-249`
 
 #### 7B-1: Equity Curve Export
+
 ```python
 save_performance_csv(performance_metrics, symbol_results, "artifacts/performance_summary.csv")
 save_timeseries("artifacts/oos_timeseries.csv", oos_signal, y)
 ```
 
 **oos_timeseries.csv structure:**
+
 ```csv
 date,signal,target_ret,pnl,equity
 2021-07-01,0.23,0.005,0.0,0.0
@@ -972,13 +1091,15 @@ date,signal,target_ret,pnl,equity
 2024-06-30,-0.33,0.015,0.01005,0.23450
 ```
 
-#### 7B-2: Fold-Level Summaries  
+#### 7B-2: Fold-Level Summaries
+
 ```python
 with open("artifacts/fold_summaries.json", "w") as f:
     json.dump(fold_summaries, f, indent=2)
 ```
 
 **fold_summaries.json structure:**
+
 ```json
 [
   {
@@ -999,11 +1120,13 @@ with open("artifacts/fold_summaries.json", "w") as f:
 ```
 
 #### 7B-3: Model Diagnostics
+
 ```python
 save_comprehensive_diagnostics(vars(args), X.shape, feature_info, model_performance)
 ```
 
 **Generated diagnostic files:**
+
 - `artifacts/diagnostics/run_YYYYMMDD_HHMMSS_summary.json`
 - Feature statistics and model architecture details
 - Performance breakdown by fold and time period
@@ -1020,6 +1143,7 @@ logger.info(f"OOS DAPY({args.dapy_style}): {dapy_val:.2f} | OOS IR: {ir:.2f} | O
 ```
 
 **Example final console output:**
+
 ```
 2024-01-15 14:32:18 - __main__ - INFO - OOS DAPY(hits): 15.23 | OOS IR: 0.58 | OOS hit-rate: 0.524
 OOS Shuffling p-value (DAPY): 0.0033000000 (obs=15.23)
@@ -1041,22 +1165,26 @@ Artifacts saved to: artifacts/
 ## 🔬 VALIDATION METHODOLOGY: Why This Works
 
 ### 1. **True Out-of-Sample Testing**
+
 - **No look-ahead bias**: Signal lagged by 1 day before applying returns
 - **Walk-forward validation**: Each prediction uses only historical data
 - **Temporal splitting**: Respects time series structure (no random splits)
 
-### 2. **Statistical Rigor**  
+### 2. **Statistical Rigor**
+
 - **Block shuffling**: Preserves autocorrelation in null hypothesis testing
 - **Multiple testing correction**: P-value accounts for selection bias
 - **Cross-validation**: 6-fold CV reduces overfitting vs single train-test split
 
 ### 3. **Comprehensive Performance Measurement**
+
 - **Risk-adjusted metrics**: Sharpe ratio, Information Ratio, max drawdown
 - **Practical metrics**: Hit rate, turnover, win/loss ratios
 - **Temporal consistency**: Monthly win rates, drawdown duration
 
 ### 4. **Reproducible Results**
-- **Deterministic seeds**: All random processes seeded for reproducibility  
+
+- **Deterministic seeds**: All random processes seeded for reproducibility
 - **Complete artifacts**: Every aspect of model and performance saved
 - **Audit trail**: Fold-by-fold breakdown enables deep analysis
 
@@ -1067,6 +1195,7 @@ Artifacts saved to: artifacts/
 Let's trace through a complete example using Treasury Bond futures:
 
 ### **Data Input**
+
 ```
 Features: 1316 → 50 (after feature selection)
 Target: @TY#C 24-hour forward returns
@@ -1076,6 +1205,7 @@ Models: 50 XGBoost per fold
 ```
 
 ### **Model Training Results**
+
 ```
 Fold 0: Selected drivers [3,17,24,31,45,2,19,33,41,8,26,38], τ=1.25, J_train=0.847
 Fold 1: Selected drivers [7,22,35,41,8,16,29,4,18,33,12,25], τ=0.89, J_train=0.923
@@ -1084,6 +1214,7 @@ Fold 5: Selected drivers [15,28,6,39,21,14,32,9,42,11,27,35], τ=1.67, J_train=0
 ```
 
 ### **Final Performance**
+
 ```
 OOS DAPY(hits): 15.23 | OOS IR: 0.58 | OOS hit-rate: 0.524
 OOS Shuffling p-value (DAPY): 0.0033 (statistically significant)
@@ -1095,6 +1226,7 @@ Maximum Drawdown: -8.73%
 ```
 
 ### **Business Impact**
+
 - **Risk-adjusted return**: 61 basis points of Sharpe per unit of risk
 - **Consistency**: 52.4% directional accuracy (better than coin flip)
 - **Statistical significance**: 99.67% confidence (p=0.0033)
@@ -1109,8 +1241,9 @@ This complete pipeline transforms raw market data into a statistically significa
 ### Overview: The Heart of the System
 
 Objective functions determine **how the system evaluates signal quality** at every critical decision point:
+
 - **Driver Selection**: Which 12 signals (out of 50) to select for ensemble
-- **Weight Optimization**: How to optimally combine the selected signals  
+- **Weight Optimization**: How to optimally combine the selected signals
 - **P-value Gating**: Statistical significance testing to prevent overfitting
 
 **CRITICAL RECENT FIXES**: All objective functions now have **proper temporal alignment** - signals from day T-1 predict returns on day T, eliminating look-ahead bias that was present in some functions.
@@ -1122,6 +1255,7 @@ Objective functions determine **how the system evaluates signal quality** at eve
 #### 1. **DAPY Hits** (`dapy_hits`)
 
 **What it does**: Directional accuracy performance with annualization
+
 ```python
 # Concept: How well does the signal predict direction?  
 signal_t_minus_1 = [+0.3, -0.2, +0.8, -0.5, +0.1]  # Yesterday's signal
@@ -1134,9 +1268,10 @@ dapy_score = (2 * 0.60 - 1.0) * 252 = 50.4  # Annualized: +50.4
 **Best For**: Traditional trend-following strategies, simple directional prediction
 **Scale**: Large (~20 unit range)
 
-#### 2. **DAPY ERI Both** (`dapy_eri_both`) 
+#### 2. **DAPY ERI Both** (`dapy_eri_both`)
 
 **What it does**: Excess Return Index for long+short positions vs buy-and-hold
+
 ```python
 # Concept: How much excess return vs passive buy-and-hold?
 # Accounts for market exposure and trading costs
@@ -1153,6 +1288,7 @@ dapy_eri_score = (combined_pnl - benchmark_adj) / benchmark_volatility
 #### 3. **Information Ratio** (`information_ratio`)
 
 **What it does**: Risk-adjusted returns with proper temporal alignment
+
 ```python
 # Signal T-1 applied to return T, then calculate Sharpe-like ratio
 pnl_daily = signal_lagged * returns  # [-0.003, -0.004, +0.040, +0.015, +0.001]
@@ -1162,12 +1298,13 @@ ir_score = ann_return / ann_vol       # 0.59 Information Ratio
 ```
 
 **Typical Range**: -1.0 to +1.0 (larger = better)
-**Best For**: Risk-conscious strategies, Sharpe-like optimization  
+**Best For**: Risk-conscious strategies, Sharpe-like optimization
 **Scale**: Small (~1.5 unit range)
 
 #### 4. **Adjusted Sharpe** (`adjusted_sharpe`)
 
 **What it does**: Sharpe ratio adjusted for multiple testing bias
+
 ```python
 # Base Sharpe calculation with temporal alignment
 sharpe = pnl_mean / pnl_std * sqrt(252)  # 0.59
@@ -1184,6 +1321,7 @@ adj_sharpe = conservative_threshold / sqrt(years)  # 0.05 (much lower)
 #### 5. **CB Ratio** (`cb_ratio`)
 
 **What it does**: Calmar-Burke ratio (return/drawdown) with L1 penalty
+
 ```python
 sharpe = 0.59
 max_drawdown = -0.087  # -8.7% maximum loss
@@ -1199,6 +1337,7 @@ cb_score = cb_base - l1_penalty  # 6.65 final score
 #### 6. **Predictive ICIR+LogScore** (`predictive_icir_logscore`)
 
 **What it does**: Advanced predictive quality combining era-based IC consistency and calibrated probability scoring
+
 ```python
 # Era-based Information Coefficient (monthly eras)
 for each_month:
@@ -1224,18 +1363,19 @@ final_score = 1.0 * icir_score + 1.0 * logscore  # 0.25 + (-0.73) = -0.48
 
 **CRITICAL INSIGHT**: Objective functions operate on vastly different scales, which creates serious issues when combining them:
 
-| Objective | Typical Range | Scale Magnitude |
-|-----------|---------------|----------------|
-| DAPY Hits | [-13, +6] | ~20 units |
-| DAPY ERI Both | [-8, +4] | ~12 units |
-| Information Ratio | [-0.7, +0.4] | ~1 unit |
-| **Adjusted Sharpe** | [0.0, +0.11] | **~0.4 units** |
-| CB Ratio | [-6, +3] | ~9 units |
-| Predictive ICIR+LogScore | [-1.2, -0.5] | ~1.6 units |
+| Objective                 | Typical Range | Scale Magnitude      |
+| ------------------------- | ------------- | -------------------- |
+| DAPY Hits                 | [-13, +6]     | ~20 units            |
+| DAPY ERI Both             | [-8, +4]      | ~12 units            |
+| Information Ratio         | [-0.7, +0.4]  | ~1 unit              |
+| **Adjusted Sharpe** | [0.0, +0.11]  | **~0.4 units** |
+| CB Ratio                  | [-6, +3]      | ~9 units             |
+| Predictive ICIR+LogScore  | [-1.2, -0.5]  | ~1.6 units           |
 
 ### 🚨 Critical Scale Issues
 
 1. **DAPY vs Adjusted Sharpe**: 50-200x scale difference!
+
    ```yaml
    # This configuration is BROKEN:
    objective:
@@ -1243,8 +1383,8 @@ final_score = 1.0 * icir_score + 1.0 * logscore  # 0.25 + (-0.73) = -0.48
      adjusted_sharpe: {weight: 1.0} # Contributes ~0.05 units  
      # Result: Adjusted Sharpe has ZERO impact (0.05 vs 10 = noise)
    ```
-
 2. **Information Ratio vs Adjusted Sharpe**: 4x scale difference
+
    ```yaml
    # This needs reweighting:
    objective:
@@ -1259,6 +1399,7 @@ final_score = 1.0 * icir_score + 1.0 * logscore  # 0.25 + (-0.73) = -0.48
 #### ✅ **Recommended Configurations**
 
 1. **🎉 NEW: Auto-Normalized Multi-Objective (Breakthrough)**:
+
    ```yaml
    driver_selection_objective:
      dapy: {dapy_style: "hits", weight: 1.0, auto_normalize: true}
@@ -1269,8 +1410,8 @@ final_score = 1.0 * icir_score + 1.0 * logscore  # 0.25 + (-0.73) = -0.48
      adjusted_sharpe: {weight: 1.0, auto_normalize: true}
      cb_ratio: {weight: 1.0, auto_normalize: true}
    ```
-
 2. **🎯 Advanced Predictive (Best Practice)**:
+
    ```yaml
    driver_selection_objective: "predictive_icir_logscore"  
    grope_weight_objective:
@@ -1281,8 +1422,8 @@ final_score = 1.0 * icir_score + 1.0 * logscore  # 0.25 + (-0.73) = -0.48
      information_ratio:
        weight: 1.0  # Perfect scale compatibility!
    ```
-
 3. **💼 Risk-Conscious Auto-Normalized**:
+
    ```yaml
    driver_selection_objective: "adjusted_sharpe"
    grope_weight_objective:
@@ -1290,22 +1431,22 @@ final_score = 1.0 * icir_score + 1.0 * logscore  # 0.25 + (-0.73) = -0.48
      adjusted_sharpe: {weight: 1.0, auto_normalize: true}  # Equal weights!
      cb_ratio: {weight: 0.5, auto_normalize: true}  # Light drawdown control
    ```
-
 4. **📈 Traditional High-Performance**:
-   ```yaml 
+
+   ```yaml
    driver_selection_objective:
      dapy: {dapy_style: "eri_both", weight: 1.0}
    grope_weight_objective:
      dapy: {dapy_style: "eri_both", weight: 1.0} 
      information_ratio: {weight: 1.0}
    ```
-
 5. **🔒 Single Objectives (Simplest)**:
+
    ```yaml
    # Option A: Pure academic rigor
    driver_selection_objective: "adjusted_sharpe"
    grope_weight_objective: "adjusted_sharpe"
-   
+
    # Option B: Pure predictive quality  
    driver_selection_objective: "predictive_icir_logscore"
    grope_weight_objective: "predictive_icir_logscore"
@@ -1340,11 +1481,13 @@ objective:
 ### 🧮 Scale-Aware Weighting Formula
 
 When mixing objectives with different scales:
+
 ```
 weight_B = weight_A × (typical_range_A ÷ typical_range_B)
 ```
 
 **Examples**:
+
 ```python
 # Mix DAPY (range ~20) with Adjusted Sharpe (range ~0.4)
 weight_adjusted_sharpe = weight_dapy * (20 / 0.4) = weight_dapy * 50
@@ -1358,21 +1501,25 @@ weight_adjusted_sharpe = weight_ir * (1.5 / 0.4) = weight_ir * 4
 ### 🔄 Asset-Specific Recommendations
 
 #### **Bonds** (@TY#C, @US#C, @FV#C, @TU#C)
+
 - **Best**: `adjusted_sharpe` (emphasizes risk control)
 - **Alternative**: `predictive_icir_logscore` (sophisticated approach)
 - **Avoid**: Pure DAPY (too aggressive for bond volatility)
 
 #### **Equity Indices** (@ES#C, @NQ#C, @YM#C, @RTY#C)
-- **Best**: `dapy_eri_both` (captures trend momentum)  
+
+- **Best**: `dapy_eri_both` (captures trend momentum)
 - **Alternative**: Composite DAPY + IR for balance
 - **Consider**: `predictive_icir_logscore` for advanced modeling
 
 #### **Commodities** (@C#C, @S#C, @W#C, @LE#C, @GF#C, etc.)
+
 - **Best**: `dapy_eri_both` (handles commodity cycles)
 - **Alternative**: `cb_ratio` (drawdown control for volatility)
 - **Test**: Asset-specific DAPY style (`eri_long` vs `eri_short`)
 
-#### **Volatility** (@VX#C)  
+#### **Volatility** (@VX#C)
+
 - **Best**: `predictive_icir_logscore` (sophisticated mean reversion)
 - **Alternative**: `adjusted_sharpe` (risk control for extreme moves)
 - **Avoid**: Traditional DAPY (volatility patterns are complex)
@@ -1384,12 +1531,14 @@ weight_adjusted_sharpe = weight_ir * (1.5 / 0.4) = weight_ir * 4
 #### **Temporal Alignment Fixes (CRITICAL)**
 
 **Problem**: Several objective functions had look-ahead bias:
-- `dapy_from_binary_hits`: Compared `signal[t]` to `return[t]` 
+
+- `dapy_from_binary_hits`: Compared `signal[t]` to `return[t]`
 - `hit_rate`: Same issue
 - `predictive_icir_logscore`: Multiple internal alignment problems
 - `directional_hit_rate`: Direct comparison without lag
 
 **Fix Applied**: All functions now use `signal.shift(1)` for proper temporal alignment
+
 ```python
 # BEFORE (BROKEN - look-ahead bias):
 score = compare_direction(signal[t], return[t])
@@ -1401,27 +1550,29 @@ score = compare_direction(signal[t-1], return[t])
 #### **Edge Case Robustness**
 
 **Problems**: Functions crashed or returned invalid values with:
+
 - Empty datasets
-- All-NaN data  
+- All-NaN data
 - Single observation
 - Extreme values
 - Zero variance scenarios
 
 **Fix Applied**: Comprehensive error handling in all functions
+
 ```python
 # Example robust implementation:
 def robust_objective(signal, returns):
     # Handle edge cases
     if len(signal) == 0 or len(returns) == 0:
         return 0.0
-    
+  
     # Clean data
     lagged_signal = signal.shift(1).fillna(0.0) 
     clean_data = pd.DataFrame({'signal': lagged_signal, 'returns': returns}).dropna()
-    
+  
     if len(clean_data) == 0:
         return 0.0
-    
+  
     # Calculation with NaN checks...
     result = calculate_metric(clean_data['signal'], clean_data['returns'])
     return 0.0 if np.isnan(result) else float(result)
@@ -1432,6 +1583,7 @@ def robust_objective(signal, returns):
 **Problem**: Some objectives couldn't be used with p-value gating due to parameter mismatches.
 
 **Fix Applied**: All objectives now properly support the p-value gating interface:
+
 ```python
 # All objectives now support: shuffle_pvalue(signal, returns, objective_fn, **kwargs)
 pval, obs_score, null_dist = shuffle_pvalue(signal, returns, objective_fn)
@@ -1444,7 +1596,7 @@ pval, obs_score, null_dist = shuffle_pvalue(signal, returns, objective_fn)
 #### **Major Architecture Strengths**
 
 1. **✅ Proper Temporal Separation**: Walk-forward CV with strict train/test separation
-2. **✅ Statistical Rigor**: P-value gating prevents overfitting  
+2. **✅ Statistical Rigor**: P-value gating prevents overfitting
 3. **✅ Global Optimization**: GROPE finds optimal ensemble weights
 4. **✅ Diversity Control**: Correlation penalty prevents over-concentration
 5. **✅ Configurable Objectives**: Flexible objective system for different strategies
@@ -1459,7 +1611,7 @@ pval, obs_score, null_dist = shuffle_pvalue(signal, returns, objective_fn)
 #### **Remaining Considerations**
 
 1. **⚠️ Scale Management**: Users must carefully weight objectives with different scales
-2. **⚠️ Asset Specificity**: Different assets may need different objective functions  
+2. **⚠️ Asset Specificity**: Different assets may need different objective functions
 3. **⚠️ Hyperparameter Sensitivity**: Some objectives have sensitive parameters (min_hit_rate, adj_sharpe_n)
 4. **⚠️ Computational Cost**: Complex objectives (predictive_icir_logscore) are slower
 
@@ -1481,12 +1633,14 @@ objective:
 ```
 
 **How it works**:
+
 - All objectives automatically normalized to [0,1] range using empirical scale estimates
-- Equal weights (1.0, 1.0, 1.0) now mean equal contribution 
+- Equal weights (1.0, 1.0, 1.0) now mean equal contribution
 - Eliminates need for manual scale analysis and compensation
 - Works with any objective combination
 
 **Example Results**:
+
 ```
 Raw scales (dominated):      6.9405  (DAPY overwhelms other objectives)
 Auto-normalized (balanced):  0.4749  (All objectives contribute equally)
@@ -1496,7 +1650,7 @@ Auto-normalized (balanced):  0.4749  (All objectives contribute equally)
 
 1. ✅ **Auto-scaling**: ~~Implement automatic scale normalization~~ → **COMPLETED**
 2. **Asset-class Detection**: Automatically recommend objectives based on target symbol
-3. **Adaptive Weighting**: Dynamic objective weights based on market regime  
+3. **Adaptive Weighting**: Dynamic objective weights based on market regime
 4. **Performance Attribution**: Break down objective contributions in final reporting
 
 ---
@@ -1504,16 +1658,19 @@ Auto-normalized (balanced):  0.4749  (All objectives contribute equally)
 ### 🎯 Final Recommendations
 
 #### **For New Users**
+
 - Start with single objectives: `adjusted_sharpe` or `predictive_icir_logscore`
 - Test on your specific data before production
 - Use provided config templates
 
-#### **For Advanced Users** 
+#### **For Advanced Users**
+
 - Experiment with scale-aware composite objectives
 - Consider asset-specific objective selection
 - Monitor objective value ranges in your data
 
 #### **For All Users**
+
 - Always validate temporal alignment in backtests
 - Use p-value gating to prevent overfitting
 - Keep detailed records of objective performance across different market conditions

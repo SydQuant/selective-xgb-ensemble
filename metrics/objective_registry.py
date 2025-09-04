@@ -39,6 +39,9 @@ class ObjectiveRegistry:
         # Multi-objective examples (for future use)
         self.register("2ir_1sharpe", self._multi_objective_2ir_1sharpe)
         self.register("ir_adj_sharpe", self._multi_objective_ir_adj_sharpe)
+        
+        # Hybrid objective for Task 3 additional test
+        self.register("hybrid_sharpe_ir", self._hybrid_sharpe_ir)
     
     def _adjusted_sharpe_wrapper(self, signal: pd.Series, returns: pd.Series, **kwargs) -> float:
         """Wrapper for adjusted Sharpe ratio."""
@@ -75,6 +78,16 @@ class ObjectiveRegistry:
         adj_sharpe_n = kwargs.get('adj_sharpe_n', 10)
         adj_sharpe = compute_adjusted_sharpe(sharpe, num_years, num_points, adj_sharpe_n)
         return ir + adj_sharpe
+    
+    def _hybrid_sharpe_ir(self, signal: pd.Series, returns: pd.Series, **kwargs) -> float:
+        """Hybrid objective: 0.7×Adjusted_Sharpe + 0.3×Information_Ratio."""
+        ir = information_ratio(signal, returns)
+        sharpe = sharpe_ratio(signal, returns)
+        num_years = len(signal) / 252.0
+        num_points = len(signal)
+        adj_sharpe_n = kwargs.get('adj_sharpe_n', 10)
+        adj_sharpe = compute_adjusted_sharpe(sharpe, num_years, num_points, adj_sharpe_n)
+        return 0.7 * adj_sharpe + 0.3 * ir
     
     def register(self, name: str, function: Callable):
         """Register a new objective function."""
