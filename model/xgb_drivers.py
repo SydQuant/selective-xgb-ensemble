@@ -30,55 +30,46 @@ def detect_gpu() -> str:
     
     return "cpu"
 
+def _create_base_xgb_spec(rng, device: str, **param_ranges) -> Dict[str, Any]:
+    """Create base XGBoost specification with configurable parameter ranges."""
+    return {
+        "max_depth": int(rng.integers(*param_ranges.get('max_depth', (2, 7)))),
+        "learning_rate": float(rng.uniform(*param_ranges.get('learning_rate', (0.03, 0.3)))),
+        "n_estimators": int(rng.integers(*param_ranges.get('n_estimators', (30, 300)))),
+        "subsample": float(rng.uniform(*param_ranges.get('subsample', (0.6, 1.0)))),
+        "colsample_bytree": float(rng.uniform(*param_ranges.get('colsample_bytree', (0.6, 1.0)))),
+        "reg_alpha": float(10**rng.uniform(*param_ranges.get('reg_alpha_log', (-5, -1)))),
+        "reg_lambda": float(10**rng.uniform(*param_ranges.get('reg_lambda_log', (-4, -0.5)))),
+        "min_child_weight": float(rng.uniform(*param_ranges.get('min_child_weight', (0.1, 5.0)))),
+        "gamma": 0.0,
+        "tree_method": "hist",
+        "device": device,
+        "random_state": int(rng.integers(0, 2**31-1))
+    }
+
 def generate_xgb_specs(n_models: int = 50, seed: int = 13) -> List[Dict[str, Any]]:
     """Generate diverse XGBoost specs optimized for financial data."""
     rng = np.random.default_rng(seed)
-    specs = []
     device = detect_gpu()
-    
-    for i in range(n_models):
-        spec = {
-            "max_depth": int(rng.integers(2, 7)),
-            "learning_rate": float(rng.uniform(0.03, 0.3)),
-            "n_estimators": int(rng.integers(30, 300)),
-            "subsample": float(rng.uniform(0.6, 1.0)),
-            "colsample_bytree": float(rng.uniform(0.6, 1.0)),
-            "reg_alpha": float(10**rng.uniform(-5, -1)),
-            "reg_lambda": float(10**rng.uniform(-4, -0.5)),
-            "min_child_weight": float(rng.uniform(0.1, 5.0)),
-            "gamma": 0.0,
-            "tree_method": "hist",
-            "device": device,
-            "random_state": int(rng.integers(0, 2**31-1))
-        }
-        specs.append(spec)
-    
-    return specs
+    return [_create_base_xgb_spec(rng, device) for _ in range(n_models)]
 
 def generate_deep_xgb_specs(n_models: int = 50, seed: int = 13) -> List[Dict[str, Any]]:
     """Generate deep XGBoost specs with 8-10 depth for alternative architectures."""
     rng = np.random.default_rng(seed)
-    specs = []
     device = detect_gpu()
     
-    for i in range(n_models):
-        spec = {
-            "max_depth": int(rng.integers(8, 11)),
-            "learning_rate": float(rng.uniform(0.01, 0.15)),
-            "n_estimators": int(rng.integers(50, 200)),
-            "subsample": float(rng.uniform(0.7, 0.9)),
-            "colsample_bytree": float(rng.uniform(0.7, 0.9)),
-            "reg_alpha": float(10**rng.uniform(-4, -1)),
-            "reg_lambda": float(10**rng.uniform(-3, 0)),
-            "min_child_weight": float(rng.uniform(2.0, 8.0)),
-            "gamma": 0.0,
-            "tree_method": "hist",
-            "device": device,
-            "random_state": int(rng.integers(0, 2**31-1))
-        }
-        specs.append(spec)
+    deep_params = {
+        'max_depth': (8, 11),
+        'learning_rate': (0.01, 0.15),
+        'n_estimators': (50, 200),
+        'subsample': (0.7, 0.9),
+        'colsample_bytree': (0.7, 0.9),
+        'reg_alpha_log': (-4, -1),
+        'reg_lambda_log': (-3, 0),
+        'min_child_weight': (2.0, 8.0)
+    }
     
-    return specs
+    return [_create_base_xgb_spec(rng, device, **deep_params) for _ in range(n_models)]
 
 def stratified_xgb_bank(all_cols, n_models=50, seed=13):
     """Generate tiered XGBoost models: Conservative (30%), Balanced (50%), Aggressive (20%)."""
@@ -93,57 +84,54 @@ def stratified_xgb_bank(all_cols, n_models=50, seed=13):
     def get_tier_spec(tier):
         n_features = len(all_cols)
         
-        if tier == "A":  # Conservative
-            # Target range: 20-36 features, but adapt to available features
-            low = min(20, max(1, n_features // 3))
-            high = min(36, n_features) + 1  # +1 for rng.integers upper bound
-            K = int(rng.integers(low, high)) if high > low else n_features
-            return {
-                "max_depth": int(rng.integers(3, 5)),
-                "learning_rate": float(rng.uniform(0.03, 0.08)),
-                "n_estimators": int(rng.integers(250, 501)),
-                "subsample": float(rng.uniform(0.7, 0.95)),
-                "colsample_bytree": float(rng.uniform(0.5, 0.8)),
-                "reg_alpha": logu(1e-5, 1e-2),
-                "reg_lambda": logu(1e-4, 0.3),
-                "min_child_weight": float(rng.uniform(2.0, 6.0)),
-                "gamma": 0.0, "tree_method": "hist", "device": device,
-                "random_state": int(rng.integers(0, 2**31-1))
-            }, min(K, n_features)
-        elif tier == "B":  # Balanced
-            # Target range: 40-71 features, but adapt to available features
-            low = min(40, max(1, n_features // 2))
-            high = min(71, n_features) + 1  # +1 for rng.integers upper bound
-            K = int(rng.integers(low, high)) if high > low else n_features
-            return {
-                "max_depth": int(rng.integers(3, 6)),
-                "learning_rate": float(rng.uniform(0.05, 0.12)),
-                "n_estimators": int(rng.integers(180, 401)),
-                "subsample": float(rng.uniform(0.6, 0.95)),
-                "colsample_bytree": float(rng.uniform(0.5, 0.8)),
-                "reg_alpha": logu(1e-5, 1e-1),
-                "reg_lambda": logu(1e-4, 1.0),
-                "min_child_weight": float(rng.uniform(1.0, 6.0)),
-                "gamma": 0.0, "tree_method": "hist", "device": device,
-                "random_state": int(rng.integers(0, 2**31-1))
-            }, min(K, n_features)
-        else:  # Aggressive
-            # Target range: 60-91 features, but adapt to available features
-            low = min(60, max(1, int(n_features * 0.8)))
-            high = min(91, n_features) + 1  # +1 for rng.integers upper bound
-            K = int(rng.integers(low, high)) if high > low else n_features
-            return {
-                "max_depth": int(rng.integers(4, 7)),
-                "learning_rate": float(rng.uniform(0.08, 0.18)),
-                "n_estimators": int(rng.integers(120, 301)),
-                "subsample": float(rng.uniform(0.6, 0.9)),
-                "colsample_bytree": float(rng.uniform(0.3, 0.6)),
-                "reg_alpha": logu(1e-5, 1e-1),
-                "reg_lambda": logu(1e-4, 1.0),
-                "min_child_weight": float(rng.uniform(1.0, 4.0)),
-                "gamma": 0.0, "tree_method": "hist", "device": device,
-                "random_state": int(rng.integers(0, 2**31-1))
-            }, min(K, n_features)
+        # Tier configurations: feature_range_multiplier, params
+        tier_configs = {
+            "A": {  # Conservative: 20-36 features
+                'feature_mult': (1/3, 20, 36),
+                'max_depth': (3, 5), 'learning_rate': (0.03, 0.08), 'n_estimators': (250, 501),
+                'subsample': (0.7, 0.95), 'colsample_bytree': (0.5, 0.8),
+                'reg_alpha_range': (1e-5, 1e-2), 'reg_lambda_range': (1e-4, 0.3),
+                'min_child_weight': (2.0, 6.0)
+            },
+            "B": {  # Balanced: 40-71 features  
+                'feature_mult': (1/2, 40, 71),
+                'max_depth': (3, 6), 'learning_rate': (0.05, 0.12), 'n_estimators': (180, 401),
+                'subsample': (0.6, 0.95), 'colsample_bytree': (0.5, 0.8),
+                'reg_alpha_range': (1e-5, 1e-1), 'reg_lambda_range': (1e-4, 1.0),
+                'min_child_weight': (1.0, 6.0)
+            },
+            "C": {  # Aggressive: 60-91 features
+                'feature_mult': (0.8, 60, 91),
+                'max_depth': (4, 7), 'learning_rate': (0.08, 0.18), 'n_estimators': (120, 301),
+                'subsample': (0.6, 0.9), 'colsample_bytree': (0.3, 0.6),
+                'reg_alpha_range': (1e-5, 1e-1), 'reg_lambda_range': (1e-4, 1.0),
+                'min_child_weight': (1.0, 4.0)
+            }
+        }
+        
+        config = tier_configs[tier]
+        
+        # Calculate feature count
+        mult, min_feat, max_feat = config['feature_mult']
+        low = min(min_feat, max(1, int(n_features * mult)))
+        high = min(max_feat, n_features) + 1
+        K = int(rng.integers(low, high)) if high > low else n_features
+        
+        # Generate spec using configuration
+        spec = {
+            "max_depth": int(rng.integers(*config['max_depth'])),
+            "learning_rate": float(rng.uniform(*config['learning_rate'])),
+            "n_estimators": int(rng.integers(*config['n_estimators'])),
+            "subsample": float(rng.uniform(*config['subsample'])),
+            "colsample_bytree": float(rng.uniform(*config['colsample_bytree'])),
+            "reg_alpha": logu(*config['reg_alpha_range']),
+            "reg_lambda": logu(*config['reg_lambda_range']),
+            "min_child_weight": float(rng.uniform(*config['min_child_weight'])),
+            "gamma": 0.0, "tree_method": "hist", "device": device,
+            "random_state": int(rng.integers(0, 2**31-1))
+        }
+        
+        return spec, min(K, n_features)
 
     tiers = (["A"] * nA) + (["B"] * nB) + (["C"] * nC)
     rng.shuffle(tiers)
