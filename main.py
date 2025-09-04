@@ -110,6 +110,90 @@ def get_objective_functions(args):
     # No dapy_fn in strict mode
     return None, driver_selection_obj, weight_optimization_obj
 
+def setup_xgb_specs(X_columns, args):
+    """Setup XGBoost specifications based on architecture choice.
+    
+    Returns:
+        tuple: (specs, col_slices) where col_slices is None for non-tiered approaches
+    """
+    if args.tiered_xgb:
+        specs, col_slices = stratified_xgb_bank(X_columns.tolist(), n_models=args.n_models, seed=7)
+        return specs, col_slices
+    elif args.deep_xgb:
+        specs = generate_deep_xgb_specs(n_models=args.n_models, seed=7)
+        return specs, None
+    else:
+        specs = generate_xgb_specs(n_models=args.n_models, seed=7)
+        return specs, None
+
+def train_fold_models(X_tr, y_tr, X_te, specs, col_slices, args):
+    """Train XGBoost models and return predictions based on architecture choice."""
+    if args.tiered_xgb and col_slices is not None:
+        return fold_train_predict_tiered(X_tr, y_tr, X_te, specs, col_slices)
+    else:
+        return fold_train_predict(X_tr, y_tr, X_te, specs)
+
+def select_and_optimize_drivers(signals_tr, signals_te_or_full, y_tr, args, driver_selection_obj, weight_optimization_obj, seed=1234):
+    """Unified driver selection and weight optimization logic.
+    
+    Args:
+        signals_tr: Training signals list
+        signals_te_or_full: Test signals (for CV) or full signals (for production)
+        y_tr: Training target
+        args: Arguments object
+        driver_selection_obj: Driver selection objective function
+        weight_optimization_obj: Weight optimization objective function
+        seed: Random seed for GROPE optimization
+        
+    Returns:
+        tuple: (combined_signal, selection_info) where selection_info contains chosen_idx, weights, tau, J_star
+    """
+    # Create gate function using the gating module
+    gate = lambda sig, y_local: apply_pvalue_gating(sig, y_local, args)
+    
+    # Driver selection
+    chosen_idx, selection_diagnostics = pick_top_n_greedy_diverse(
+        signals_tr, y_tr, n=args.n_select, pval_gate=gate,
+        objective_fn=driver_selection_obj, diversity_penalty=args.diversity_penalty,
+        objective_name=args.driver_selection
+    )
+    
+    if len(chosen_idx) == 0:
+        return None, None
+        
+    train_sel = [signals_tr[i] for i in chosen_idx]
+    output_sel = [signals_te_or_full[i] for i in chosen_idx]
+    
+    # Weight optimization
+    if args.equal_weights:
+        w = np.ones(len(train_sel))
+        tau = 1.0
+        ww = softmax(w, temperature=tau)
+        J_star = 0.0
+    else:
+        bounds = {**{f"w{i}": (-2.0, 2.0) for i in range(len(train_sel))}, "tau": (0.2, 3.0)}
+        fobj = weight_objective_factory(
+            train_sel, y_tr, turnover_penalty=args.lambda_to, pmax=args.pmax, 
+            w_dapy=args.w_dapy, w_ir=args.w_ir, objective_fn=weight_optimization_obj
+        )
+        theta_star, J_star, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, seed=seed)
+        
+        w = np.array([theta_star[f"w{i}"] for i in range(len(train_sel))], dtype=float)
+        tau = float(theta_star["tau"])
+        ww = softmax(w, temperature=tau)
+    
+    # Combine signals
+    combined_signal = combine_signals(output_sel, ww)
+    
+    selection_info = {
+        "chosen_idx": chosen_idx,
+        "weights": ww.tolist(),
+        "tau": tau,
+        "J_train": J_star
+    }
+    
+    return combined_signal, selection_info
+
 def save_timeseries(path: str, signal: pd.Series, y: pd.Series):
     os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
     pnl = (signal.shift(1).fillna(0.0) * y.reindex_like(signal)).astype(float)
@@ -223,14 +307,7 @@ def run_training_pipeline(X, y, args, dapy_fn, driver_selection_obj=None, weight
         # UPDATED: wfo_splits now returns generator, convert to list for compatibility
         splits = list(wfo_splits(len(X), k_folds=args.folds, min_train=max(252, len(X)//(args.folds*2))))
     
-    if args.tiered_xgb:
-        specs, col_slices = stratified_xgb_bank(X.columns.tolist(), n_models=args.n_models, seed=7)
-    elif args.deep_xgb:
-        specs = generate_deep_xgb_specs(n_models=args.n_models, seed=7)
-        col_slices = None
-    else:
-        specs = generate_xgb_specs(n_models=args.n_models, seed=7)
-        col_slices = None
+    specs, col_slices = setup_xgb_specs(X.columns, args)
         
     os.makedirs("artifacts", exist_ok=True)
 
@@ -241,12 +318,8 @@ def run_training_pipeline(X, y, args, dapy_fn, driver_selection_obj=None, weight
         X_tr, y_tr = X.iloc[tr], y.iloc[tr]
         X_te = X.iloc[te]  # Removed unused y_te
 
-        
-        # Use tiered or standard training based on architecture choice
-        if args.tiered_xgb:
-            train_preds, test_preds = fold_train_predict_tiered(X_tr, y_tr, X_te, specs, col_slices)
-        else:
-            train_preds, test_preds = fold_train_predict(X_tr, y_tr, X_te, specs)
+        # Train models using the unified helper function
+        train_preds, test_preds = train_fold_models(X_tr, y_tr, X_te, specs, col_slices, args)
         
         
         s_tr, s_te = build_driver_signals(train_preds, test_preds, y_tr, z_win=args.z_win, beta=args.beta_pre)
@@ -268,38 +341,16 @@ def run_training_pipeline(X, y, args, dapy_fn, driver_selection_obj=None, weight
         except Exception as e:
             logger.warning(f"OOS diagnostics failed: {e}")
 
-        # Create gate function using new module
-        gate = lambda sig, y_local: apply_pvalue_gating(sig, y_local, args)
-
-        # Use the required driver selection objective
-        chosen_idx, selection_diagnostics = pick_top_n_greedy_diverse(
-            s_tr, y_tr, n=args.n_select, pval_gate=gate,
-            objective_fn=driver_selection_obj, diversity_penalty=args.diversity_penalty,
-            objective_name=args.driver_selection
+        # Use unified driver selection and optimization
+        s_fold, selection_info = select_and_optimize_drivers(
+            s_tr, s_te, y_tr, args, driver_selection_obj, weight_optimization_obj, seed=1234+f
         )
-        if len(chosen_idx) == 0:
-            continue
-        train_sel = [s_tr[i] for i in chosen_idx]
-        test_sel  = [s_te[i] for i in chosen_idx]
-
-        if args.equal_weights:
-            w = np.ones(len(train_sel))
-            tau = 1.0
-            ww = softmax(w, temperature=tau)
-            J_star = 0.0
-        else:
-            bounds = {**{f"w{i}": (-2.0, 2.0) for i in range(len(train_sel))}, "tau": (0.2, 3.0)}
-            fobj = weight_objective_factory(train_sel, y_tr, turnover_penalty=args.lambda_to, pmax=args.pmax, w_dapy=args.w_dapy, w_ir=args.w_ir, objective_fn=weight_optimization_obj)
-            theta_star, J_star, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, seed=1234+f)
-
-            w = np.array([theta_star[f"w{i}"] for i in range(len(train_sel))], dtype=float)
-            tau = float(theta_star["tau"])
-            ww = softmax(w, temperature=tau)
         
-        s_fold = combine_signals(test_sel, ww)
+        if s_fold is None:
+            continue
+            
         oos_signal.iloc[te] = s_fold
-
-        fold_summaries.append({"fold": f, "chosen_idx": chosen_idx, "weights": ww.tolist(), "tau": tau, "J_train": J_star})
+        fold_summaries.append({"fold": f, **selection_info})
 
     if len(fold_summaries) == 0 or oos_signal.abs().sum() < 1e-10:
         logger.error("No valid signal generated")
@@ -383,16 +434,9 @@ def train_production_model(X: pd.DataFrame, y: pd.Series, args):
     from opt.weight_objective import weight_objective_factory
     from eval.target_shuffling import shuffle_pvalue
 
-    # Generate XGB specs based on architecture choice
-    if args.tiered_xgb:
-        specs, col_slices = stratified_xgb_bank(X.columns.tolist(), n_models=args.n_models, seed=7)
-        train_preds, test_preds = fold_train_predict_tiered(X, y, X, specs, col_slices)  # predict on full
-    elif args.deep_xgb:
-        specs = generate_deep_xgb_specs(n_models=args.n_models, seed=7)
-        train_preds, test_preds = fold_train_predict(X, y, X, specs)  # predict on full
-    else:
-        specs = generate_xgb_specs(n_models=args.n_models, seed=7)
-        train_preds, test_preds = fold_train_predict(X, y, X, specs)  # predict on full
+    # Generate XGB specs and train models
+    specs, col_slices = setup_xgb_specs(X.columns, args)
+    train_preds, test_preds = train_fold_models(X, y, X, specs, col_slices, args)  # predict on full dataset
     s_tr, s_full = build_driver_signals(train_preds, test_preds, y, z_win=args.z_win, beta=args.beta_pre)
 
     def gate(sig, yy):
@@ -460,16 +504,9 @@ def random_past_train_then_backtest(X: pd.DataFrame, y: pd.Series, args):
     X_tr, y_tr = X.iloc[idx_train], y.iloc[idx_train]
     X_te = X[X.index >= ts]
     
-    # Generate XGB specs based on architecture choice
-    if args.tiered_xgb:
-        specs, col_slices = stratified_xgb_bank(X_tr.columns.tolist(), n_models=args.n_models, seed=7)
-        train_preds, test_preds = fold_train_predict_tiered(X_tr, y_tr, X_te, specs, col_slices)
-    elif args.deep_xgb:
-        specs = generate_deep_xgb_specs(n_models=args.n_models, seed=7)
-        train_preds, test_preds = fold_train_predict(X_tr, y_tr, X_te, specs)
-    else:
-        specs = generate_xgb_specs(n_models=args.n_models, seed=7)
-        train_preds, test_preds = fold_train_predict(X_tr, y_tr, X_te, specs)
+    # Generate XGB specs and train models
+    specs, col_slices = setup_xgb_specs(X_tr.columns, args)
+    train_preds, test_preds = train_fold_models(X_tr, y_tr, X_te, specs, col_slices, args)
     s_tr, s_te = build_driver_signals(train_preds, test_preds, y_tr, z_win=args.z_win, beta=args.beta_pre)
 
     def gate(sig, yy):
