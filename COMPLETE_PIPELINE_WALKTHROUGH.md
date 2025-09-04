@@ -150,6 +150,82 @@ def pick_top_n_greedy_diverse(train_signals, y_tr, n, pval_gate, objective_fn=No
 - **Round 3**: Signal #24 would have high score but corr(24,17)=0.8, so gets penalty → Skip
 - **Continue**: Until 12 diverse, high-performing signals selected
 
+### Step 2B1: Advanced Objective Function - Predictive ICIR+LogScore
+
+**Location**: `metrics/predictive_objective.py:202-222`
+
+The `predictive_icir_logscore` objective function is a sophisticated scoring mechanism that combines two complementary predictive quality measures:
+
+#### **Component 1: ICIR (Information Coefficient Information Ratio)**
+
+**Purpose**: Measures consistency of signal-return correlation across different time periods
+
+```python
+def icir(signal: pd.Series, returns: pd.Series, eras: pd.Series) -> float:
+    """ICIR = mean(IC_era) / std(IC_era). Returns 0 if undefined."""
+    ics = []
+    for era in unique_eras:
+        # Calculate Spearman correlation for this era (e.g., monthly)
+        era_ic = spearman_corr(signal[era], returns[era])
+        ics.append(era_ic)
+    
+    ic_mean = mean(ics)
+    ic_std = std(ics)
+    return 0.0 if ic_std == 0 else ic_mean / ic_std
+```
+
+- **Era-based**: Splits data into monthly eras to test consistency
+- **Spearman Correlation**: Rank-based correlation (handles outliers better than Pearson)
+- **Consistency Measure**: High ICIR = signal consistently predicts returns across different market regimes
+
+#### **Component 2: Calibrated LogScore**
+
+**Purpose**: Measures quality of directional predictions using probability calibration
+
+```python
+def calibrated_logscore(train_signal, train_returns, val_signal, val_returns) -> float:
+    # Step 1: Train calibrator on training data
+    train_directions = (train_returns > 0).astype(int)  # 0=down, 1=up
+    calibrator = LogisticRegression()
+    calibrator.fit(train_signal.values.reshape(-1, 1), train_directions)
+    
+    # Step 2: Predict probabilities on validation data
+    val_directions = (val_returns > 0).astype(int)
+    predicted_probs = calibrator.predict_proba(val_signal.values.reshape(-1, 1))[:, 1]
+    
+    # Step 3: Calculate LogScore (log-likelihood)
+    logscore = mean(val_directions * log(predicted_probs) + 
+                   (1 - val_directions) * log(1 - predicted_probs))
+    return logscore
+```
+
+- **Probability Calibration**: Converts raw signals to well-calibrated probabilities
+- **Cross-validation**: Trains on early data, validates on later data (prevents overfitting)
+- **LogScore Metric**: Rewards both accuracy AND confidence calibration
+
+#### **Combined Objective**
+
+```python
+def predictive_icir_logscore(signal: pd.Series, returns: pd.Series, **kwargs) -> float:
+    # Default equal weighting
+    icir_weight = kwargs.get('icir_weight', 1.0)
+    logscore_weight = kwargs.get('logscore_weight', 1.0)
+    
+    # Calculate both components
+    icir_score = icir(signal, returns, monthly_eras)
+    logscore = calibrated_logscore(train_split, train_returns, val_split, val_returns)
+    
+    return icir_weight * icir_score + logscore_weight * logscore
+```
+
+**Key Advantages**:
+- **Robustness**: ICIR handles non-stationarity, LogScore handles calibration
+- **Forward-looking**: Uses proper train/validation splits to prevent overfitting
+- **Scale-independent**: Both components are standardized metrics
+- **Complementary**: ICIR measures rank correlation, LogScore measures directional accuracy
+
+This advanced objective often outperforms simpler metrics like DAPY or basic Sharpe ratios because it explicitly tests for both predictive consistency and probability calibration quality.
+
 ### Step 2C: Extract Selected Signals
 
 **Location**: `main.py:208-209`

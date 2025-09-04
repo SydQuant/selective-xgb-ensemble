@@ -28,11 +28,11 @@ def apply_pvalue_gating(signal, y_local, args, objective_fn: Optional[Callable] 
     # Determine objective function
     if objective_fn is None:
         if args.p_value_gating == 'dapy':
-            from metrics.dapy import dapy_fn
-            objective_fn = dapy_fn
+            from metrics.dapy import dapy_from_binary_hits
+            objective_fn = dapy_from_binary_hits
         else:
-            from metrics.dapy import dapy_fn
-            objective_fn = OBJECTIVE_REGISTRY.get(args.p_value_gating, dapy_fn)
+            from metrics.dapy import dapy_from_binary_hits
+            objective_fn = OBJECTIVE_REGISTRY.get(args.p_value_gating, dapy_from_binary_hits)
     
     # Run significance test
     pval, _, _ = shuffle_pvalue(signal, y_local, objective_fn, n_shuffles=200, block=args.block)

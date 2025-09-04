@@ -23,8 +23,10 @@ class ObjectiveRegistry:
         """Register built-in objective functions."""
         
         # DAPY variants
-        self.register("dapy_hits", dapy_from_binary_hits)
-        self.register("dapy_eri_both", dapy_eri_both)
+        self.register("hits", dapy_from_binary_hits)
+        self.register("dapy_hits", dapy_from_binary_hits)  # Alias for backward compatibility
+        self.register("eri_both", dapy_eri_both) 
+        self.register("dapy_eri_both", dapy_eri_both)  # Alias for backward compatibility
         
         # Information Ratio
         self.register("information_ratio", information_ratio)
@@ -33,6 +35,10 @@ class ObjectiveRegistry:
         self.register("adjusted_sharpe", self._adjusted_sharpe_wrapper)
         self.register("cb_ratio", self._cb_ratio_wrapper)
         self.register("predictive_icir_logscore", predictive_icir_logscore)
+        
+        # Multi-objective examples (for future use)
+        self.register("2ir_1sharpe", self._multi_objective_2ir_1sharpe)
+        self.register("ir_adj_sharpe", self._multi_objective_ir_adj_sharpe)
     
     def _adjusted_sharpe_wrapper(self, signal: pd.Series, returns: pd.Series, **kwargs) -> float:
         """Wrapper for adjusted Sharpe ratio."""
@@ -49,6 +55,26 @@ class ObjectiveRegistry:
         l1_penalty = kwargs.get('l1_penalty', 0.0)
         weights = kwargs.get('weights', None)
         return cb_ratio(sharpe, max_dd, l1_penalty, weights)
+    
+    def _multi_objective_2ir_1sharpe(self, signal: pd.Series, returns: pd.Series, **kwargs) -> float:
+        """Multi-objective: 2×IR + 1×Adjusted_Sharpe."""
+        ir = information_ratio(signal, returns)
+        sharpe = sharpe_ratio(signal, returns)
+        num_years = len(signal) / 252.0
+        num_points = len(signal)
+        adj_sharpe_n = kwargs.get('adj_sharpe_n', 10)
+        adj_sharpe = compute_adjusted_sharpe(sharpe, num_years, num_points, adj_sharpe_n)
+        return 2.0 * ir + 1.0 * adj_sharpe
+    
+    def _multi_objective_ir_adj_sharpe(self, signal: pd.Series, returns: pd.Series, **kwargs) -> float:
+        """Multi-objective: 1×IR + 1×Adjusted_Sharpe (equal weighting)."""
+        ir = information_ratio(signal, returns)
+        sharpe = sharpe_ratio(signal, returns)
+        num_years = len(signal) / 252.0
+        num_points = len(signal)
+        adj_sharpe_n = kwargs.get('adj_sharpe_n', 10)
+        adj_sharpe = compute_adjusted_sharpe(sharpe, num_years, num_points, adj_sharpe_n)
+        return ir + adj_sharpe
     
     def register(self, name: str, function: Callable):
         """Register a new objective function."""

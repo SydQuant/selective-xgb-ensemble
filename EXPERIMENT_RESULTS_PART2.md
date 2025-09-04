@@ -128,9 +128,16 @@ Test 2: start from baseline, use n_models 75, n_select 20, fold 10, history from
 
 (check the results and disgnostics and logs for each one of them, i expect them to have diff performance )
 
+Update the doc with results and your thoughts. Remove what we already have there 
+
 Task 3: pick the best performing setup, and test 5 objectives for p_value gating. And see if we get diff xgb models selected as part of this process. And figure out the best performing config of (p_value_gate and driver selection)
 
+Again, evaluate the results and udpate on doc. 
 
 Task 4: pick that best config, and test it with 5 dif objectives for grope. And continue to monitor logs and diagnostics, and find the best model. 
+
+You do not have to rush to get all of them done. Always pause and reflect if theres's nay critical bugs, and fix it before you proceeed to the next task. 
+
+Try to have simple and strateight forward error handling, remove excessive error ahndling or complex logic. 
 
 *Last Updated: 2025-09-04 16:48*

@@ -89,7 +89,9 @@ def get_objective_functions(args):
         driver_selection_obj = create_composite_objective(args.driver_selection_objective, OBJECTIVE_REGISTRY)
     elif args.driver_selection:
         # Use CLI argument directly with OBJECTIVE_REGISTRY
-        driver_selection_obj = OBJECTIVE_REGISTRY[args.driver_selection]
+        driver_selection_obj = OBJECTIVE_REGISTRY.get(args.driver_selection)
+    else:
+        raise ValueError("No driver_selection objective specified")
     
     if hasattr(args, 'grope_weight_objective') and args.grope_weight_objective:
         weight_optimization_obj = create_composite_objective(args.grope_weight_objective, OBJECTIVE_REGISTRY)
@@ -249,9 +251,10 @@ def run_training_pipeline(X, y, args, dapy_fn, driver_selection_obj=None, weight
         gate = lambda sig, y_local: apply_pvalue_gating(sig, y_local, args)
 
         # Use the required driver selection objective
-        chosen_idx = pick_top_n_greedy_diverse(
+        chosen_idx, selection_diagnostics = pick_top_n_greedy_diverse(
             s_tr, y_tr, n=args.n_select, pval_gate=gate,
-            objective_fn=driver_selection_obj, diversity_penalty=args.diversity_penalty
+            objective_fn=driver_selection_obj, diversity_penalty=args.diversity_penalty,
+            objective_name=args.driver_selection
         )
         if len(chosen_idx) == 0:
             continue
@@ -368,10 +371,10 @@ def train_production_model(X: pd.DataFrame, y: pd.Series, args):
     def gate(sig, yy):
         if args.bypass_pvalue_gating:
             return True
-        pval, _, _ = shuffle_pvalue(sig, yy, dapy_fn, n_shuffles=200, block=args.block)
+        pval, _, _ = shuffle_pvalue(sig, yy, driver_selection_obj, n_shuffles=200, block=args.block)
         return pval <= args.pmax
 
-    chosen_idx = pick_top_n_greedy_diverse(s_tr, y, n=args.n_select, pval_gate=gate, w_dapy=args.w_dapy, w_ir=args.w_ir, diversity_penalty=args.diversity_penalty, dapy_fn=dapy_fn, objective_fn=None)
+    chosen_idx, selection_diagnostics = pick_top_n_greedy_diverse(s_tr, y, n=args.n_select, pval_gate=gate, objective_fn=driver_selection_obj, diversity_penalty=args.diversity_penalty, objective_name=args.driver_selection)
     if len(chosen_idx) == 0:
         return
     train_sel = [s_tr[i] for i in chosen_idx]
@@ -445,10 +448,10 @@ def random_past_train_then_backtest(X: pd.DataFrame, y: pd.Series, args):
     def gate(sig, yy):
         if args.bypass_pvalue_gating:
             return True
-        pval, _, _ = shuffle_pvalue(sig, yy, dapy_fn, n_shuffles=200, block=args.block)
+        pval, _, _ = shuffle_pvalue(sig, yy, driver_selection_obj, n_shuffles=200, block=args.block)
         return pval <= args.pmax
 
-    chosen_idx = pick_top_n_greedy_diverse(s_tr, y_tr, n=args.n_select, pval_gate=gate, w_dapy=args.w_dapy, w_ir=args.w_ir, diversity_penalty=args.diversity_penalty, dapy_fn=dapy_fn, objective_fn=None)
+    chosen_idx, selection_diagnostics = pick_top_n_greedy_diverse(s_tr, y_tr, n=args.n_select, pval_gate=gate, objective_fn=driver_selection_obj, diversity_penalty=args.diversity_penalty, objective_name=args.driver_selection)
     if len(chosen_idx) == 0:
         return
     train_sel = [s_tr[i] for i in chosen_idx]

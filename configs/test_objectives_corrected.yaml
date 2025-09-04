@@ -1,0 +1,46 @@
+# test_objectives_corrected.yaml - Task 2 CORRECTED Configuration
+# Using optimal 4-year period and proper p-value gating with dapy binary
+
+target_symbol: "@ES#C"
+symbols: "@ES#C,@NQ#C,@YM#C,@RTY#C,@TY#C,@US#C,@FV#C,@TU#C,@EU#C,@BP#C,@JY#C,@AD#C,@C#C,@S#C,@W#C,@LE#C,@GF#C,@HE#C,@KC#C,@SB#C,@CC#C,@CT#C,@BO#C,@SM#C,@VX#C"
+
+# CORRECTED: Use 10-year period with 10 folds as requested
+start_date: "2015-01-01"
+end_date: "2025-08-01"
+
+signal_hour: 12
+n_hours: 24
+on_target_only: false
+corr_threshold: 0.7
+
+# Model ensemble configuration - Task 2 Baseline
+n_models: 75
+n_select: 20
+folds: 10  # 10 folds for 10-year period
+use_multiprocessing: true
+
+# Signal processing parameters
+z_win: 100
+beta_pre: 1.0
+lambda_to: 0.05
+weight_budget: 80
+w_dapy: 1.0
+w_ir: 1.0
+diversity_penalty: 0.2
+pmax: 0.10
+
+# CORRECTED: NO bypass_pvalue_gating - use proper p-value gating
+# p_value_gating will be specified via CLI
+p_value_gating: null
+final_shuffles: 600
+block: 10
+
+# NO hardcoded objectives - will use CLI parameters
+# driver_selection_objective: null
+# grope_weight_objective: null
+
+# Training configuration
+train_production: false
+dapy_style: "hits"  # CORRECTED: Use proper dapy binary hits
+test_start: "2023-10-01" 
+random_train_pct: 0.0
