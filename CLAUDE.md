@@ -390,4 +390,10 @@ Sharpe = (PnL.mean() * 252) / (PnL.std() * sqrt(252))  # Annualized
 - **Pure Performance Focus**: Sharpe-based rather than predictive accuracy
 - **Integration**: Can replace current selection methods or be used as hybrid approach
 
+**Horse Race Selection Methods**: Two new competitive selection frameworks (`ensemble/horse_race_*.py`):
+- **Individual Quality**: Each metric selects its single best driver with quality momentum tracking
+- **Ensemble Stability**: Each metric creates top-k driver ensembles for performance comparison  
+- **Predictive Power Analysis**: Spearman correlation between validation scores and realized OOS performance
+- **EWMA Quality Memory**: Historical performance tracking with configurable decay rates
+
 Framework optimized for financial data. Validated across bonds, commodities, equities, volatility.
