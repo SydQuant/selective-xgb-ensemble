@@ -116,6 +116,7 @@ def setup_xgb_specs(X_columns, args):
     Returns:
         tuple: (specs, col_slices) where col_slices is None for non-tiered approaches
     """
+    # Choose XGBoost architecture: tiered (stratified features), deep (complex trees), or standard
     if args.tiered_xgb:
         specs, col_slices = stratified_xgb_bank(X_columns.tolist(), n_models=args.n_models, seed=7)
         return specs, col_slices
@@ -123,11 +124,13 @@ def setup_xgb_specs(X_columns, args):
         specs = generate_deep_xgb_specs(n_models=args.n_models, seed=7)
         return specs, None
     else:
+        # Standard architecture - most commonly used and reliable
         specs = generate_xgb_specs(n_models=args.n_models, seed=7)
         return specs, None
 
 def train_fold_models(X_tr, y_tr, X_te, specs, col_slices, args):
     """Train XGBoost models and return predictions based on architecture choice."""
+    # Train models based on architecture: tiered uses column slicing, standard uses all features
     if args.tiered_xgb and col_slices is not None:
         return fold_train_predict_tiered(X_tr, y_tr, X_te, specs, col_slices)
     else:
@@ -148,10 +151,10 @@ def select_and_optimize_drivers(signals_tr, signals_te_or_full, y_tr, args, driv
     Returns:
         tuple: (combined_signal, selection_info) where selection_info contains chosen_idx, weights, tau, J_star
     """
-    # Create gate function using the gating module
+    # P-value gating function - filters out statistically insignificant signals
     gate = lambda sig, y_local: apply_pvalue_gating(sig, y_local, args)
     
-    # Driver selection
+    # Greedy diverse selection - picks best n_select signals with diversity penalty
     chosen_idx, selection_diagnostics = pick_top_n_greedy_diverse(
         signals_tr, y_tr, n=args.n_select, pval_gate=gate,
         objective_fn=driver_selection_obj, diversity_penalty=args.diversity_penalty,
@@ -164,25 +167,28 @@ def select_and_optimize_drivers(signals_tr, signals_te_or_full, y_tr, args, driv
     train_sel = [signals_tr[i] for i in chosen_idx]
     output_sel = [signals_te_or_full[i] for i in chosen_idx]
     
-    # Weight optimization
+    # Weight optimization - either equal weights or GROPE optimization
     if args.equal_weights:
         w = np.ones(len(train_sel))
         tau = 1.0
         ww = softmax(w, temperature=tau)
         J_star = 0.0
     else:
+        # GROPE optimization - optimize ensemble weights and temperature parameter
         bounds = {**{f"w{i}": (-2.0, 2.0) for i in range(len(train_sel))}, "tau": (0.2, 3.0)}
         fobj = weight_objective_factory(
             train_sel, y_tr, turnover_penalty=args.lambda_to, pmax=args.pmax, 
             w_dapy=args.w_dapy, w_ir=args.w_ir, objective_fn=weight_optimization_obj
         )
+        # Global optimization to find best weights (w0,w1,...) and temperature (tau)
         theta_star, J_star, _ = grope_optimize(bounds, fobj, budget=args.weight_budget, seed=seed)
         
+        # Extract optimized weights and apply softmax normalization
         w = np.array([theta_star[f"w{i}"] for i in range(len(train_sel))], dtype=float)
         tau = float(theta_star["tau"])
-        ww = softmax(w, temperature=tau)
+        ww = softmax(w, temperature=tau)  # Convert raw weights to normalized probabilities
     
-    # Combine signals
+    # Combine selected signals using optimized weights
     combined_signal = combine_signals(output_sel, ww)
     
     selection_info = {
@@ -195,16 +201,20 @@ def select_and_optimize_drivers(signals_tr, signals_te_or_full, y_tr, args, driv
     return combined_signal, selection_info
 
 def save_timeseries(path: str, signal: pd.Series, y: pd.Series):
+    """Save trading timeseries with proper 1-day lag to avoid look-ahead bias."""
     os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
+    # CRITICAL: Lag signal by 1 day to avoid look-ahead bias
     pnl = (signal.shift(1).fillna(0.0) * y.reindex_like(signal)).astype(float)
-    eq = pnl.cumsum()
+    eq = pnl.cumsum()  # Cumulative equity curve
     out = pd.DataFrame({'signal': signal, 'target_ret': y.reindex_like(signal), 'pnl': pnl, 'equity': eq})
     out.to_csv(path)
     return out
 
 def save_oos_artifacts(signal: pd.Series, y: pd.Series, block: int, final_shuffles: int, dapy_fn):
+    """Save out-of-sample artifacts and perform statistical significance testing."""
     os.makedirs("artifacts", exist_ok=True)
     out = save_timeseries("artifacts/oos_timeseries.csv", signal, y)
+    # Statistical significance testing via block shuffling (preserves autocorrelation)
     pval, obs, _ = shuffle_pvalue(signal, y, dapy_fn, n_shuffles=final_shuffles, block=block)
     print(f"OOS Shuffling p-value (DAPY): {pval:.10f} (obs={obs:.2f})")
     return out

@@ -28,39 +28,29 @@ def calculate_simple_features(df: pd.DataFrame) -> pd.DataFrame:
     atr_absolute = high_low.rolling(6).mean()
     result['atr'] = atr_absolute / result['close']  # ATR as % of price
     
-    # Momentum features for various periods (following original pattern)
+    # Momentum features for various periods (following original pattern)  
     periods = [1, 2, 3, 4, 8, 12, 16, 20]
     change = result['close'].pct_change(fill_method=None)
+    atr_change = result['atr'].pct_change(fill_method=None)
     
     for p in periods:
+        # Batch calculate all rolling features for this period
         momentum = change.rolling(p, min_periods=1).mean()
         result[f'momentum_{p}h'] = momentum.clip(-0.2, 0.2)
-        
-        velocity = momentum.pct_change(fill_method=None)
-        result[f'velocity_{p}h'] = velocity.clip(-5, 5)
-        
-        rsi_rolling = result['rsi'].rolling(p, min_periods=1).mean()
-        result[f'rsi_{p}h'] = rsi_rolling  # Remove artificial clipping
-        
-        # ATR change (already as % of price, so pct_change is appropriate)
-        atr_change = result['atr'].pct_change(fill_method=None)
+        result[f'velocity_{p}h'] = momentum.pct_change(fill_method=None).clip(-5, 5)
+        result[f'rsi_{p}h'] = result['rsi'].rolling(p, min_periods=1).mean()
         result[f'atr_{p}h'] = atr_change.clip(-2, 2).rolling(p, min_periods=1).mean()
         
-        # Breakout as percentage of recent low (fix 1h issue by using min period of 2)
-        if p == 1:
-            # For 1h, use 2-period min to avoid constant zero
-            recent_low = result['close'].rolling(2, min_periods=2).min()
-        else:
-            recent_low = result['close'].rolling(p, min_periods=2).min()
-        
-        # Only calculate where we have valid recent_low
+        # Breakout calculation (handle p=1 edge case)
+        min_periods = 2 if p > 1 else 2  # Always use min_periods=2
+        window = max(p, 2) if p == 1 else p
+        recent_low = result['close'].rolling(window, min_periods=min_periods).min()
         result[f'breakout_{p}h'] = (result['close'] - recent_low) / recent_low
     
-    # Momentum differentials
-    if 'momentum_1h' in result.columns and 'momentum_4h' in result.columns:
-        result['momentum_diff_1_4h'] = result['momentum_1h'] - result['momentum_4h']
-        result['momentum_diff_3_12h'] = result['momentum_3h'] - result['momentum_12h']
-        result['momentum_diff_8_16h'] = result['momentum_8h'] - result['momentum_16h']
+    # Momentum differentials (batch calculate)
+    diff_pairs = [(1, 4), (3, 12), (8, 16)]
+    for short, long in diff_pairs:
+        result[f'momentum_diff_{short}_{long}h'] = result[f'momentum_{short}h'] - result[f'momentum_{long}h']
     
     return result
 
@@ -160,24 +150,22 @@ def clean_data_simple(df: pd.DataFrame) -> pd.DataFrame:
     df_clean = df_clean.replace([np.inf, -np.inf], np.nan)
     
     # 2. Identify and remove truly problematic features
-    features_to_drop = []
-    
-    for col in feature_cols:
-        series = df_clean[col]
+    def should_drop_feature(series):
         n_total = len(series)
         n_nan = series.isna().sum()
-        n_finite = series.replace([np.inf, -np.inf], np.nan).notna().sum()
         
         # Drop if >90% NaN (very low quality)
         if n_nan / n_total > 0.9:
-            features_to_drop.append(col)
-            continue
+            return True
             
         # Check if constant (std < 1e-12 on finite values)
         finite_vals = series.dropna()
         if len(finite_vals) > 0 and finite_vals.std() < 1e-12:
-            features_to_drop.append(col)
-            continue
+            return True
+            
+        return False
+    
+    features_to_drop = [col for col in feature_cols if should_drop_feature(df_clean[col])]
     
     if features_to_drop:
         df_clean = df_clean.drop(columns=features_to_drop)
@@ -186,22 +174,22 @@ def clean_data_simple(df: pd.DataFrame) -> pd.DataFrame:
     # Forward fill for time series continuity (no future leakage)
     df_clean = df_clean.ffill()
     
-    # For remaining NaNs (typically at start due to rolling windows), 
-    # check if they're a small number that can be handled, or if the feature should be dropped
-    features_to_drop_nan = []
-    
-    for col in feature_cols:
+    # Handle remaining NaNs (typically at start due to rolling windows)
+    def handle_remaining_nans(col):
         series = df_clean[col]
         nan_count = series.isna().sum()
-        
         if nan_count > 0:
             nan_pct = nan_count / len(series)
-            
             if nan_pct > 0.1:  # >10% NaN - drop the feature
-                features_to_drop_nan.append(col)
+                return 'drop'
             else:
-                # Small number of NaNs (likely at start) - fill with 0 (no forward-looking bias)
+                # Small number of NaNs (likely at start) - fill with 0
                 df_clean[col] = series.fillna(0.0)
+                return 'filled'
+        return 'ok'
+    
+    feature_cols_remaining = [col for col in df_clean.columns if col.startswith(('rsi', 'atr', 'momentum', 'velocity', 'breakout'))]
+    features_to_drop_nan = [col for col in feature_cols_remaining if handle_remaining_nans(col) == 'drop']
     
     if features_to_drop_nan:
         df_clean = df_clean.drop(columns=features_to_drop_nan)

@@ -135,7 +135,7 @@ Key parameters:
 - `--equal_weights` - Use equal weighting instead of GROPE optimization (asset-dependent effectiveness)
 - `--tiered_xgb` - Use tiered XGBoost configuration (breakthrough for underperformers: +0.24 to +0.37 Sharpe)
 - `--deep_xgb` - Use deep XGBoost configuration (advanced architecture option)
-- `--dapy_style` - DAPY calculation method: "hits" (default), "eri_long", "eri_short", "eri_both" (asset-specific optimization)
+- `--dapy_style` - DAPY calculation method: "hits" (default), "eri_both" (asset-specific optimization) - simplified from original 4 options
 - `--driver_selection` - Driver selection objective function: "hybrid_sharpe_ir" (0.7×Adjusted_Sharpe + 0.3×Information_Ratio), "hits", "eri_both", "adjusted_sharpe", "cb_ratio", "predictive_icir_logscore", "information_ratio"
 - `--grope_objective` - GROPE weight optimization objective: same options as driver_selection
 - `--pmax` - P-value threshold for statistical significance gating (e.g., 0.05, 0.1, 0.2)
@@ -176,10 +176,11 @@ grep "Processing complete:" logs/
 **Debug signals**: 
 - Check `ensemble/combiner.py:build_driver_signals()` for z-score/tanh transformation pipeline
 - Signal flow: raw predictions → z-score → tanh squashing → clipping [-1,1]
+- Transformation functions now consolidated within combiner.py module
 
 **Add new metrics**: 
 - Extend functions in `metrics/` directory (supports DAPY variants and adjusted Sharpe)
-- Run `analyze_task8_metrics.py` for multi-metric validation
+- Use the objective registry system for configurable multi-metric validation
 
 ## Critical Codebase Components
 
@@ -201,7 +202,7 @@ grep "Processing complete:" logs/
 - `ensemble/combiner.py` - Signal transformation (z-score → tanh → clipping)
 - `ensemble/selection.py` - Driver selection with diversity penalty and p-value gating
 - `ensemble/sharpe_stability_selector.py` - **NEW**: Stability-based model selection using Sharpe ratio performance
-- `utils/transforms.py` - Mathematical transformations for signals
+- Signal transformations now integrated into `ensemble/combiner.py` for better modularity
 
 ### Optimization
 - `opt/grope.py` - Global RBF optimization engine (GROPE algorithm)

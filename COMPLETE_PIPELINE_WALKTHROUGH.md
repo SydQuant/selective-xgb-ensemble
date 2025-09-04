@@ -29,7 +29,7 @@ else:
 
 ### Step 1B: Raw Predictions → Trading Signals
 
-**Location**: `ensemble/combiner.py:7-18` → `main.py:193`
+**Location**: `ensemble/combiner.py:build_driver_signals()` → called from main pipeline
 
 ```python
 s_tr, s_te = build_driver_signals(train_preds, test_preds, y_tr, z_win=args.z_win, beta=args.beta_pre)
@@ -55,12 +55,14 @@ def build_driver_signals(train_preds, test_preds, y_tr, z_win=100, beta=1.0):
     return s_tr, s_te
 ```
 
-**What each signal becomes:**
+**Signal transformation pipeline (consolidated in combiner.py):**
 
 - **Raw prediction**: e.g., 0.00234 (small return prediction)
 - **After z-score**: e.g., 1.2 (standardized, shows how extreme vs recent predictions)
 - **After tanh**: e.g., 0.83 (bounded trading signal in [-1,1])
 - **Result**: `s_tr` = list of 50 normalized signals on training data, `s_te` = same for test data
+
+*Note: zscore and tanh_squash functions are now integrated directly into combiner.py for better modularity*
 
 ---
 
@@ -68,14 +70,11 @@ def build_driver_signals(train_preds, test_preds, y_tr, z_win=100, beta=1.0):
 
 ### Step 2A: P-Value Gating Function
 
-**Location**: `main.py:195-199`
+**Location**: `ensemble/gating.py:apply_pvalue_gating()` → called from selection logic
 
 ```python
-def gate(sig, y_local):
-    if args.bypass_pvalue_gating:
-        return True
-    pval, _, _ = shuffle_pvalue(sig, y_local, dapy_fn, n_shuffles=200, block=args.block)
-    return pval <= args.pmax
+# Now handled by the gating module with improved logging
+gate = lambda sig, y_local: apply_pvalue_gating(sig, y_local, args)
 ```
 
 **Purpose**: Statistical significance test
@@ -87,13 +86,14 @@ def gate(sig, y_local):
 
 ### Step 2B: Greedy Diverse Driver Selection
 
-**Location**: `ensemble/selection.py:12-53` → `main.py:201-205`
+**Location**: `ensemble/selection.py:pick_top_n_greedy_diverse()` → called from unified selection logic
 
 ```python
-chosen_idx = pick_top_n_greedy_diverse(
-    s_tr, y_tr, n=args.n_select, pval_gate=gate,
-    w_dapy=args.w_dapy, w_ir=args.w_ir, diversity_penalty=args.diversity_penalty, 
-    dapy_fn=dapy_fn, objective_fn=driver_selection_obj
+# Now uses configurable objectives and improved diagnostics
+chosen_idx, selection_diagnostics = pick_top_n_greedy_diverse(
+    signals_tr, y_tr, n=args.n_select, pval_gate=gate,
+    objective_fn=driver_selection_obj, diversity_penalty=args.diversity_penalty,
+    objective_name=args.driver_selection
 )
 ```
 
@@ -1516,7 +1516,7 @@ weight_adjusted_sharpe = weight_ir * (1.5 / 0.4) = weight_ir * 4
 
 - **Best**: `dapy_eri_both` (handles commodity cycles)
 - **Alternative**: `cb_ratio` (drawdown control for volatility)
-- **Test**: Asset-specific DAPY style (`eri_long` vs `eri_short`)
+- **Test**: Asset-specific DAPY style (`hits` vs `eri_both`) - eri_long/eri_short removed for simplicity
 
 #### **Volatility** (@VX#C)
 
