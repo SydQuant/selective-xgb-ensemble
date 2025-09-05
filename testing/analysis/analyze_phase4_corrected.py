@@ -61,9 +61,9 @@ def analyze_phase4_results():
     """Analyze corrected Phase 4 results with proper OOS metrics"""
     
     log_files = {
-        'Standard': "logs/xgb_performance_corrected_p4_standard_standard_100feat_10folds_20250905_150008.log",
-        'Deep': "logs/xgb_performance_corrected_p4_deep_deep_100feat_10folds_20250905_150014.log", 
-        'Tiered': "logs/xgb_performance_tiered_rerun_tiered_100feat_10folds_20250905_122001.log"
+        'Standard': "logs/xgb_performance_p4_standard_200feat_standard_200feat_10folds_20250905_165745.log",
+        'Tiered': "logs/xgb_performance_p4_tiered_200feat_tiered_200feat_10folds_20250905_165753.log",
+        'Deep': "logs/xgb_performance_p4_deep_200feat_deep_200feat_10folds_20250905_165802.log"
     }
     
     results = {}
@@ -71,7 +71,7 @@ def analyze_phase4_results():
     print("=" * 80)
     print("PHASE 4 CORRECTED ANALYSIS - PROPER OOS METRICS")
     print("=" * 80)
-    print("Multi-Year Data (2015-2024): 2324 observations, 10 folds, 50 models, 100 features")
+    print("Multi-Year Data (2015-2024): 2324 observations, 10 folds, 50 models, 200 features")
     print()
     
     for config_name, log_file in log_files.items():

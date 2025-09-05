@@ -69,10 +69,10 @@ def analyze_phase3_results():
     """Analyze corrected Phase 3 results with proper OOS metrics"""
     
     log_files = {
-        '50_features': "logs/xgb_performance_corrected_p3_50feat_standard_50feat_10folds_20250905_151711.log",
-        '100_features': "logs/xgb_performance_corrected_p3_100feat_standard_100feat_10folds_20250905_151716.log", 
-        '150_features': "logs/xgb_performance_corrected_p3_150feat_standard_150feat_10folds_20250905_151722.log",
-        'ALL_features': "logs/xgb_performance_corrected_p3_ALLfeat_standard_-1feat_10folds_20250905_151728.log"
+        '100_features': "logs/phase3/xgb_performance_p3_T2_100feat_fixed_standard_100feat_10folds_20250905_163747.log",
+        '200_features': "logs/phase3/xgb_performance_p3_T3_200feat_fixed_standard_200feat_10folds_20250905_163755.log", 
+        'ALL_filtered_features': "logs/phase3/xgb_performance_p3_T4_ALLfiltered_fixed_standard_-1feat_10folds_20250905_163802.log",
+        'ALL_raw_features': "logs/phase3/xgb_performance_p3_T5_ALLraw_fixed_standard_50feat_10folds_20250905_162158.log"
     }
     
     results = {}
@@ -135,11 +135,11 @@ def analyze_phase3_results():
     print("=" * 80)
     print("PHASE 3 COMPARISON SUMMARY")
     print("=" * 80)
-    print(f"{'Metric':<25} | {'50 Features':<12} | {'100 Features':<12} | {'150 Features':<12} | {'ALL Features':<12} | {'Winner':<10}")
+    print(f"{'Metric':<25} | {'100 Features':<12} | {'200 Features':<12} | {'ALL Filtered':<12} | {'ALL Raw':<12} | {'Winner':<10}")
     print("-" * 105)
     
     if results:
-        configs = ['50_features', '100_features', '150_features', 'ALL_features']
+        configs = ['100_features', '200_features', 'ALL_filtered_features', 'ALL_raw_features']
         configs = [k for k in configs if k in results]
         
         # Compare metrics
@@ -155,15 +155,17 @@ def analyze_phase3_results():
         significance_winner = max(significance_values.keys(), key=lambda k: significance_values[k]) if significance_values else 'N/A'
         
         def format_winner(winner_key):
-            if winner_key == 'ALL_features':
-                return 'ALL'
+            if winner_key == 'ALL_filtered_features':
+                return 'ALL_FILT'
+            elif winner_key == 'ALL_raw_features':
+                return 'ALL_RAW'
             else:
                 return winner_key.split('_')[0]
         
-        print(f"{'Avg OOS Sharpe':<25} | {sharpe_values.get('50_features', 0):<12.3f} | {sharpe_values.get('100_features', 0):<12.3f} | {sharpe_values.get('150_features', 0):<12.3f} | {sharpe_values.get('ALL_features', 0):<12.3f} | {format_winner(sharpe_winner):<10}")
-        print(f"{'Avg OOS Hit Rate':<25} | {hit_values.get('50_features', 0):<12.3f} | {hit_values.get('100_features', 0):<12.3f} | {hit_values.get('150_features', 0):<12.3f} | {hit_values.get('ALL_features', 0):<12.3f} | {format_winner(hit_winner):<10}")
-        print(f"{'Sharpe Consistency':<25} | {consistency_values.get('50_features', 0):<12.3f} | {consistency_values.get('100_features', 0):<12.3f} | {consistency_values.get('150_features', 0):<12.3f} | {consistency_values.get('ALL_features', 0):<12.3f} | {format_winner(consistency_winner):<10}")
-        print(f"{'Statistical Significance':<25} | {significance_values.get('50_features', 0):<12.1f}% | {significance_values.get('100_features', 0):<12.1f}% | {significance_values.get('150_features', 0):<12.1f}% | {significance_values.get('ALL_features', 0):<12.1f}% | {format_winner(significance_winner):<10}")
+        print(f"{'Avg OOS Sharpe':<25} | {sharpe_values.get('100_features', 0):<12.3f} | {sharpe_values.get('200_features', 0):<12.3f} | {sharpe_values.get('ALL_filtered_features', 0):<12.3f} | {sharpe_values.get('ALL_raw_features', 0):<12.3f} | {format_winner(sharpe_winner):<10}")
+        print(f"{'Avg OOS Hit Rate':<25} | {hit_values.get('100_features', 0):<12.3f} | {hit_values.get('200_features', 0):<12.3f} | {hit_values.get('ALL_filtered_features', 0):<12.3f} | {hit_values.get('ALL_raw_features', 0):<12.3f} | {format_winner(hit_winner):<10}")
+        print(f"{'Sharpe Consistency':<25} | {consistency_values.get('100_features', 0):<12.3f} | {consistency_values.get('200_features', 0):<12.3f} | {consistency_values.get('ALL_filtered_features', 0):<12.3f} | {consistency_values.get('ALL_raw_features', 0):<12.3f} | {format_winner(consistency_winner):<10}")
+        print(f"{'Statistical Significance':<25} | {significance_values.get('100_features', 0):<12.1f}% | {significance_values.get('200_features', 0):<12.1f}% | {significance_values.get('ALL_filtered_features', 0):<12.1f}% | {significance_values.get('ALL_raw_features', 0):<12.1f}% | {format_winner(significance_winner):<10}")
         
         # Overall scoring
         print(f"\n{'='*80}")
