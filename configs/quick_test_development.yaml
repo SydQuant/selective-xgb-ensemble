@@ -1,0 +1,56 @@
+# quick_test_development.yaml - FAST DEVELOPMENT TESTING
+# Minimal configuration for rapid prototyping and debugging
+# Optimized for speed over accuracy - use for development/debugging only
+# Runtime: ~2-5 minutes
+
+# Data Configuration (Short Period)
+target_symbol: "@ES#C"  # Override via CLI
+symbols: "@ES#C,@NQ#C,@YM#C,@RTY#C,@TY#C"  # Limited symbol set for speed
+start_date: "2023-01-01"  # Short 1.5-year period
+end_date: "2024-08-01"
+signal_hour: 12
+n_hours: 24
+on_target_only: false
+corr_threshold: 0.7
+
+# Minimal Model Configuration
+n_models: 15        # Reduced for speed
+n_select: 5         # Fewer selected models
+folds: 3            # Fewer folds
+use_multiprocessing: true
+
+# Signal Processing Parameters
+z_win: 50           # Shorter window for speed
+beta_pre: 1.0
+lambda_to: 0.05
+weight_budget: 40   # Reduced budget
+w_dapy: 1.0
+w_ir: 1.0
+diversity_penalty: 0.2
+pmax: 0.20          # Relaxed significance
+
+# Fast Statistical Testing
+p_value_gating: null      # Disabled for speed
+final_shuffles: 100       # Minimal shuffles
+block: 10
+
+# Training Configuration
+train_production: false
+dapy_style: "hits"
+test_start: "2023-10-01"
+random_train_pct: 0.0
+
+# Simple Objective Configuration
+driver_selection_objective:
+  dapy:
+    dapy_style: "hits"
+    weight: 1.0
+  information_ratio:
+    weight: 1.0
+
+grope_weight_objective:
+  dapy:
+    dapy_style: "hits"
+    weight: 1.0
+  information_ratio:
+    weight: 1.0

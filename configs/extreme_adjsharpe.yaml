@@ -1,0 +1,60 @@
+# Extreme test: adjusted_sharpe metric  
+target_symbol: "@ES#C"
+symbols: "@ES#C,@NQ#C,@YM#C,@RTY#C,@TY#C,@US#C,@FV#C,@TU#C,@EU#C,@BP#C,@JY#C,@AD#C,@C#C,@S#C,@W#C,@LE#C,@GF#C,@HE#C,@KC#C,@SB#C,@CC#C,@CT#C,@BO#C,@SM#C,@VX#C"
+start_date: "2018-01-01"
+end_date: "2024-01-01"
+signal_hour: 12
+n_hours: 24
+on_target_only: false
+corr_threshold: 0.7
+max_features: 100
+
+n_models: 30
+n_select: 20
+folds: 4
+use_multiprocessing: true
+
+use_stability_ensemble: true
+
+stability:
+  metric_name: "adj_sharpe"
+  top_k: 8
+  alpha: 1.0
+  lam_gap: 0.3
+  relative_gap: false
+  eta_quality: 0.0
+  quality_halflife: 63
+  inner_val_frac: 0.2
+  costs_per_turn: 0.0001
+
+z_win: 100
+beta_pre: 1.0
+lambda_to: 0.05
+weight_budget: 200
+w_dapy: 1.0
+w_ir: 1.0
+diversity_penalty: 0.2
+pmax: 0.10
+
+p_value_gating: null
+final_shuffles: 1000
+block: 10
+
+train_production: false
+dapy_style: "hits"
+test_start: "2018-01-01"
+random_train_pct: 0.0
+
+driver_selection_objective:
+  dapy:
+    dapy_style: "hits"
+    weight: 1.0
+  information_ratio:
+    weight: 1.0
+
+grope_weight_objective:
+  dapy:
+    dapy_style: "hits"
+    weight: 1.0
+  information_ratio:
+    weight: 1.0

@@ -1,0 +1,71 @@
+# stability_ensemble_test.yaml - STABILITY ENSEMBLE CONFIGURATION
+# Uses stability horse race method instead of GROPE optimization
+# Emphasizes ensemble robustness and consistent performance
+# Runtime: ~5-8 minutes per symbol (similar to GROPE)
+
+# Data Configuration
+target_symbol: "@ES#C"  # Override via CLI --target_symbol
+symbols: "@ES#C,@NQ#C,@YM#C,@RTY#C,@TY#C,@US#C,@FV#C,@TU#C,@EU#C,@BP#C,@JY#C,@AD#C,@C#C,@S#C,@W#C,@LE#C,@GF#C,@HE#C,@KC#C,@SB#C,@CC#C,@CT#C,@BO#C,@SM#C,@VX#C"
+start_date: "2020-07-01"  # 4-year optimal timeframe
+end_date: "2024-08-01"
+signal_hour: 12
+n_hours: 24
+on_target_only: false
+corr_threshold: 0.7
+
+# Model Ensemble Configuration  
+n_models: 50        # Same XGBoost ensemble size
+n_select: 12        # Ignored in stability mode (kept for compatibility)
+folds: 6            # Cross-validation folds
+use_multiprocessing: true
+
+# Ensemble Method Selection
+use_stability_ensemble: true  # Use stability instead of GROPE
+
+# Stability Ensemble Parameters
+stability:
+  metric_name: "sharpe"              # Primary selection metric
+  top_k: 5                           # Select top 5 drivers for ensemble
+  alpha: 1.0                         # Full weight on validation performance
+  lam_gap: 0.3                       # Moderate stability penalty
+  relative_gap: false                # Use absolute gap penalty
+  eta_quality: 0.0                   # No quality momentum (start simple)
+  quality_halflife: 63               # Quality memory (~3 months)
+  inner_val_frac: 0.2                # 20% inner validation split
+  costs_per_turn: 0.0001             # Small transaction costs
+
+# Signal Processing Parameters (same as GROPE)
+z_win: 100          # Rolling z-score window
+beta_pre: 1.0       # Tanh squashing parameter
+lambda_to: 0.05     # Turnover penalty (unused in stability mode)
+weight_budget: 80   # GROPE budget (unused in stability mode)
+w_dapy: 1.0         # GROPE weights (unused in stability mode)
+w_ir: 1.0           # GROPE weights (unused in stability mode)
+diversity_penalty: 0.2  # GROPE diversity (unused in stability mode)
+pmax: 0.05          # P-value threshold (used same way)
+
+# Statistical Testing Configuration (same as GROPE)
+p_value_gating: null  # P-value gating method
+final_shuffles: 600   # Shuffles for p-value calculation
+block: 10            # Block size for shuffling
+
+# Training Configuration
+train_production: false
+dapy_style: "hits"   # DAPY calculation method
+test_start: "2023-10-01"
+random_train_pct: 0.0
+
+# Objective Function Configuration (unused in stability mode but kept for compatibility)
+driver_selection_objective:
+  dapy:
+    dapy_style: "hits"
+    weight: 1.0
+  information_ratio:
+    weight: 1.0
+
+grope_weight_objective:
+  dapy:
+    dapy_style: "hits"
+    weight: 1.0
+  information_ratio:
+    weight: 1.0

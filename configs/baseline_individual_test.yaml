@@ -1,0 +1,71 @@
+# baseline_individual_test.yaml - BASELINE INDIVIDUAL SYMBOL TESTING
+# Most commonly used configuration for testing individual symbols
+# Balanced between speed and reliability - suitable for research and development
+# Runtime: ~5-10 minutes per symbol
+
+# Data Configuration
+target_symbol: "@ES#C"  # Override via CLI --target_symbol
+symbols: "@ES#C,@NQ#C,@YM#C,@RTY#C,@TY#C,@US#C,@FV#C,@TU#C,@EU#C,@BP#C,@JY#C,@AD#C,@C#C,@S#C,@W#C,@LE#C,@GF#C,@HE#C,@KC#C,@SB#C,@CC#C,@CT#C,@BO#C,@SM#C,@VX#C"
+start_date: "2020-07-01"  # 4-year optimal timeframe
+end_date: "2024-08-01"
+signal_hour: 12
+n_hours: 24
+on_target_only: false
+corr_threshold: 0.7
+
+# Model Ensemble Configuration  
+n_models: 50        # Baseline model count
+n_select: 12        # Models selected after GROPE optimization (unused in stability mode)
+folds: 6            # Cross-validation folds
+use_multiprocessing: true
+
+# Ensemble Method Selection
+use_stability_ensemble: false  # true = Stability Horse Race, false = GROPE optimization
+
+# Stability Ensemble Parameters (only used when use_stability_ensemble=true)
+stability:
+  metric_name: "sharpe"              # Metric for driver selection: "sharpe", "adj_sharpe", "hit_rate"  
+  top_k: 5                           # Number of drivers to select for ensemble (3-8 recommended)
+  alpha: 1.0                         # Weight on validation performance (0.5-1.0)
+  lam_gap: 0.3                       # Stability penalty for train→val gap (0.1-0.5)  
+  relative_gap: false                # Use relative gap penalty (true/false)
+  eta_quality: 0.0                   # Quality momentum weight (0.0-0.3)
+  quality_halflife: 63               # Quality memory halflife in days (~3 months)
+  inner_val_frac: 0.2                # Fraction of training data for inner validation
+  costs_per_turn: 0.0001             # Transaction costs for metric calculation
+
+# Signal Processing Parameters
+z_win: 100          # Rolling z-score window
+beta_pre: 1.0       # Tanh squashing parameter
+lambda_to: 0.05     # Turnover penalty
+weight_budget: 80   # Weight optimization budget
+w_dapy: 1.0         # DAPY weight in driver selection
+w_ir: 1.0           # Information Ratio weight in driver selection
+diversity_penalty: 0.2  # Diversity penalty in selection
+pmax: 0.05          # P-value threshold (5% significance)
+
+# Statistical Testing Configuration
+p_value_gating: null  # P-value gating method: null (disabled), 'dapy', etc.
+final_shuffles: 600   # Shuffles for p-value calculation
+block: 10            # Block size for shuffling
+
+# Training Configuration
+train_production: false
+dapy_style: "hits"   # DAPY calculation method
+test_start: "2023-10-01"
+random_train_pct: 0.0
+
+# Objective Function Configuration (Default)
+driver_selection_objective:
+  dapy:
+    dapy_style: "hits"
+    weight: 1.0
+  information_ratio:
+    weight: 1.0
+
+grope_weight_objective:
+  dapy:
+    dapy_style: "hits"
+    weight: 1.0
+  information_ratio:
+    weight: 1.0
