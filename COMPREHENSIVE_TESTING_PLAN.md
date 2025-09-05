@@ -31,8 +31,8 @@ Testing Strategy Overview
 This comprehensive testing plan follows a systematic approach to identify optimal configurations across multiple dimensions:
 
 1. **Phase 1**: Fold Optimization (Find optimal number of cross-validation folds) ✅ **COMPLETE - Winner: 10 Folds**
-2. **Phase 2**: Model Count Optimization (Find optimal number of XGBoost models) ✅ **COMPLETE - Winner: 25 Models**
-3. **Phase 3**: Feature Count Optimization (Compare all features vs feature selection) ⚙️ **RUNNING**
+2. **Phase 2**: Model Count Optimization (Find optimal number of XGBoost models) ✅ **COMPLETE - Winner: 50 Models**
+3. **Phase 3**: Feature Count Optimization (Compare 100, 200, All Filtered, All Raw features) ⚙️ **RERUNNING WITH FIXED ANALYZER**
 4. **Phase 4**: Architecture Comparison (Standard vs Tiered vs Deep XGBoost)
 
 Each phase builds on the optimal configuration from the previous phase.
@@ -125,7 +125,7 @@ I messed up this step
 - Models: **50** (corrected from Phase 2)
 - XGBoost: standard architecture
 
-### Test Matrix - Phase 3 CORRECTED
+### Test Matrix - Phase 3 FIXED ANALYZER
 
 | Test ID | Features | Selection Method          | Log File                                                                                            | Notes                  | Status                |
 | ------- | -------- | ------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------- | --------------------- |
@@ -135,22 +135,22 @@ I messed up this step
 | P3-T4   | 389      | Block-wise filtered       | `xgb_performance_corrected_p3_ALLfeat_standard_-1feat_10folds_20250905_151728.log` (389 features) | All filtered features  | ✅**COMPLETE**  |
 | P3-T5   | ALL      | No selection              | `xgb_performance_p3_T5_ALLraw_feat_standard_50feat_10folds_20250905_HHMMSS.log` (1054 features)   | All raw features       | ⚙️**RUNNING** |
 
-### Phase 3 Results Summary ✅ **COMPLETE**
+### Phase 3 Results Summary ⚙️ **RERUNNING WITH FIXED ANALYZER**
 
-| Metric                                | 50 Features | 100 Features | 150 Features | All Filtered Features | All Raw Features | Winner                 |
-| ------------------------------------- | ----------- | ------------ | ------------ | --------------------- | ---------------- | ---------------------- |
-| Features Used                         | 50          | 100          | 150          | 389                   | 1054             | -                      |
-| Avg OOS Sharpe                        | +0.499      | +0.298       | +0.356       | +0.528                | TBD              | **ALL_filtered** |
-| Avg OOS Hit Rate                      | 50.0%       | 50.0%        | 50.0%        | 50.0%                 | TBD              | **ALL_tied**     |
-| Sharpe Consistency (StdDev)           | 1.190       | 1.109        | 1.049        | 1.187                 | TBD              | **150_features** |
-| Statistical Significance (% positive) | 63.4%       | 56.8%        | 59.3%        | 64.4%                 | TBD              | **ALL_filtered** |
-| **Overall Score**               | 0.684       | 0.598        | 0.646        | **0.701**       | TBD              | **ALL_filtered** |
+| Metric                                | ~~50 Features~~ | 100 Features | 200 Features | All Filtered Features | All Raw Features | Winner                 |
+| ------------------------------------- | --------------- | ------------ | ------------ | --------------------- | ---------------- | ---------------------- |
+| Features Used                         | ~~50~~          | 100          | 200          | ~389                  | 1054             | -                      |
+| Avg OOS Sharpe                        | ~~+0.499~~      | ⚙️ Running   | ⚙️ Running   | ⚙️ Running            | ⚙️ Running       | **TBD**               |
+| Avg OOS Hit Rate                      | ~~50.0%~~       | ⚙️ Running   | ⚙️ Running   | ⚙️ Running            | ⚙️ Running       | **TBD**               |
+| Sharpe Consistency (StdDev)           | ~~1.190~~       | ⚙️ Running   | ⚙️ Running   | ⚙️ Running            | ⚙️ Running       | **TBD**               |
+| Statistical Significance (% positive) | ~~63.4%~~       | ⚙️ Running   | ⚙️ Running   | ⚙️ Running            | ⚙️ Running       | **TBD**               |
+| **Overall Score**               | ~~0.684~~       | ⚙️ Running   | ⚙️ Running   | ⚙️ Running            | ⚙️ Running       | **TBD**               |
 
-**Phase 3 Current Winner**: **All Filtered Features (389)** (Score: 0.701, OOS Sharpe: +0.528) - *Pending P3-T5 completion*
+**Phase 3 Status**: **Rerunning with xgb_performance_analyzer_fixed.py** (provides MEAN rows for easier analysis)
 
 ---
 
-## Phase 4: Architecture Comparison ✅ **READY TO LAUNCH**
+## Phase 4: Architecture Comparison 
 
 **Objective**: Compare XGBoost architectures using optimal configuration from Phases 1-3
 

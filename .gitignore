@@ -36,13 +36,7 @@ Thumbs.db
 artifacts/
 *.csv
 
-# Arctic Database - ADDED: Ignore database files
-data/arctic_data/
-data/**/arctic_data/
-*.mdb
-*.lmdb
-*.db
-*.sqlite
+
 
 # Large data files
 *.h5
