@@ -29,7 +29,7 @@ def calculate_simple_features(df: pd.DataFrame) -> pd.DataFrame:
     result['atr'] = atr_absolute / result['close']  # ATR as % of price
     
     # Momentum features for various periods (following original pattern)  
-    periods = [1, 2, 3, 4, 8, 12, 16, 20]
+    periods = [1, 2, 3, 4, 8, 12, 16, 20, 24, 28, 32]
     change = result['close'].pct_change(fill_method=None)
     atr_change = result['atr'].pct_change(fill_method=None)
     
@@ -59,7 +59,7 @@ def calculate_cross_correlations_simple(target_symbol: str, raw_data: Dict[str, 
     if target_symbol not in raw_data:
         return pd.DataFrame(index=target_index)
     
-    periods = [2, 4, 6, 8, 10, 12, 16, 20]
+    periods = [2, 4, 6, 8, 10, 12, 16, 20, 24, 28, 32]
     target_close = raw_data[target_symbol]['close']
     
     corr_features = {}

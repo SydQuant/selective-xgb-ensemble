@@ -144,6 +144,23 @@ Key parameters:
 ## Development Commands
 
 ### Testing and Validation
+
+**Primary Testing Framework**: `xgb_performance_analyzer.py`
+```bash
+# Comprehensive architecture testing (Phase 4 example)
+~/anaconda3/python.exe xgb_performance_analyzer.py \
+    --log_label "p4_standard_ALLfeat" \
+    --target_symbol "@ES#C" \
+    --start_date "2014-01-01" --end_date "2024-01-01" \
+    --n_models 50 --n_folds 10 \
+    --no_feature_selection --xgb_type "standard"
+
+# Alternative architectures
+# --xgb_type "tiered"  # Multi-tier ensemble
+# --xgb_type "deep"    # Deeper trees
+```
+
+**Log Analysis Commands**:
 ```bash
 # Check final performance metrics
 grep "OOS DAPY" logs/
@@ -156,6 +173,9 @@ grep "Data loaded:" logs/
 
 # Check signal quality (essential for validation)
 grep "Processing complete:" logs/
+
+# Phase analysis scripts
+~/anaconda3/python.exe testing/analysis/analyze_phase3_corrected.py
 ```
 
 ### Common Development Tasks
@@ -246,15 +266,40 @@ Generated in `artifacts/` directory:
 - Z-scores → tanh squashing with beta parameter  
 - Final clipping to [-1,1] range for risk management
 
-## Validated Optimizations
+## Comprehensive Testing Results (2024)
 
-Based on systematic testing across 8+ symbols and 12+ experimental configurations:
+### Systematic Multi-Phase Optimization - @ES#C (2014-2024)
+
+**Phase 1: Cross-Validation Optimization** ✅ **COMPLETE**
+- **Winner**: **10 Folds** (Score: 0.768, OOS Sharpe: +0.050)
+- Tested: 5, 10, 15 folds with 25 models, 100 features
+
+**Phase 2: Model Count Optimization** ✅ **COMPLETE**  
+- **Winner**: **50 Models** (Score: 0.604, OOS Sharpe: +0.128)
+- Tested: 25, 50, 75, 100 models with 10 folds, 100 features
+
+**Phase 3: Feature Selection Optimization** ✅ **COMPLETE**
+- **Current Winner**: **All Filtered Features (389)** (Score: 0.701, OOS Sharpe: +0.528)
+- **Pending**: P3-T5 All Raw Features (1054) test running
+- Tested: 50, 100, 150, All Filtered (389), All Raw (1054) features
+
+**Phase 4: Architecture Comparison** 🚀 **IN PROGRESS**
+- **Current**: Standard XGBoost running with optimal configuration
+- **Pending**: Tiered and Deep XGBoost tests after Phase 3 completion
+
+### Current Optimal Configuration (Pending P3-T5)
+- **Folds**: 10 (optimal)
+- **Models**: 50 (optimal) 
+- **Features**: All Filtered (389) vs All Raw (1054) - **testing in progress**
+- **Architecture**: TBD (Phase 4 pending)
+
+## Legacy Validated Optimizations
+
+Based on previous testing across 8+ symbols and 12+ experimental configurations:
 
 1. **P-Value Bypass**: ✅ **Recommended** - Identical performance with 3x speed improvement
-2. **Feature Count**: ✅ **50 features confirmed optimal** - expansion to 70+ consistently degrades performance
-3. **Model Count**: ✅ **75 models optimal** - breakthrough configuration with +0.02 to +0.50 Sharpe improvements
-4. **Cross-Validation Method**: ✅ **6-fold CV required** - train-test split underperforms by -0.17 to -1.23 Sharpe
-5. **Architecture Variants**:
+2. **Cross-Validation Method**: ✅ **Multi-fold CV required** - train-test split underperforms significantly
+3. **Architecture Variants**:
    - **Tiered XGBoost**: Major breakthrough for underperformers (+0.24 to +0.37 Sharpe on @TY#C/@RTY#C)
    - **Equal Weights**: Asset-dependent alternative (competitive for bonds/commodities, inferior for equities)
    - **ERI_both Objective**: Asset-class specific (+0.59 for volatiles, -0.21 for stable assets)
@@ -391,10 +436,37 @@ Sharpe = (PnL.mean() * 252) / (PnL.std() * sqrt(252))  # Annualized
 - **Pure Performance Focus**: Sharpe-based rather than predictive accuracy
 - **Integration**: Can replace current selection methods or be used as hybrid approach
 
-**Horse Race Selection Methods**: Two new competitive selection frameworks (`ensemble/horse_race_*.py`):
+**Horse Race Selection Methods**: Experimental selection frameworks (archived in `testing/experimental/`):
 - **Individual Quality**: Each metric selects its single best driver with quality momentum tracking
 - **Ensemble Stability**: Each metric creates top-k driver ensembles for performance comparison  
 - **Predictive Power Analysis**: Spearman correlation between validation scores and realized OOS performance
 - **EWMA Quality Memory**: Historical performance tracking with configurable decay rates
+
+## Testing Framework Organization
+
+### Organized Directory Structure
+```
+testing/
+├── analysis/          # Phase analysis scripts
+├── archive/           # Superseded implementations  
+├── experimental/      # Research experiments
+└── README.md         # Testing documentation
+
+logs/
+├── phase1/           # Cross-validation optimization logs
+├── phase2/           # Model count optimization logs
+├── phase3/           # Feature optimization logs
+├── phase4/           # Architecture comparison logs
+└── archive/          # Historical logs
+
+artifacts/
+├── current results   # Latest testing artifacts
+└── archive/          # Historical artifacts
+```
+
+### Current Testing Status
+- **Primary Tool**: `xgb_performance_analyzer.py` (comprehensive fold analysis)
+- **Phase Analysis**: `testing/analysis/analyze_phase[1-4]_corrected.py`  
+- **Documentation**: `COMPREHENSIVE_TESTING_PLAN.md` (live results tracking)
 
 Framework optimized for financial data. Validated across bonds, commodities, equities, volatility.

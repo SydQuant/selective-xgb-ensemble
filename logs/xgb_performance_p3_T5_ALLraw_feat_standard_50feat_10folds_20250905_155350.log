@@ -1,0 +1,31 @@
+2025-09-05 15:53:50,311 - INFO - ================================================================================
+2025-09-05 15:53:50,311 - INFO - XGBoost Performance Analysis
+2025-09-05 15:53:50,311 - INFO - ================================================================================
+2025-09-05 15:53:50,311 - INFO - Configuration:
+2025-09-05 15:53:50,311 - INFO -   Target Symbol: @ES#C
+2025-09-05 15:53:50,311 - INFO -   Date Range: 2014-01-01 to 2024-01-01
+2025-09-05 15:53:50,312 - INFO -   Models: 50
+2025-09-05 15:53:50,312 - INFO -   Folds: 10
+2025-09-05 15:53:50,312 - INFO -   Max Features: 50
+2025-09-05 15:53:50,312 - INFO -   XGBoost Type: standard
+2025-09-05 15:53:50,312 - INFO -   Inner Validation Fraction: 0.2
+2025-09-05 15:53:50,312 - INFO - Loading data...
+2025-09-05 15:53:53,200 - WARNING - Found 72 NaN values in feature columns after cleaning
+2025-09-05 15:53:53,219 - INFO - Using target column: @ES#C_target_return
+2025-09-05 15:53:53,267 - WARNING - Found 72 NaN values in feature columns after cleaning
+2025-09-05 15:53:53,336 - INFO - Data shape before feature selection: X=(2324, 1054), y=(2324,)
+2025-09-05 15:53:53,337 - INFO - Skipping feature selection - using all features
+2025-09-05 15:53:53,337 - INFO - Using all 1054 features
+2025-09-05 15:53:53,337 - INFO - Data shape after feature processing: X=(2324, 1054), y=(2324,)
+2025-09-05 15:53:53,337 - INFO - Date range: Index 2015-01-02 12:00:00 to 2023-12-29 12:00:00
+2025-09-05 15:53:53,337 - INFO - Generating 50 standard XGBoost models...
+2025-09-05 15:53:54,844 - INFO - GPU detection: CUDA GPU available
+2025-09-05 15:53:55,075 - INFO - GPU detection: CUDA GPU available
+2025-09-05 15:53:55,076 - INFO - Updating XGBoost specs to use GPU
+2025-09-05 15:53:55,076 - INFO - Running enhanced fold analysis with IIS/IVal/OOS breakdown...
+2025-09-05 15:53:55,076 - INFO - 
+2025-09-05 15:53:55,076 - INFO - ====================================================================================================
+2025-09-05 15:53:55,076 - INFO - FOLD 1/9
+2025-09-05 15:53:55,076 - INFO - ====================================================================================================
+2025-09-05 15:53:55,093 - INFO - Train: 232 samples, Test: 232 samples
+2025-09-05 15:53:55,096 - INFO - Inner Train: 185 samples, Inner Val: 47 samples

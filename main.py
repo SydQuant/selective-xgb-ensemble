@@ -9,6 +9,8 @@ from model.feature_selection import apply_feature_selection
 from ensemble.combiner import build_driver_signals, combine_signals, softmax
 from ensemble.selection import pick_top_n_greedy_diverse
 from ensemble.gating import apply_pvalue_gating
+# ADDED: Stability ensemble support
+from ensemble.stability_selection import stability_driver_selection_and_combination, StabilityConfig
 from opt.grope import grope_optimize
 from opt.weight_objective import weight_objective_factory
 from metrics.dapy import hit_rate
@@ -151,6 +153,45 @@ def select_and_optimize_drivers(signals_tr, signals_te_or_full, y_tr, args, driv
     Returns:
         tuple: (combined_signal, selection_info) where selection_info contains chosen_idx, weights, tau, J_star
     """
+    # CHECK: Use stability ensemble instead of GROPE?
+    if getattr(args, 'use_stability_ensemble', False):
+        logger.info("Using stability ensemble method instead of GROPE optimization")
+        
+        # Create stability configuration from args - handle nested config dictionary
+        stability_section = getattr(args, 'stability', {})
+        stability_config = StabilityConfig(
+            metric_name=stability_section.get('metric_name', 'sharpe'),
+            top_k=stability_section.get('top_k', 5),
+            alpha=stability_section.get('alpha', 1.0),
+            lam_gap=stability_section.get('lam_gap', 0.3),
+            relative_gap=stability_section.get('relative_gap', False),
+            eta_quality=stability_section.get('eta_quality', 0.0),
+            quality_halflife=stability_section.get('quality_halflife', 63),
+            inner_val_frac=stability_section.get('inner_val_frac', 0.2),
+            costs_per_turn=stability_section.get('costs_per_turn', 0.0001)
+        )
+        
+        # Stability method handles both selection and combination
+        combined_signal, diagnostics = stability_driver_selection_and_combination(
+            signals_tr, signals_te_or_full, y_tr, stability_config
+        )
+        
+        if combined_signal is None or len(combined_signal) == 0:
+            return None, None
+            
+        # Format selection info to match GROPE format
+        selection_info = {
+            "method": "stability_ensemble",
+            "chosen_idx": diagnostics.get("selected_indices", []),
+            "weights": [1.0/len(diagnostics.get("selected_indices", [1]))] * len(diagnostics.get("selected_indices", [1])),  # Equal weights
+            "tau": 1.0,  # Not applicable for stability
+            "J_star": diagnostics.get("mean_stability", 0.0),  # Use stability score instead
+            "selection_diagnostics": diagnostics
+        }
+        
+        return combined_signal, selection_info
+    
+    # ORIGINAL GROPE METHOD (default behavior)
     # P-value gating function - filters out statistically insignificant signals
     gate = lambda sig, y_local: apply_pvalue_gating(sig, y_local, args)
     
