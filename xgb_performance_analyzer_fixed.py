@@ -6,6 +6,7 @@ Fixed XGBoost Performance Analysis with reorganized table structure
 import argparse
 import logging
 import os
+import statistics
 from datetime import datetime
 from typing import List, Dict, Any
 import numpy as np
@@ -137,10 +138,18 @@ def print_simple_table(title: str, headers: List[str], rows: List[List[str]], lo
 def enhanced_fold_analysis(X: pd.DataFrame, y: pd.Series, xgb_specs: List[Dict], 
                           actual_folds: int, inner_val_frac: float, logger: logging.Logger, 
                           ewma_alpha: float = 0.1) -> Dict:
-    """Enhanced fold analysis with reorganized table structure"""
+    """Enhanced fold analysis with reorganized table structure and proper Q metrics"""
     
     fold_splits = list(wfo_splits(n=len(X), k_folds=actual_folds, min_train=50))
     all_fold_results = {}
+    
+    # Track quality metrics across folds for EWMA calculation
+    model_quality_history = {
+        'oos_sharpe': [[] for _ in range(len(xgb_specs))],
+        'oos_hit': [[] for _ in range(len(xgb_specs))],
+        'oos_ir': [[] for _ in range(len(xgb_specs))],
+        'oos_adj_sharpe': [[] for _ in range(len(xgb_specs))]
+    }
     
     logger.info(f"Running enhanced fold analysis with reorganized tables...")
     
@@ -212,10 +221,31 @@ def enhanced_fold_analysis(X: pd.DataFrame, y: pd.Series, xgb_specs: List[Dict],
             oos_pvalue_ir = bootstrap_pvalue(oos_ir, oos_returns, signal_shifted,
                                            lambda p, r: calculate_information_ratio(p * r))
             
-            # Quality metrics (for single fold, these will be same as current metrics)
-            fold_sharpe_q = oos_sharpe  # For single fold
-            fold_hit_q = oos_hit
-            fold_ir_q = oos_ir
+            # Store current fold performance for quality tracking
+            model_quality_history['oos_sharpe'][model_idx].append(oos_sharpe)
+            model_quality_history['oos_hit'][model_idx].append(oos_hit)
+            model_quality_history['oos_ir'][model_idx].append(oos_ir)
+            
+            model_quality_history['oos_adj_sharpe'][model_idx].append(oos_adj_sharpe)
+            
+            # Calculate quality metrics with EWMA momentum
+            if len(model_quality_history['oos_sharpe'][model_idx]) == 1:
+                # First fold: Q = 0.0 baseline (like metric_dummy_zero)
+                fold_sharpe_q = 0.0
+                fold_hit_q = 0.0
+                fold_ir_q = 0.0
+                fold_adj_sharpe_q = 0.0
+            else:
+                # Subsequent folds: EWMA of historical performance
+                sharpe_series = pd.Series(model_quality_history['oos_sharpe'][model_idx][:-1])  # Exclude current
+                hit_series = pd.Series(model_quality_history['oos_hit'][model_idx][:-1])
+                ir_series = pd.Series(model_quality_history['oos_ir'][model_idx][:-1])
+                adj_sharpe_series = pd.Series(model_quality_history['oos_adj_sharpe'][model_idx][:-1])
+                
+                fold_sharpe_q = calculate_ewma_quality(sharpe_series, ewma_alpha)
+                fold_hit_q = calculate_ewma_quality(hit_series, ewma_alpha) 
+                fold_ir_q = calculate_ewma_quality(ir_series, ewma_alpha)
+                fold_adj_sharpe_q = calculate_ewma_quality(adj_sharpe_series, ewma_alpha)
             
             fold_results.append({
                 'Model': f"M{model_idx:02d}",
@@ -226,7 +256,7 @@ def enhanced_fold_analysis(X: pd.DataFrame, y: pd.Series, xgb_specs: List[Dict],
                 'OOS_AdjSharpe': oos_adj_sharpe, 'OOS_CB_Ratio': oos_cb_ratio,
                 'OOS_DAPY_Binary': oos_dapy_binary, 'OOS_DAPY_Both': oos_dapy_both,
                 'OOS_PValue_Sharpe': oos_pvalue_sharpe, 'OOS_PValue_Hit': oos_pvalue_hit, 'OOS_PValue_IR': oos_pvalue_ir,
-                'Fold_Sharpe_Q': fold_sharpe_q, 'Fold_Hit_Q': fold_hit_q, 'Fold_IR_Q': fold_ir_q
+                'Fold_Sharpe_Q': fold_sharpe_q, 'Fold_Hit_Q': fold_hit_q, 'Fold_IR_Q': fold_ir_q, 'Fold_AdjSharpe_Q': fold_adj_sharpe_q
             })
         
         # Create DataFrame for mean calculations
@@ -413,6 +443,213 @@ def enhanced_fold_analysis(X: pd.DataFrame, y: pd.Series, xgb_specs: List[Dict],
         logger.info("")
         
         all_fold_results[f'fold_{fold_idx+1}'] = fold_results
+    
+    # COMPREHENSIVE CROSS-FOLD ANALYSIS (after all folds complete)
+    logger.info("=" * 100)
+    logger.info("COMPREHENSIVE CROSS-FOLD ANALYSIS")
+    logger.info("=" * 100)
+    
+    # Aggregate all OOS metrics across all folds
+    all_oos_sharpe = []
+    all_oos_hit = []
+    all_positive_sharpe_count = 0
+    total_model_tests = 0
+    
+    for fold_data in all_fold_results.values():
+        for model_result in fold_data:
+            all_oos_sharpe.append(model_result['OOS_Sharpe'])
+            all_oos_hit.append(model_result['OOS_Hit'])
+            if model_result['OOS_Sharpe'] > 0:
+                all_positive_sharpe_count += 1
+            total_model_tests += 1
+    
+    # Calculate comprehensive statistics
+    avg_oos_sharpe = statistics.mean(all_oos_sharpe) if all_oos_sharpe else 0.0
+    sharpe_consistency = statistics.stdev(all_oos_sharpe) if len(all_oos_sharpe) > 1 else 0.0
+    avg_oos_hit_rate = statistics.mean(all_oos_hit) if all_oos_hit else 0.0
+    statistical_significance = (all_positive_sharpe_count / total_model_tests * 100) if total_model_tests > 0 else 0.0
+    
+    # Calculate overall score (matching Phase 4 analysis weights)
+    # Score = 30% Sharpe + 10% Hit + 30% Consistency + 30% Significance
+    max_sharpe = max(all_oos_sharpe) if all_oos_sharpe else 1.0
+    max_hit = max(all_oos_hit) if all_oos_hit else 1.0
+    max_std = sharpe_consistency if sharpe_consistency > 0 else 1.0
+    
+    overall_score = (
+        0.30 * (avg_oos_sharpe / max_sharpe if max_sharpe > 0 else 0) +
+        0.10 * (avg_oos_hit_rate / max_hit if max_hit > 0 else 0) +
+        0.30 * (1 - sharpe_consistency / max_std if max_std > 0 else 0) +
+        0.30 * (statistical_significance / 100.0)
+    )
+    
+    # Calculate final Q statistics for each model across all folds
+    logger.info("=" * 100)
+    logger.info("FINAL Q STATISTICS & MODEL QUALITY ANALYSIS")
+    logger.info("=" * 100)
+    logger.info(f"Total Model Tests: {total_model_tests} | Overall Score: {overall_score:.3f}")
+    logger.info("")
+    
+    # Aggregate Q metrics and performance by model
+    model_aggregates = {}
+    for model_idx in range(len(xgb_specs)):
+        model_name = f"M{model_idx:02d}"
+        
+        # Collect all fold results for this model
+        model_oos_sharpe = []
+        model_oos_hit = []
+        model_oos_ir = []
+        model_sharpe_q = []
+        model_hit_q = []
+        model_ir_q = []
+        model_adj_sharpe = []
+        model_adj_sharpe_q = []
+        model_pvalues = []
+        
+        for fold_data in all_fold_results.values():
+            if isinstance(fold_data, list):  # Skip summary dict
+                for model_result in fold_data:
+                    if model_result['Model'] == model_name:
+                        model_oos_sharpe.append(model_result['OOS_Sharpe'])
+                        model_oos_hit.append(model_result['OOS_Hit'])
+                        model_oos_ir.append(model_result['OOS_IR'])
+                        model_sharpe_q.append(model_result['Fold_Sharpe_Q'])
+                        model_hit_q.append(model_result['Fold_Hit_Q'])
+                        model_ir_q.append(model_result['Fold_IR_Q'])
+                        model_adj_sharpe.append(model_result['OOS_AdjSharpe'])
+                        model_adj_sharpe_q.append(model_result['Fold_AdjSharpe_Q'])
+                        model_pvalues.append(model_result['OOS_PValue_Sharpe'])
+        
+        if model_oos_sharpe:  # If we have data for this model
+            model_aggregates[model_name] = {
+                'avg_oos_sharpe': statistics.mean(model_oos_sharpe),
+                'avg_oos_hit': statistics.mean(model_oos_hit),
+                'avg_oos_ir': statistics.mean(model_oos_ir),
+                'avg_sharpe_q': statistics.mean(model_sharpe_q),
+                'avg_hit_q': statistics.mean(model_hit_q),
+                'avg_ir_q': statistics.mean(model_ir_q),
+                'avg_adj_sharpe': statistics.mean(model_adj_sharpe),
+                'avg_adj_sharpe_q': statistics.mean(model_adj_sharpe_q),
+                'avg_pvalue': statistics.mean(model_pvalues),
+                'sharpe_std': statistics.stdev(model_oos_sharpe) if len(model_oos_sharpe) > 1 else 0.0,
+                'positive_sharpe_pct': sum(1 for s in model_oos_sharpe if s > 0) / len(model_oos_sharpe) * 100,
+                'fold_count': len(model_oos_sharpe)
+            }
+    
+    # Create comprehensive Q statistics table
+    q_table_rows = []
+    for model_name in sorted(model_aggregates.keys()):
+        agg = model_aggregates[model_name]
+        q_table_rows.append([
+            model_name,
+            f"{agg['avg_oos_sharpe']:.3f}",
+            f"{agg['avg_oos_hit']:.3f}",
+            f"{agg['avg_oos_ir']:.3f}",
+            f"{agg['avg_sharpe_q']:.3f}",
+            f"{agg['avg_hit_q']:.3f}",
+            f"{agg['avg_ir_q']:.3f}",
+            f"{agg['avg_adj_sharpe']:.3f}",
+            f"{agg['avg_pvalue']:.3f}",
+            f"{agg['sharpe_std']:.3f}",
+            f"{agg['positive_sharpe_pct']:.1f}%",
+            f"{agg['fold_count']}"
+        ])
+    
+    # Add overall means row
+    if model_aggregates:
+        all_models = list(model_aggregates.values())
+        mean_row = [
+            "MEAN",
+            f"{statistics.mean([m['avg_oos_sharpe'] for m in all_models]):.3f}",
+            f"{statistics.mean([m['avg_oos_hit'] for m in all_models]):.3f}",
+            f"{statistics.mean([m['avg_oos_ir'] for m in all_models]):.3f}",
+            f"{statistics.mean([m['avg_sharpe_q'] for m in all_models]):.3f}",
+            f"{statistics.mean([m['avg_hit_q'] for m in all_models]):.3f}",
+            f"{statistics.mean([m['avg_ir_q'] for m in all_models]):.3f}",
+            f"{statistics.mean([m['avg_adj_sharpe'] for m in all_models]):.3f}",
+            f"{statistics.mean([m['avg_pvalue'] for m in all_models]):.3f}",
+            f"{statistics.mean([m['sharpe_std'] for m in all_models]):.3f}",
+            f"{statistics.mean([m['positive_sharpe_pct'] for m in all_models]):.1f}%",
+            f"{statistics.mean([m['fold_count'] for m in all_models]):.0f}"
+        ]
+        q_table_rows.append(mean_row)
+    
+    # Q METRICS TABLE with Adjusted Sharpe Q
+    q_metrics_rows = []
+    for model_name in sorted(model_aggregates.keys()):
+        agg = model_aggregates[model_name]
+        q_metrics_rows.append([
+            model_name,
+            f"{agg['avg_sharpe_q']:.3f}",
+            f"{agg['avg_hit_q']:.3f}",
+            f"{agg['avg_ir_q']:.3f}",
+            f"{agg['avg_adj_sharpe_q']:.3f}",
+            f"{agg['avg_oos_sharpe']:.3f}",
+            f"{agg['avg_oos_hit']:.3f}",
+            f"{agg['avg_pvalue']:.3f}",
+            f"{agg['positive_sharpe_pct']:.1f}%"
+        ])
+    
+    # Add MEAN row for Q metrics
+    if model_aggregates:
+        all_models = list(model_aggregates.values())
+        q_mean_row = [
+            "MEAN",
+            f"{statistics.mean([m['avg_sharpe_q'] for m in all_models]):.3f}",
+            f"{statistics.mean([m['avg_hit_q'] for m in all_models]):.3f}",
+            f"{statistics.mean([m['avg_ir_q'] for m in all_models]):.3f}",
+            f"{statistics.mean([m['avg_adj_sharpe_q'] for m in all_models]):.3f}",
+            f"{statistics.mean([m['avg_oos_sharpe'] for m in all_models]):.3f}",
+            f"{statistics.mean([m['avg_oos_hit'] for m in all_models]):.3f}",
+            f"{statistics.mean([m['avg_pvalue'] for m in all_models]):.3f}",
+            f"{statistics.mean([m['positive_sharpe_pct'] for m in all_models]):.1f}%"
+        ]
+        q_metrics_rows.append(q_mean_row)
+    
+    print_simple_table(
+        "Q METRICS ANALYSIS TABLE:",
+        ["Model", "Sharpe_Q", "Hit_Q", "IR_Q", "AdjSharpe_Q", "OOS_Sharpe", "OOS_Hit", "P_Value", "Pos%"],
+        q_metrics_rows,
+        logger
+    )
+    
+    # BEST MODELS BY Q METRICS
+    logger.info("")
+    logger.info("=" * 80)
+    logger.info("BEST MODELS BY Q METRICS")
+    logger.info("=" * 80)
+    
+    if model_aggregates:
+        # Find best models by each Q metric
+        best_sharpe_q = max(model_aggregates.items(), key=lambda x: x[1]['avg_sharpe_q'])
+        best_hit_q = max(model_aggregates.items(), key=lambda x: x[1]['avg_hit_q'])
+        best_ir_q = max(model_aggregates.items(), key=lambda x: x[1]['avg_ir_q'])
+        best_adj_sharpe_q = max(model_aggregates.items(), key=lambda x: x[1]['avg_adj_sharpe_q'])
+        
+        logger.info(f"Best Sharpe_Q:     {best_sharpe_q[0]} (Q={best_sharpe_q[1]['avg_sharpe_q']:.3f}, OOS_Sharpe={best_sharpe_q[1]['avg_oos_sharpe']:.3f}, Hit={best_sharpe_q[1]['avg_oos_hit']:.1%})")
+        logger.info(f"Best Hit_Q:        {best_hit_q[0]} (Q={best_hit_q[1]['avg_hit_q']:.3f}, OOS_Hit={best_hit_q[1]['avg_oos_hit']:.1%}, Sharpe={best_hit_q[1]['avg_oos_sharpe']:.3f})")
+        logger.info(f"Best IR_Q:         {best_ir_q[0]} (Q={best_ir_q[1]['avg_ir_q']:.3f}, OOS_IR={best_ir_q[1]['avg_oos_ir']:.3f}, Sharpe={best_ir_q[1]['avg_oos_sharpe']:.3f})")
+        logger.info(f"Best AdjSharpe_Q:  {best_adj_sharpe_q[0]} (Q={best_adj_sharpe_q[1]['avg_adj_sharpe_q']:.3f}, OOS_AdjSharpe={best_adj_sharpe_q[1]['avg_adj_sharpe']:.3f}, Hit={best_adj_sharpe_q[1]['avg_oos_hit']:.1%})")
+        logger.info("")
+        
+        # P_Value explanation
+        logger.info("METRICS EXPLANATION:")
+        logger.info("- Pos%: Percentage of folds with positive OOS Sharpe (statistical significance)")
+        logger.info("- P_Value: Bootstrap p-value testing if OOS Sharpe > random (lower = more significant)")
+        logger.info("- Q Metrics: EWMA quality momentum of historical performance (excludes current fold)")
+        logger.info("")
+    
+    # Add summary to results
+    all_fold_results['comprehensive_summary'] = {
+        'total_model_tests': total_model_tests,
+        'avg_oos_sharpe': avg_oos_sharpe,
+        'avg_oos_hit_rate': avg_oos_hit_rate,
+        'sharpe_consistency': sharpe_consistency,
+        'statistical_significance': statistical_significance,
+        'overall_score': overall_score
+    }
+    
+    # Add model aggregates for detailed analysis
+    all_fold_results['model_aggregates'] = model_aggregates
     
     return all_fold_results
 
