@@ -22,7 +22,7 @@ from full_timeline_backtest import FullTimelineBacktester
 from backtest_visualization import log_detailed_backtest_summary
 from data.data_utils_simple import prepare_real_data_simple
 from model.feature_selection import apply_feature_selection
-from model.xgb_drivers import generate_xgb_specs, fit_xgb_on_slice
+from model.xgb_drivers import generate_xgb_specs, generate_deep_xgb_specs, fit_xgb_on_slice
 from cv.wfo import wfo_splits
 
 def setup_logging(config):
@@ -64,9 +64,9 @@ def train_single_model(model_idx, spec, X_train, y_train, X_inner_train, y_inner
     model = fit_xgb_on_slice(X_train, y_train, spec)
     
     # Predictions with normalization
-    pred_inner_train = normalize_predictions(pd.Series(model.predict(X_inner_train.values), index=X_inner_train.index))
-    pred_inner_val = normalize_predictions(pd.Series(model.predict(X_inner_val.values), index=X_inner_val.index))
-    pred_test = normalize_predictions(pd.Series(model.predict(X_test.values), index=X_test.index))
+    pred_inner_train = normalize_predictions(pd.Series(model.predict(X_inner_train.values), index=X_inner_train.index), config.binary_signal)
+    pred_inner_val = normalize_predictions(pd.Series(model.predict(X_inner_val.values), index=X_inner_val.index), config.binary_signal)
+    pred_test = normalize_predictions(pd.Series(model.predict(X_test.values), index=X_test.index), config.binary_signal)
     
     # Metrics calculation
     is_metrics = calculate_model_metrics(pred_inner_train, y_inner_train, shifted=False)
@@ -167,7 +167,7 @@ def run_production_backtest(X, y, all_fold_results, xgb_specs, fold_splits, conf
     )
     
     backtest_results = backtester.run_full_timeline_backtest(
-        X, y, all_fold_results, fold_splits, xgb_specs, quality_tracker
+        X, y, all_fold_results, fold_splits, xgb_specs, quality_tracker, config
     )
     
     # Log results

@@ -40,10 +40,12 @@ def create_detailed_production_analysis(quality_tracker, backtest_results, confi
                 production_models.update(selected_models)
                 if fold_num not in production_folds:
                     production_folds.append(fold_num)
-            else:  # Training period
-                training_models.update(selected_models)
-                if fold_num not in training_folds:
-                    training_folds.append(fold_num)
+            else:  # Training period - skip dummy selections from early folds
+                # Only include meaningful training selections (not M00-M04 from fold 2)
+                if not (fold_num == 2 and selected_models == [0, 1, 2, 3, 4]):
+                    training_models.update(selected_models)
+                    if fold_num not in training_folds:
+                        training_folds.append(fold_num)
     
     production_models = sorted(list(production_models))
     training_models = sorted(list(training_models))
@@ -225,11 +227,16 @@ def create_detailed_production_analysis(quality_tracker, backtest_results, confi
         cumulative = returns.cumsum()
         max_drawdown = (cumulative.expanding().max() - cumulative).max()
     
-    # Show ALL model names used across all periods
+    # Show ALL model names used across all periods (exclude Fold 2 dummy models)
     all_used_models = set()
     if 'fold_results' in backtest_results:
         for fold_result in backtest_results['fold_results']:
-            all_used_models.update(fold_result.get('selected_models', []))
+            fold_num = fold_result['fold']
+            selected_models = fold_result.get('selected_models', [])
+            
+            # Skip dummy models from Fold 2 (M00-M04 baseline selection)
+            if not (fold_num == 2 and selected_models == [0, 1, 2, 3, 4]):
+                all_used_models.update(selected_models)
     
     model_names_list = sorted([f'M{m:02d}' for m in all_used_models])
     model_names_str = ', '.join(model_names_list)
@@ -260,22 +267,32 @@ Unique Models: {len(all_used_models)}"""
     ax_usage = fig.add_subplot(gs[2, :])
     
     if 'fold_results' in backtest_results and backtest_results['fold_results']:
-        # Create comprehensive model usage matrix
+        # Create comprehensive model usage matrix (exclude Fold 2 dummy models)
         all_folds = [f['fold'] for f in backtest_results['fold_results']]
         all_models_used = set()
         for fold_result in backtest_results['fold_results']:
-            all_models_used.update(fold_result['selected_models'])
+            fold_num = fold_result['fold']
+            selected_models = fold_result['selected_models']
+            
+            # Skip dummy models from Fold 2 (M00-M04 baseline selection)
+            if not (fold_num == 2 and selected_models == [0, 1, 2, 3, 4]):
+                all_models_used.update(selected_models)
         
         all_models_used = sorted(list(all_models_used))
         
-        # Create usage matrix: Rows=Models, Columns=Folds
+        # Create usage matrix: Rows=Models, Columns=Folds (exclude dummy selections)
         usage_matrix = np.zeros((len(all_models_used), len(all_folds)))
         
         for fold_idx, fold_result in enumerate(backtest_results['fold_results']):
-            for model_idx in fold_result['selected_models']:
-                if model_idx in all_models_used:
-                    row_idx = all_models_used.index(model_idx)
-                    usage_matrix[row_idx, fold_idx] = 1
+            fold_num = fold_result['fold']
+            selected_models = fold_result['selected_models']
+            
+            # Skip dummy models from Fold 2
+            if not (fold_num == 2 and selected_models == [0, 1, 2, 3, 4]):
+                for model_idx in selected_models:
+                    if model_idx in all_models_used:
+                        row_idx = all_models_used.index(model_idx)
+                        usage_matrix[row_idx, fold_idx] = 1
         
         # Create heatmap
         sns.heatmap(usage_matrix, 
@@ -322,9 +339,35 @@ Unique Models: {len(all_used_models)}"""
         all_periods = list(range(-training_periods, 0)) + list(range(len(production_returns)))
         all_cumulative = list(training_cumulative.values) + list(production_cumulative.values)
         
-        # Plot complete curve with training/production distinction
-        training_x = list(range(-training_periods, 0))
-        production_x = list(range(len(production_returns)))
+        # Create proper x-axis using actual dates if available
+        if 'production_dates' in backtest_results and backtest_results['production_dates']:
+            production_dates = backtest_results['production_dates']
+            
+            # Generate training dates (estimated backwards from production start)
+            if len(production_dates) > 0:
+                prod_start_date = production_dates[0]
+                if hasattr(prod_start_date, 'date'):
+                    prod_start_date = prod_start_date.date()
+                
+                # Estimate training period dates (assuming daily frequency)
+                training_dates = pd.date_range(end=prod_start_date, periods=training_periods+1, freq='D')[:-1]
+                
+                # Combine all dates for x-axis
+                all_timeline_dates = list(training_dates) + list(production_dates)
+                training_x = list(range(len(training_dates)))
+                production_x = list(range(len(training_dates), len(training_dates) + len(production_dates)))
+                
+                use_date_labels = True
+            else:
+                # Fallback to period numbers
+                training_x = list(range(-training_periods, 0))
+                production_x = list(range(len(production_returns)))
+                use_date_labels = False
+        else:
+            # Fallback to period numbers
+            training_x = list(range(-training_periods, 0))
+            production_x = list(range(len(production_returns)))
+            use_date_labels = False
         
         # Training period (gray, dashed) - actual OOS backtest
         training_label = 'Training Period (Actual OOS)' if 'training_returns' in backtest_results else f'Training Period (Est.)'
@@ -340,65 +383,57 @@ Unique Models: {len(all_used_models)}"""
         ax_pnl.axvline(x=0, color='red', linestyle='-', linewidth=3, alpha=0.9, 
                       label=f'Production Start (Fold {cutoff_fold+1})', zorder=10)
         
-        # Set up proper date axis for both training and production periods
-        total_periods = len(training_returns) + len(production_returns)
-        
-        # Try to get actual dates if available
-        if 'full_timeline_dates' in backtest_results and backtest_results['full_timeline_dates']:
-            all_dates = backtest_results['full_timeline_dates']
-            if len(all_dates) >= len(production_returns):
-                # Create date labels for the combined timeline
-                # Training period uses estimated dates, production uses actual dates
-                prod_start_idx = len(training_returns)
-                prod_dates = all_dates[:len(production_returns)]  # Use actual production dates
+        # Set up proper date axis labels
+        if use_date_labels and 'all_timeline_dates' in locals():
+            # Use actual dates for x-axis labels
+            total_timeline_length = len(training_x) + len(production_x)
+            n_ticks = min(10, total_timeline_length // 100) 
+            
+            if n_ticks > 3:
+                tick_indices = np.linspace(0, total_timeline_length-1, n_ticks, dtype=int)
+                tick_labels = []
                 
-                # Create combined x-axis with proper date labels
-                n_ticks = min(8, total_periods // 50)  # Reasonable number of ticks
-                if n_ticks > 0:
-                    tick_indices = np.linspace(0, total_periods-1, n_ticks, dtype=int)
-                    tick_labels = []
-                    
-                    for idx in tick_indices:
-                        if idx < len(training_returns):
-                            # Training period - estimate dates
-                            tick_labels.append(f'Train-{idx}')
+                for idx in tick_indices:
+                    if idx < len(all_timeline_dates):
+                        date = all_timeline_dates[idx]
+                        if hasattr(date, 'strftime'):
+                            tick_labels.append(date.strftime('%Y-%m'))
+                        elif hasattr(date, 'date'):
+                            tick_labels.append(date.date().strftime('%Y-%m'))
                         else:
-                            # Production period - use actual dates
-                            prod_idx = idx - len(training_returns)
-                            if prod_idx < len(prod_dates):
-                                date = prod_dates[prod_idx]
-                                if hasattr(date, 'strftime'):
-                                    tick_labels.append(date.strftime('%Y-%m'))
-                                else:
-                                    tick_labels.append(str(date)[:7])
-                            else:
-                                tick_labels.append(f'Prod-{prod_idx}')
-                    
-                    ax_pnl.set_xticks(tick_indices)
-                    ax_pnl.set_xticklabels(tick_labels, rotation=45)
-                else:
-                    # Fallback: use period numbers
-                    ax_pnl.set_xlabel('Trading Period')
+                            tick_labels.append(str(date)[:7])
+                    else:
+                        tick_labels.append(f'P{idx}')
+                
+                ax_pnl.set_xticks(tick_indices)
+                ax_pnl.set_xticklabels(tick_labels, rotation=45)
+                ax_pnl.set_xlabel('Timeline (YYYY-MM)', fontsize=12)
+            else:
+                ax_pnl.set_xlabel('Trading Timeline (Combined Training + Production)', fontsize=12)
         else:
-            # Fallback: use period numbers with clear labels
-            ax_pnl.set_xlabel('Trading Period (Training: 0-{}, Production: {}-{})'.format(
-                len(training_returns)-1, len(training_returns), total_periods-1))
+            ax_pnl.set_xlabel('Trading Period (Training: Negative, Production: Positive)', fontsize=12)
         
-        # Add fold markers for production period
+        # Add fold markers for PRODUCTION period only (F7+ in your case)
         if 'fold_results' in backtest_results:
             cumulative_samples = 0
             for fold_result in backtest_results['fold_results']:
-                fold_samples = fold_result.get('n_test_samples', 0)
+                fold_num = fold_result['fold']
                 
-                # Add fold performance annotation
-                fold_sharpe = fold_result['fold_metrics'].get('sharpe', 0)
-                ax_pnl.annotate(f"F{fold_result['fold']}: {fold_sharpe:.2f}", 
-                               xy=(cumulative_samples + fold_samples//2, production_cumulative.iloc[min(cumulative_samples + fold_samples//2, len(production_cumulative)-1)]),
-                               xytext=(0, 15), textcoords='offset points', 
-                               fontsize=10, ha='center', fontweight='bold',
-                               bbox=dict(boxstyle='round,pad=0.3', facecolor='yellow', alpha=0.8))
-                
-                cumulative_samples += fold_samples
+                # Only annotate production period folds
+                if fold_num >= cutoff_fold_num:
+                    fold_samples = fold_result.get('n_test_samples', 0)
+                    
+                    # Add fold performance annotation with actual fold number
+                    fold_sharpe = fold_result['fold_metrics'].get('sharpe', 0)
+                    if cumulative_samples + fold_samples//2 < len(production_cumulative):
+                        pnl_value = production_cumulative.iloc[cumulative_samples + fold_samples//2]
+                        ax_pnl.annotate(f"Fold {fold_num}: {fold_sharpe:.2f}", 
+                                       xy=(cumulative_samples + fold_samples//2, pnl_value),
+                                       xytext=(0, 20), textcoords='offset points', 
+                                       fontsize=10, ha='center', fontweight='bold',
+                                       bbox=dict(boxstyle='round,pad=0.3', facecolor='lightgreen', alpha=0.9))
+                    
+                    cumulative_samples += fold_samples
         
         # Drawdown for production period only
         running_max = production_cumulative.expanding().max()
@@ -442,7 +477,7 @@ Unique Models: {len(all_used_models)}"""
                 f'Complete Breakdown: Q-Evolution + Fold Performance + Model Analysis + PnL Curve', 
                 fontsize=18, fontweight='bold')
     
-    filename = f"detailed_production_{config.target_symbol}_{timestamp}.png"
+    filename = f"detailed_production_{config.target_symbol}_{config.log_label}_{timestamp}.png"
     save_path = os.path.join(save_dir, filename)
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.close()

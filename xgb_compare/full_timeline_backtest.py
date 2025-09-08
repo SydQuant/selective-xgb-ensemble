@@ -28,7 +28,7 @@ class FullTimelineBacktester:
                                   all_fold_results: List[Dict], 
                                   fold_splits: List[Tuple], 
                                   xgb_specs: List[Dict],
-                                  quality_tracker) -> Dict[str, Any]:
+                                  quality_tracker, config=None) -> Dict[str, Any]:
         """
         Run complete timeline backtest using same methodology for training and production periods.
         
@@ -127,7 +127,9 @@ class FullTimelineBacktester:
                         model = fit_xgb_on_slice(X.iloc[train_idx], y.iloc[train_idx], xgb_specs[model_idx])
                         # Get predictions on test set
                         raw_pred = model.predict(X.iloc[test_idx].values)
-                        norm_pred = normalize_predictions(pd.Series(raw_pred, index=X.index[test_idx]))
+                        # Pass binary_signal flag if available in config
+                        binary_mode = getattr(config, 'binary_signal', False) if config else False
+                        norm_pred = normalize_predictions(pd.Series(raw_pred, index=X.index[test_idx]), binary_mode)
                         fold_predictions[model_idx] = norm_pred
                 
                 # Combine predictions from selected models (equal weighting)

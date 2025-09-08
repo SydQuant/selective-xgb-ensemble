@@ -87,13 +87,20 @@ def bootstrap_pvalue(actual_metric: float, returns: pd.Series, predictions: pd.S
     better_count = sum(1 for x in bootstrap_metrics if abs(x) >= abs(actual_metric))
     return better_count / len(bootstrap_metrics)
 
-def normalize_predictions(predictions: pd.Series) -> pd.Series:
-    """Normalize predictions using z-score + tanh transformation."""
+def normalize_predictions(predictions: pd.Series, binary_signal: bool = False) -> pd.Series:
+    """Normalize predictions using z-score + tanh transformation or binary signals."""
     if predictions.std() == 0:
         return pd.Series(np.zeros_like(predictions), index=predictions.index)
     
     z_scores = (predictions - predictions.mean()) / predictions.std()
-    normalized = np.tanh(z_scores)
+    
+    if binary_signal:
+        # Binary signals: +1 for positive, -1 for negative z-scores
+        normalized = np.where(z_scores > 0, 1.0, -1.0)
+    else:
+        # Standard tanh normalization
+        normalized = np.tanh(z_scores)
+    
     return pd.Series(normalized, index=predictions.index)
 
 def calculate_ewma_quality(series: pd.Series, alpha: float = 0.1) -> float:

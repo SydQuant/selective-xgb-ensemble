@@ -37,6 +37,9 @@ class XGBCompareConfig:
     q_metric: str = 'sharpe'
     reselection_frequency: int = 1
     
+    # Signal processing
+    binary_signal: bool = False  # Use +1/-1 signals instead of tanh
+    
     # Analysis parameters
     n_bootstraps: int = 100
     log_label: str = 'comparison'
@@ -77,6 +80,7 @@ class XGBCompareConfig:
         logger.info(f"  Feature Selection: {'Disabled' if self.no_feature_selection else 'Enabled'}")
         logger.info(f"  Inner Val Fraction: {self.inner_val_frac}")
         logger.info(f"  EWMA Alpha: {self.ewma_alpha}, Quality Halflife: {self.quality_halflife} days")
+        logger.info(f"  Signal Type: {'Binary (+1/-1)' if self.binary_signal else 'Tanh Normalized'}")
         logger.info(f"  Production: Cutoff={self.cutoff_fraction}, Top N={self.top_n_models}, Q-Metric={self.q_metric}")
         logger.info(f"  Reselection: Every {self.reselection_frequency} fold(s)")
         logger.info("")
@@ -135,6 +139,8 @@ def create_argument_parser() -> argparse.ArgumentParser:
                        help='Number of bootstrap iterations for p-values')
     parser.add_argument('--log_label', type=str, default='comparison', 
                        help='Label for output filenames')
+    parser.add_argument('--binary_signal', action='store_true',
+                       help='Use binary +1/-1 signals instead of tanh normalization')
     
     return parser
 
@@ -160,5 +166,6 @@ def parse_config() -> XGBCompareConfig:
         q_metric=args.q_metric,
         reselection_frequency=args.reselection_frequency,
         n_bootstraps=args.n_bootstraps,
-        log_label=args.log_label
+        log_label=args.log_label,
+        binary_signal=args.binary_signal
     )

@@ -1,0 +1,84 @@
+2025-09-08 19:59:58,071 - INFO - ================================================================================
+2025-09-08 19:59:58,072 - INFO - XGBoost Comparison Framework
+2025-09-08 19:59:58,072 - INFO - ================================================================================
+2025-09-08 19:59:58,072 - INFO - Configuration:
+2025-09-08 19:59:58,072 - INFO -   Target Symbol: @ES#C
+2025-09-08 19:59:58,072 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-08 19:59:58,072 - INFO -   Models: 50, Type: standard
+2025-09-08 19:59:58,072 - INFO -   Folds: 10
+2025-09-08 19:59:58,073 - INFO -   Max Features: -1 (All after cluster reduction)
+2025-09-08 19:59:58,073 - INFO -   Feature Selection: Enabled
+2025-09-08 19:59:58,073 - INFO -   Inner Val Fraction: 0.2
+2025-09-08 19:59:58,073 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-08 19:59:58,073 - INFO -   Production: Cutoff=0.7, Top N=5, Q-Metric=sharpe
+2025-09-08 19:59:58,073 - INFO -   Reselection: Every 1 fold(s)
+2025-09-08 19:59:58,073 - INFO - 
+2025-09-08 20:00:01,111 - INFO - Loaded: X=(2733, 1054), y=(2733,)
+2025-09-08 20:00:10,082 - INFO - Selected 400 features (threshold: 0.7)
+2025-09-08 20:00:10,092 - INFO - Selected: 400 features
+2025-09-08 20:00:11,728 - INFO - GPU detection: CUDA GPU available
+2025-09-08 20:00:11,730 - INFO - Starting analysis: 50 standard models x 9 folds
+2025-09-08 20:00:11,730 - INFO - Processing Fold 1/10
+2025-09-08 20:00:31,232 - INFO - Fold 1 Summary:
+2025-09-08 20:00:31,233 - INFO -   Best OOS Sharpe: M42 (2.162, p=0.000)
+2025-09-08 20:00:31,233 - INFO -   Best Q-Sharpe:   M00 (0.000, OOS=0.206)
+2025-09-08 20:00:31,233 - INFO -   Mean OOS Sharpe: 0.548
+2025-09-08 20:00:31,233 - INFO - 
+2025-09-08 20:00:31,234 - INFO - Processing Fold 2/10
+2025-09-08 20:00:56,003 - INFO - Fold 2 Summary:
+2025-09-08 20:00:56,003 - INFO -   Best OOS Sharpe: M27 (1.752, p=0.060)
+2025-09-08 20:00:56,003 - INFO -   Best Q-Sharpe:   M42 (2.162, OOS=0.921)
+2025-09-08 20:00:56,003 - INFO -   Mean OOS Sharpe: 0.278
+2025-09-08 20:00:56,003 - INFO - 
+2025-09-08 20:00:56,005 - INFO - Processing Fold 3/10
+2025-09-08 20:01:23,863 - INFO - Fold 3 Summary:
+2025-09-08 20:01:23,864 - INFO -   Best OOS Sharpe: M34 (2.251, p=0.010)
+2025-09-08 20:01:23,864 - INFO -   Best Q-Sharpe:   M42 (2.038, OOS=0.109)
+2025-09-08 20:01:23,864 - INFO -   Mean OOS Sharpe: 0.596
+2025-09-08 20:01:23,864 - INFO - 
+2025-09-08 20:01:23,866 - INFO - Processing Fold 4/10
+2025-09-08 20:01:56,889 - INFO - Fold 4 Summary:
+2025-09-08 20:01:56,890 - INFO -   Best OOS Sharpe: M23 (0.936, p=0.230)
+2025-09-08 20:01:56,890 - INFO -   Best Q-Sharpe:   M35 (1.904, OOS=-0.053)
+2025-09-08 20:01:56,890 - INFO -   Mean OOS Sharpe: -0.577
+2025-09-08 20:01:56,890 - INFO - 
+2025-09-08 20:01:56,891 - INFO - Processing Fold 5/10
+2025-09-08 20:02:34,094 - INFO - Fold 5 Summary:
+2025-09-08 20:02:34,094 - INFO -   Best OOS Sharpe: M46 (1.930, p=0.040)
+2025-09-08 20:02:34,095 - INFO -   Best Q-Sharpe:   M35 (1.708, OOS=-0.293)
+2025-09-08 20:02:34,095 - INFO -   Mean OOS Sharpe: 0.350
+2025-09-08 20:02:34,095 - INFO - 
+2025-09-08 20:02:34,098 - INFO - Processing Fold 6/10
+2025-09-08 20:03:15,322 - INFO - Fold 6 Summary:
+2025-09-08 20:03:15,323 - INFO -   Best OOS Sharpe: M37 (2.320, p=0.020)
+2025-09-08 20:03:15,323 - INFO -   Best Q-Sharpe:   M35 (1.508, OOS=-0.827)
+2025-09-08 20:03:15,323 - INFO -   Mean OOS Sharpe: 0.566
+2025-09-08 20:03:15,323 - INFO - 
+2025-09-08 20:03:15,327 - INFO - Processing Fold 7/10
+2025-09-08 20:03:58,044 - INFO - Fold 7 Summary:
+2025-09-08 20:03:58,044 - INFO -   Best OOS Sharpe: M40 (2.131, p=0.000)
+2025-09-08 20:03:58,044 - INFO -   Best Q-Sharpe:   M42 (1.355, OOS=1.318)
+2025-09-08 20:03:58,044 - INFO -   Mean OOS Sharpe: -0.067
+2025-09-08 20:03:58,044 - INFO - 
+2025-09-08 20:03:58,048 - INFO - Processing Fold 8/10
+2025-09-08 20:04:44,908 - INFO - Fold 8 Summary:
+2025-09-08 20:04:44,909 - INFO -   Best OOS Sharpe: M49 (2.277, p=0.010)
+2025-09-08 20:04:44,909 - INFO -   Best Q-Sharpe:   M42 (1.351, OOS=0.438)
+2025-09-08 20:04:44,909 - INFO -   Mean OOS Sharpe: 0.087
+2025-09-08 20:04:44,909 - INFO - 
+2025-09-08 20:04:44,915 - INFO - Processing Fold 9/10
+2025-09-08 20:05:35,418 - INFO - Fold 9 Summary:
+2025-09-08 20:05:35,419 - INFO -   Best OOS Sharpe: M03 (1.927, p=0.060)
+2025-09-08 20:05:35,419 - INFO -   Best Q-Sharpe:   M42 (1.260, OOS=-0.226)
+2025-09-08 20:05:35,419 - INFO -   Mean OOS Sharpe: 0.045
+2025-09-08 20:05:35,419 - INFO - 
+2025-09-08 20:05:35,424 - INFO - Starting full timeline backtesting...
+2025-09-08 20:05:35,425 - INFO - Running full timeline backtest with 9 folds (starting from fold 2)
+2025-09-08 20:05:35,425 - INFO - Fold 1 skipped (no Q-score history for meaningful selection)
+2025-09-08 20:05:35,425 - INFO - Effective backtest period: Folds 2-9 (8 folds)
+2025-09-08 20:05:35,425 - INFO - Training period: Folds 2-6
+2025-09-08 20:05:35,425 - INFO - Production period: Folds 7-9
+2025-09-08 20:05:35,426 - INFO - Using same OOS methodology for both periods
+2025-09-08 20:05:35,426 - INFO - Fold 1: Skipped (no Q-score history for meaningful selection)
+2025-09-08 20:05:35,426 - INFO - Processing fold 2/9
+2025-09-08 20:05:35,426 - INFO - Fold 2: First meaningful selection from fold 0, models [0, 1, 2, 3, 4], avg Q-score: 0.000
