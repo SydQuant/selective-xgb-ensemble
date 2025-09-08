@@ -28,6 +28,10 @@ def calculate_simple_features(df: pd.DataFrame) -> pd.DataFrame:
     atr_absolute = high_low.rolling(6).mean()
     result['atr'] = atr_absolute / result['close']  # ATR as % of price
     
+    # CRITICAL FIX: Forward-fill first-day NaN values in ATR to prevent feature contamination
+    # This fixes the 72 NaN values that were contaminating the feature space
+    result['atr'] = result['atr'].bfill().fillna(result['atr'].median())
+    
     # Momentum features for various periods (following original pattern)  
     periods = [1, 2, 3, 4, 8, 12, 16, 20, 24, 28, 32]
     change = result['close'].pct_change(fill_method=None)
@@ -39,7 +43,9 @@ def calculate_simple_features(df: pd.DataFrame) -> pd.DataFrame:
         result[f'momentum_{p}h'] = momentum.clip(-0.2, 0.2)
         result[f'velocity_{p}h'] = momentum.pct_change(fill_method=None).clip(-5, 5)
         result[f'rsi_{p}h'] = result['rsi'].rolling(p, min_periods=1).mean()
-        result[f'atr_{p}h'] = atr_change.clip(-2, 2).rolling(p, min_periods=1).mean()
+        atr_feature = atr_change.clip(-2, 2).rolling(p, min_periods=1).mean()
+        # CRITICAL FIX: Forward-fill NaN values in ATR timeframe features (part of 72 NaN fix)
+        result[f'atr_{p}h'] = atr_feature.bfill().fillna(0.0)
         
         # Breakout calculation (handle p=1 edge case)
         min_periods = 2 if p > 1 else 2  # Always use min_periods=2

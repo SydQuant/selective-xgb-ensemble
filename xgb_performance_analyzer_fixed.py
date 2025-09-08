@@ -262,166 +262,68 @@ def enhanced_fold_analysis(X: pd.DataFrame, y: pd.Series, xgb_specs: List[Dict],
         # Create DataFrame for mean calculations
         fold_df = pd.DataFrame(fold_results)
         
-        # TABLE 1: Sharpe Analysis 
-        sharpe_rows = []
+        # CONSOLIDATED TABLE: Primary Performance Metrics
+        primary_rows = []
         for result in fold_results:
-            sharpe_rows.append([
+            primary_rows.append([
                 result['Model'],
-                f"{result['IS_Sharpe']:.3f}",
-                f"{result['IV_Sharpe']:.3f}",
                 f"{result['OOS_Sharpe']:.3f}",
+                f"{result['OOS_AdjSharpe']:.3f}",
+                f"{result['OOS_Hit']:.2%}",
+                f"{result['OOS_IR']:.3f}",
                 f"{result['OOS_PValue_Sharpe']:.3f}",
                 f"{result['Fold_Sharpe_Q']:.3f}",
-                f"{result['IS_Sharpe'] - result['IV_Sharpe']:.3f}",
+                f"{result['Fold_AdjSharpe_Q']:.3f}",
                 f"{result['IV_Sharpe'] - result['OOS_Sharpe']:.3f}"
             ])
         
         # Add mean row
-        sharpe_rows.append([
+        primary_rows.append([
             "MEAN",
-            f"{fold_df['IS_Sharpe'].mean():.3f}",
-            f"{fold_df['IV_Sharpe'].mean():.3f}",
             f"{fold_df['OOS_Sharpe'].mean():.3f}",
+            f"{fold_df['OOS_AdjSharpe'].mean():.3f}",
+            f"{fold_df['OOS_Hit'].mean():.2%}",
+            f"{fold_df['OOS_IR'].mean():.3f}",
             f"{fold_df['OOS_PValue_Sharpe'].mean():.3f}",
             f"{fold_df['Fold_Sharpe_Q'].mean():.3f}",
-            f"{(fold_df['IS_Sharpe'] - fold_df['IV_Sharpe']).mean():.3f}",
+            f"{fold_df['Fold_AdjSharpe_Q'].mean():.3f}",
             f"{(fold_df['IV_Sharpe'] - fold_df['OOS_Sharpe']).mean():.3f}"
         ])
         
         print_simple_table(
-            f"FOLD {fold_idx+1} - SHARPE ANALYSIS:",
-            ["Model", "IS_Sharpe", "IV_Sharpe", "OOS_Sharpe", "OOS_p", "Sharpe_Q", "IS-IV", "IV-OOS"],
-            sharpe_rows,
+            f"FOLD {fold_idx+1} - PRIMARY PERFORMANCE METRICS:",
+            ["Model", "OOS_Sharpe", "OOS_AdjSharpe", "OOS_Hit", "OOS_IR", "P_Value", "Sharpe_Q", "AdjSharpe_Q", "IV-OOS_Gap"],
+            primary_rows,
             logger
         )
         logger.info("")
         
-        # TABLE 2: Adjusted Sharpe Analysis
-        adj_sharpe_rows = []
+        # SUPPLEMENTARY TABLE: Risk & Returns Analysis
+        risk_rows = []
         for result in fold_results:
-            adj_sharpe_rows.append([
-                result['Model'],
-                f"{result['IS_Sharpe']:.3f}",  # Use regular Sharpe for IS (no turnover)
-                f"{result['IV_Sharpe']:.3f}",  # Use regular Sharpe for IV (no turnover)
-                f"{result['OOS_AdjSharpe']:.3f}",
-                f"{result['OOS_PValue_Sharpe']:.3f}",  # Same p-value as Sharpe
-                f"{result['OOS_AdjSharpe']:.3f}",  # Use AdjSharpe as quality metric
-                f"{result['IS_Sharpe'] - result['IV_Sharpe']:.3f}",
-                f"{result['IV_Sharpe'] - result['OOS_AdjSharpe']:.3f}"  # IV to OOS AdjSharpe gap
-            ])
-        
-        # Add mean row
-        adj_sharpe_rows.append([
-            "MEAN",
-            f"{fold_df['IS_Sharpe'].mean():.3f}",
-            f"{fold_df['IV_Sharpe'].mean():.3f}",
-            f"{fold_df['OOS_AdjSharpe'].mean():.3f}",
-            f"{fold_df['OOS_PValue_Sharpe'].mean():.3f}",
-            f"{fold_df['OOS_AdjSharpe'].mean():.3f}",
-            f"{(fold_df['IS_Sharpe'] - fold_df['IV_Sharpe']).mean():.3f}",
-            f"{(fold_df['IV_Sharpe'] - fold_df['OOS_AdjSharpe']).mean():.3f}"
-        ])
-        
-        print_simple_table(
-            f"FOLD {fold_idx+1} - ADJUSTED SHARPE ANALYSIS:",
-            ["Model", "IS_Sharpe", "IV_Sharpe", "OOS_AdjSharpe", "OOS_p", "AdjSharpe_Q", "IS-IV", "IV-OOS"],
-            adj_sharpe_rows,
-            logger
-        )
-        logger.info("")
-        
-        # TABLE 3: Information Ratio Analysis
-        ir_rows = []
-        for result in fold_results:
-            ir_rows.append([
-                result['Model'],
-                f"{result['IS_IR']:.3f}",
-                f"{result['IV_IR']:.3f}",
-                f"{result['OOS_IR']:.3f}",
-                f"{result['OOS_PValue_IR']:.3f}",
-                f"{result['Fold_IR_Q']:.3f}",
-                f"{result['IS_IR'] - result['IV_IR']:.3f}",
-                f"{result['IV_IR'] - result['OOS_IR']:.3f}"
-            ])
-        
-        # Add mean row
-        ir_rows.append([
-            "MEAN",
-            f"{fold_df['IS_IR'].mean():.3f}",
-            f"{fold_df['IV_IR'].mean():.3f}",
-            f"{fold_df['OOS_IR'].mean():.3f}",
-            f"{fold_df['OOS_PValue_IR'].mean():.3f}",
-            f"{fold_df['Fold_IR_Q'].mean():.3f}",
-            f"{(fold_df['IS_IR'] - fold_df['IV_IR']).mean():.3f}",
-            f"{(fold_df['IV_IR'] - fold_df['OOS_IR']).mean():.3f}"
-        ])
-        
-        print_simple_table(
-            f"FOLD {fold_idx+1} - INFORMATION RATIO ANALYSIS:",
-            ["Model", "IS_IR", "IV_IR", "OOS_IR", "OOS_p", "IR_Q", "IS-IV", "IV-OOS"],
-            ir_rows,
-            logger
-        )
-        logger.info("")
-        
-        # TABLE 4: Hit Rate Analysis
-        hit_rows = []
-        for result in fold_results:
-            hit_rows.append([
-                result['Model'],
-                f"{result['IS_Hit']:.2%}",
-                f"{result['IV_Hit']:.2%}",
-                f"{result['OOS_Hit']:.2%}",
-                f"{result['OOS_PValue_Hit']:.3f}",
-                f"{result['Fold_Hit_Q']:.3f}"
-            ])
-        
-        # Add mean row
-        hit_rows.append([
-            "MEAN",
-            f"{fold_df['IS_Hit'].mean():.2%}",
-            f"{fold_df['IV_Hit'].mean():.2%}",
-            f"{fold_df['OOS_Hit'].mean():.2%}",
-            f"{fold_df['OOS_PValue_Hit'].mean():.3f}",
-            f"{fold_df['Fold_Hit_Q'].mean():.3f}"
-        ])
-        
-        print_simple_table(
-            f"FOLD {fold_idx+1} - HIT RATE ANALYSIS:",
-            ["Model", "IS_Hit", "IV_Hit", "OOS_Hit", "OOS_p", "Hit_Q"],
-            hit_rows,
-            logger
-        )
-        logger.info("")
-        
-        # TABLE 5: Returns & Risk Analysis
-        returns_rows = []
-        for result in fold_results:
-            returns_rows.append([
+            risk_rows.append([
                 result['Model'],
                 f"{result['OOS_Ann_Ret']:.4f}",
                 f"{result['OOS_Ann_Vol']:.4f}",
-                f"{result['OOS_AdjSharpe']:.3f}",
                 f"{result['OOS_CB_Ratio']:.3f}",
                 f"{result['OOS_DAPY_Binary']:.1f}",
                 f"{result['OOS_DAPY_Both']:.1f}"
             ])
         
         # Add mean row
-        returns_rows.append([
+        risk_rows.append([
             "MEAN",
             f"{fold_df['OOS_Ann_Ret'].mean():.4f}",
             f"{fold_df['OOS_Ann_Vol'].mean():.4f}",
-            f"{fold_df['OOS_AdjSharpe'].mean():.3f}",
             f"{fold_df['OOS_CB_Ratio'].mean():.3f}",
             f"{fold_df['OOS_DAPY_Binary'].mean():.1f}",
             f"{fold_df['OOS_DAPY_Both'].mean():.1f}"
         ])
         
         print_simple_table(
-            f"FOLD {fold_idx+1} - RETURNS & RISK ANALYSIS:",
-            ["Model", "Ann_Ret", "Ann_Vol", "AdjSharpe", "CB_Ratio", "DAPY_Bin", "DAPY_Both"],
-            returns_rows,
+            f"FOLD {fold_idx+1} - RISK & RETURNS ANALYSIS:",
+            ["Model", "Ann_Ret", "Ann_Vol", "CB_Ratio", "DAPY_Bin", "DAPY_Both"],
+            risk_rows,
             logger
         )
         
