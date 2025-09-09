@@ -304,31 +304,13 @@ def log_detailed_backtest_summary(backtest_results: Dict, logger: logging.Logger
     """
     Log a detailed text summary of backtest results with model tracking.
     """
-    logger.info("="*100)
-    logger.info("DETAILED PRODUCTION BACKTEST SUMMARY")
-    logger.info("="*100)
+    logger.info("="*80)
+    logger.info("BACKTEST SUMMARY")
+    logger.info("="*80)
     
     # Configuration
     config = backtest_results.get('configuration', {})
-    logger.info(f"Configuration:")
-    logger.info(f"  - Cutoff Fraction: {config.get('cutoff_fraction', 0.7):.0%}")
-    logger.info(f"  - Top N Models: {config.get('top_n_models', 5)}")
-    logger.info(f"  - Q-Metric: {config.get('q_metric', 'sharpe')}")
-    logger.info(f"  - Reselection Frequency: {config.get('reselection_frequency', 1)} folds")
-    logger.info("")
-    
-    # Overall performance
-    if 'performance_metrics' in backtest_results:
-        metrics = backtest_results['performance_metrics']
-        logger.info("Overall Performance:")
-        logger.info(f"  - Sharpe Ratio: {metrics.get('sharpe', 0):.3f}")
-        logger.info(f"  - Annual Return: {metrics.get('ann_ret', 0):.2%}")
-        logger.info(f"  - Annual Volatility: {metrics.get('ann_vol', 0):.2%}")
-        logger.info(f"  - Hit Rate: {metrics.get('hit_rate', 0):.1%}")
-        logger.info(f"  - CB Ratio: {metrics.get('cb_ratio', 0):.3f}")
-        logger.info(f"  - Total Periods: {metrics.get('total_periods', 0)}")
-        logger.info(f"  - Folds Traded: {metrics.get('folds_traded', 0)}")
-        logger.info("")
+    logger.info(f"Config: Cutoff={config.get('cutoff_fraction', 0.7):.0%}, Top N={config.get('top_n_models', 5)}, Q-Metric={config.get('q_metric', 'sharpe')}, Reselection={config.get('reselection_frequency', 1)} fold(s)")
     
     # Model selection history
     if 'model_selection_history' in backtest_results:
@@ -351,4 +333,4 @@ def log_detailed_backtest_summary(backtest_results: Dict, logger: logging.Logger
                        f"Hit={fold_metrics.get('hit_rate', 0):.1%} | "
                        f"Samples={fold_result['n_test_samples']}")
     
-    logger.info("="*100)
+    logger.info("="*80)

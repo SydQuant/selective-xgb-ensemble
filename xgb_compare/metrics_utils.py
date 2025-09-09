@@ -74,11 +74,8 @@ def bootstrap_pvalue(actual_metric: float, returns: pd.Series, predictions: pd.S
     for _ in range(n_bootstraps):
         shuffled_returns = returns.sample(frac=1, replace=False).reset_index(drop=True)
         shuffled_returns.index = returns.index
-        try:
-            boot_metric = metric_func(predictions, shuffled_returns)
-            bootstrap_metrics.append(boot_metric)
-        except:
-            bootstrap_metrics.append(0.0)
+        boot_metric = metric_func(predictions, shuffled_returns)
+        bootstrap_metrics.append(boot_metric)
     
     if len(bootstrap_metrics) == 0:
         return 0.5
@@ -200,12 +197,13 @@ class QualityTracker:
         for metric in q_scores.keys():
             for model_idx in range(self.n_models):
                 history = self.quality_history[metric][model_idx]
-                if fold_idx == 0 or len(history) <= 1:
-                    # First fold: Q = 0.0 baseline
+                if len(history) == 0:
+                    # No data available: Q = 0.0 baseline
                     q_scores[metric][model_idx] = 0.0
                 else:
-                    # Subsequent folds: EWMA of historical performance (exclude current fold)
-                    historical_series = pd.Series(history[:-1]) if len(history) > 1 else pd.Series([0.0])
+                    # Subsequent folds: EWMA of historical performance up to and including fold_idx
+                    # Use all history up to and including fold_idx for model selection
+                    historical_series = pd.Series(history[:fold_idx+1]) if fold_idx < len(history) else pd.Series(history)
                     q_scores[metric][model_idx] = calculate_ewma_quality(historical_series, ewma_alpha)
         
         return q_scores

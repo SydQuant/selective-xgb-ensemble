@@ -6,19 +6,19 @@
 ~/anaconda3/python.exe xgb_compare/xgb_compare_clean.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "standard" --log_label "standard_tanh"
 
 # 2. Standard XGBoost with Binary signals (+1/-1)
-~/anaconda3/python.exe xgb_compare/xgb_compare.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "standard" --log_label "standard_binary" --binary_signal
+~/anaconda3/python.exe xgb_compare/xgb_compare_clean.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "standard" --log_label "standard_binary" --binary_signal
 
 # 3. Deep XGBoost with Tanh normalization
-~/anaconda3/python.exe xgb_compare/xgb_compare.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "deep" --log_label "deep_tanh"
+~/anaconda3/python.exe xgb_compare/xgb_compare_clean.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "deep" --log_label "deep_tanh"
 
 # 4. Deep XGBoost with Binary signals (+1/-1)
-~/anaconda3/python.exe xgb_compare/xgb_compare.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "deep" --log_label "deep_binary" --binary_signal
+~/anaconda3/python.exe xgb_compare/xgb_compare_clean.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "deep" --log_label "deep_binary" --binary_signal
 
 # 5. Tiered XGBoost with Tanh normalization
-~/anaconda3/python.exe xgb_compare/xgb_compare.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "tiered" --log_label "tiered_tanh"
+~/anaconda3/python.exe xgb_compare/xgb_compare_clean.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "tiered" --log_label "tiered_tanh"
 
 # 6. Tiered XGBoost with Binary signals (+1/-1)
-~/anaconda3/python.exe xgb_compare/xgb_compare.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "tiered" --log_label "tiered_binary" --binary_signal
+~/anaconda3/python.exe xgb_compare/xgb_compare_clean.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "tiered" --log_label "tiered_binary" --binary_signal
 
 # Additional options:
 # --no_feature_selection    : Skip feature selection (use all features)

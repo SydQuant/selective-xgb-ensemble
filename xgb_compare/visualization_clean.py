@@ -21,18 +21,31 @@ def create_fold_by_fold_tables(all_fold_results, config, timestamp, save_dir):
     n_folds = len(fold_keys)
     n_models = config.n_models
     
-    # DYNAMIC TOP MODEL DISPLAY - show top N models ranked by Q-scores
-    if n_models > 50:
-        # For large model counts, show only top performers
-        top_models_to_show = min(20, max(10, n_models // 5))  # Show top 20 or 20% of models
+    # DYNAMIC TOP MODEL DISPLAY - aggressive filtering for large configs
+    if n_models > 75:
+        # Very large configs: show only top 10-12 models to prevent pixel overflow
+        top_models_to_show = min(12, max(10, n_models // 10))  # Top 10-12 models
+    elif n_models > 50:
+        # Large configs: show top 15-20 models
+        top_models_to_show = min(20, max(15, n_models // 5))  # Show top 15-20 models
     elif n_models > 20:
         top_models_to_show = min(20, n_models)  # Show up to 20 models
     else:
         top_models_to_show = n_models  # Show all models if ≤20
     
-    height_per_model = 0.35
-    height_per_fold = top_models_to_show * height_per_model + 2.5
-    total_height = max(10, n_folds * height_per_fold)
+    # Dynamic height scaling - smaller for large configs
+    if n_models > 75:
+        height_per_model = 0.22  # Compact for very large configs
+        fold_padding = 1.8       # Reduced padding
+    elif n_models > 50:
+        height_per_model = 0.25  # Slightly compact for large configs
+        fold_padding = 2.0       # Reduced padding
+    else:
+        height_per_model = 0.35  # Standard height for smaller configs
+        fold_padding = 2.5       # Standard padding
+    
+    height_per_fold = top_models_to_show * height_per_model + fold_padding
+    total_height = max(8, n_folds * height_per_fold)  # Reduced minimum height
     
     fig, axes = plt.subplots(n_folds, 1, figsize=(16, total_height))
     if n_folds == 1:
@@ -46,17 +59,18 @@ def create_fold_by_fold_tables(all_fold_results, config, timestamp, save_dir):
         
         # Filter to show only top models ranked by Q-Sharpe
         if 'Q_Sharpe' in fold_df.columns and len(fold_df) > top_models_to_show:
-            # Sort by Q-Sharpe and take top N
-            fold_df_display = fold_df.nlargest(top_models_to_show, 'Q_Sharpe')
-            # Find top 20% of displayed models for gradient highlighting  
-            top_n = max(1, int(top_models_to_show * 0.2))  # Top 20% of displayed
-            top_q_models = fold_df_display.nlargest(top_n, 'Q_Sharpe')['Model'].tolist()
+            # First take top N models by Q-Sharpe
+            fold_df_top = fold_df.nlargest(top_models_to_show, 'Q_Sharpe')
+            # Then sort by Model ID (ascending) for display
+            fold_df_display = fold_df_top.sort_values('Model')
+            # Keep top 5 models by Q-Sharpe for gradient highlighting (not by display order)
+            top_q_models = fold_df.nlargest(min(5, top_models_to_show), 'Q_Sharpe')['Model'].tolist()
         else:
             # Show all models if Q_Sharpe not available or few models
-            fold_df_display = fold_df
-            top_n = max(1, int(len(fold_df) * 0.1))  # Top 10%
+            fold_df_display = fold_df.sort_values('Model')  # Sort by Model ID
+            # Keep top 5 for highlighting
             if 'Q_Sharpe' in fold_df.columns:
-                top_q_models = fold_df.nlargest(top_n, 'Q_Sharpe')['Model'].tolist()
+                top_q_models = fold_df.nlargest(min(5, len(fold_df)), 'Q_Sharpe')['Model'].tolist()
             else:
                 top_q_models = []
         
@@ -78,7 +92,7 @@ def create_fold_by_fold_tables(all_fold_results, config, timestamp, save_dir):
             ]
             table_data.append(table_row)
             
-            # Gradient highlighting for top 10% Q-Sharpe models
+            # Gradient highlighting for top 5 Q-Sharpe models
             if model in top_q_models:
                 # Use named colors for gradient (matplotlib tables work better with named colors)
                 rank = top_q_models.index(model)
@@ -95,24 +109,31 @@ def create_fold_by_fold_tables(all_fold_results, config, timestamp, save_dir):
                         loc='center',
                         cellColours=row_colors)
         
-        # Dynamic font size based on model count
-        font_size = max(6, min(10, 200 // n_models))
+        # Dynamic font size based on model count - ensure readability
+        if n_models > 75:
+            font_size = max(7, min(9, 150 // top_models_to_show))  # Maintain readability
+        elif n_models > 50:
+            font_size = max(8, min(10, 180 // top_models_to_show))
+        else:
+            font_size = max(8, min(12, 200 // n_models))
+        
         table.auto_set_font_size(False)
         table.set_fontsize(font_size)
-        table.scale(1.0, 1.0)
+        table.scale(1.0, 1.2)  # Slightly taller cells for better readability
         
         # Style header
         for i in range(len(headers)):
             table[(0, i)].set_facecolor('#4472C4')
             table[(0, i)].set_text_props(weight='bold', color='white')
         
-        # Bold text for all top 10% models
-        models = fold_df['Model'].tolist()
+        # Bold text for top 5 Q-Sharpe models
+        # Use fold_df_display models since that's what's in the table
+        display_models = fold_df_display['Model'].tolist()
         for model in top_q_models:
-            if model in models:
-                model_idx = models.index(model) + 1
+            if model in display_models:
+                row_idx = display_models.index(model) + 1  # +1 for header row
                 for j in range(len(headers)):
-                    table[(model_idx, j)].set_text_props(weight='bold')
+                    table[(row_idx, j)].set_text_props(weight='bold')
         
         # Title with key stats
         best_oos = fold_df.loc[fold_df['OOS_Sharpe'].idxmax()]
@@ -122,20 +143,37 @@ def create_fold_by_fold_tables(all_fold_results, config, timestamp, save_dir):
         if top_q_models:
             title += f' | Top {len(top_q_models)} Q-Models: {", ".join(top_q_models)}'
         
-        ax.set_title(title, fontsize=max(10, min(14, 300 // n_models)), fontweight='bold', pad=10)
+        # Dynamic title font size with reduced padding
+        title_font_size = max(9, min(13, 250 // top_models_to_show))
+        title_pad = 8 if n_models > 50 else 10  # Reduced padding for large configs
+        ax.set_title(title, fontsize=title_font_size, fontweight='bold', pad=title_pad)
     
     plt.suptitle(f'Fold-by-Fold Analysis - {config.target_symbol}\n'
                 f'TOP {top_models_to_show} Models (ranked by Q-Sharpe) | Total: {n_models} Models', 
-                fontsize=16, fontweight='bold', y=0.99)
-    plt.tight_layout()
-    plt.subplots_adjust(top=0.98)
+                fontsize=14 if n_models > 50 else 16, fontweight='bold', y=0.995)
+    plt.tight_layout(pad=0.5)  # Reduced padding between subplots
+    plt.subplots_adjust(top=0.985, hspace=0.15)  # Reduced space between folds
+    
+    # Dynamic DPI based on image complexity to prevent pixel overflow
+    estimated_height_pixels = total_height * (300 if n_models <= 50 else 200 if n_models <= 75 else 150)
+    if estimated_height_pixels > 32000:  # Matplotlib's typical limit
+        dpi = min(150, int(30000 / total_height))  # Scale down DPI to stay under limit
+    elif n_models > 75:
+        dpi = 150  # Lower DPI for very large configs
+    elif n_models > 50:
+        dpi = 200  # Medium DPI for large configs
+    else:
+        dpi = 300  # High DPI for standard configs
     
     filename = f"fold_{config.target_symbol}_{config.n_models}models_{config.n_folds}folds_{config.log_label}_{timestamp}.png"
     save_path = os.path.join(save_dir, filename)
-    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    plt.savefig(save_path, dpi=dpi, bbox_inches='tight')
     plt.close()
     
+    logger.info(f"Saved with DPI={dpi}, estimated height={estimated_height_pixels:.0f}px, showing {top_models_to_show}/{n_models} models")
+    
     logger.info(f"Clean fold-by-fold analysis saved to: {filename}")
+    logger.info(f"Image optimized for {n_models} models x {n_folds} folds: DPI={dpi}, Height={total_height:.1f}in")
     return save_path
 
 def create_production_analysis(quality_tracker, backtest_results, config, timestamp, save_dir):
