@@ -1,0 +1,97 @@
+2025-09-09 12:12:58,533 - INFO - ================================================================================
+2025-09-09 12:12:58,534 - INFO - XGBoost Comparison Framework
+2025-09-09 12:12:58,534 - INFO - ================================================================================
+2025-09-09 12:12:58,534 - INFO - Configuration:
+2025-09-09 12:12:58,534 - INFO -   Target Symbol: @ES#C
+2025-09-09 12:12:58,534 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-09 12:12:58,534 - INFO -   Models: 100, Type: deep
+2025-09-09 12:12:58,534 - INFO -   Folds: 15
+2025-09-09 12:12:58,534 - INFO -   Max Features: -1 (All after cluster reduction)
+2025-09-09 12:12:58,534 - INFO -   Feature Selection: Enabled
+2025-09-09 12:12:58,534 - INFO -   Inner Val Fraction: 0.2
+2025-09-09 12:12:58,534 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-09 12:12:58,534 - INFO -   Signal Type: Tanh Normalized
+2025-09-09 12:12:58,534 - INFO -   Production: Cutoff=0.6, Top N=10, Q-Metric=sharpe
+2025-09-09 12:12:58,534 - INFO -   Reselection: Every 1 fold(s)
+2025-09-09 12:12:58,534 - INFO - 
+2025-09-09 12:13:02,675 - INFO - Loaded: X=(2733, 1054), y=(2733,)
+2025-09-09 12:13:10,218 - INFO - Selected 400 features (threshold: 0.7)
+2025-09-09 12:13:10,239 - INFO - Selected: 400 features
+2025-09-09 12:13:10,365 - INFO - GPU detection: CUDA GPU available
+2025-09-09 12:13:10,365 - INFO - Processing mode: GPU sequential (optimal for large model counts)
+2025-09-09 12:13:10,365 - INFO -   Total models to train: 1500
+2025-09-09 12:13:10,365 - INFO -   GPU available: True
+2025-09-09 12:13:10,379 - INFO - GPU detection: CUDA GPU available
+2025-09-09 12:13:10,383 - INFO - Starting analysis: 100 deep models x 13 folds
+2025-09-09 12:13:10,383 - INFO - Processing Fold 1/15
+2025-09-09 12:13:10,398 - INFO -   Using GPU sequential processing
+2025-09-09 12:17:55,776 - INFO - Fold 1 Summary:
+2025-09-09 12:17:55,778 - INFO -   Best OOS Sharpe: M88 (2.040, p=0.080)
+2025-09-09 12:17:55,778 - INFO -   Best Q-Sharpe:   M00 (0.000, OOS=-1.627)
+2025-09-09 12:17:55,778 - INFO -   Mean OOS Sharpe: -0.844
+2025-09-09 12:17:55,779 - INFO - 
+2025-09-09 12:17:55,783 - INFO - Processing Fold 2/15
+2025-09-09 12:17:55,827 - INFO -   Using GPU sequential processing
+2025-09-09 12:22:24,870 - INFO - Fold 2 Summary:
+2025-09-09 12:22:24,872 - INFO -   Best OOS Sharpe: M07 (2.650, p=0.060)
+2025-09-09 12:22:24,872 - INFO -   Best Q-Sharpe:   M88 (2.040, OOS=0.678)
+2025-09-09 12:22:24,872 - INFO -   Mean OOS Sharpe: 0.374
+2025-09-09 12:22:24,872 - INFO - 
+2025-09-09 12:22:24,874 - INFO - Processing Fold 3/15
+2025-09-09 12:22:24,887 - INFO -   Using GPU sequential processing
+2025-09-09 12:27:20,119 - INFO - Fold 3 Summary:
+2025-09-09 12:27:20,121 - INFO -   Best OOS Sharpe: M20 (1.514, p=0.220)
+2025-09-09 12:27:20,121 - INFO -   Best Q-Sharpe:   M88 (1.904, OOS=-0.450)
+2025-09-09 12:27:20,121 - INFO -   Mean OOS Sharpe: -0.455
+2025-09-09 12:27:20,121 - INFO - 
+2025-09-09 12:27:20,123 - INFO - Processing Fold 4/15
+2025-09-09 12:27:20,141 - INFO -   Using GPU sequential processing
+2025-09-09 12:32:05,983 - INFO - Fold 4 Summary:
+2025-09-09 12:32:05,985 - INFO -   Best OOS Sharpe: M26 (2.937, p=0.010)
+2025-09-09 12:32:05,985 - INFO -   Best Q-Sharpe:   M88 (1.668, OOS=0.440)
+2025-09-09 12:32:05,985 - INFO -   Mean OOS Sharpe: 0.826
+2025-09-09 12:32:05,985 - INFO - 
+2025-09-09 12:32:05,988 - INFO - Processing Fold 5/15
+2025-09-09 12:32:06,000 - INFO -   Using GPU sequential processing
+2025-09-09 12:37:21,191 - INFO - Fold 5 Summary:
+2025-09-09 12:37:21,192 - INFO -   Best OOS Sharpe: M06 (2.113, p=0.090)
+2025-09-09 12:37:21,192 - INFO -   Best Q-Sharpe:   M88 (1.545, OOS=-0.130)
+2025-09-09 12:37:21,192 - INFO -   Mean OOS Sharpe: -0.109
+2025-09-09 12:37:21,192 - INFO - 
+2025-09-09 12:37:21,195 - INFO - Processing Fold 6/15
+2025-09-09 12:37:21,207 - INFO -   Using GPU sequential processing
+2025-09-09 12:44:16,748 - INFO - Fold 6 Summary:
+2025-09-09 12:44:16,750 - INFO -   Best OOS Sharpe: M82 (1.132, p=0.300)
+2025-09-09 12:44:16,751 - INFO -   Best Q-Sharpe:   M88 (1.378, OOS=-0.806)
+2025-09-09 12:44:16,751 - INFO -   Mean OOS Sharpe: -0.550
+2025-09-09 12:44:16,751 - INFO - 
+2025-09-09 12:44:16,753 - INFO - Processing Fold 7/15
+2025-09-09 12:44:16,770 - INFO -   Using GPU sequential processing
+2025-09-09 12:51:02,848 - INFO - Fold 7 Summary:
+2025-09-09 12:51:02,852 - INFO -   Best OOS Sharpe: M69 (2.045, p=0.090)
+2025-09-09 12:51:02,852 - INFO -   Best Q-Sharpe:   M88 (1.159, OOS=-1.011)
+2025-09-09 12:51:02,852 - INFO -   Mean OOS Sharpe: -0.042
+2025-09-09 12:51:02,853 - INFO - 
+2025-09-09 12:51:02,856 - INFO - Processing Fold 8/15
+2025-09-09 12:51:02,899 - INFO -   Using GPU sequential processing
+2025-09-09 12:57:42,864 - INFO - Fold 8 Summary:
+2025-09-09 12:57:42,867 - INFO -   Best OOS Sharpe: M70 (2.948, p=0.010)
+2025-09-09 12:57:42,867 - INFO -   Best Q-Sharpe:   M23 (0.976, OOS=0.892)
+2025-09-09 12:57:42,867 - INFO -   Mean OOS Sharpe: 0.772
+2025-09-09 12:57:42,867 - INFO - 
+2025-09-09 12:57:42,871 - INFO - Processing Fold 9/15
+2025-09-09 12:57:42,892 - INFO -   Using GPU sequential processing
+2025-09-09 13:03:26,787 - INFO - Fold 9 Summary:
+2025-09-09 13:03:26,788 - INFO -   Best OOS Sharpe: M08 (2.639, p=0.020)
+2025-09-09 13:03:26,788 - INFO -   Best Q-Sharpe:   M23 (0.968, OOS=1.267)
+2025-09-09 13:03:26,788 - INFO -   Mean OOS Sharpe: 0.822
+2025-09-09 13:03:26,788 - INFO - 
+2025-09-09 13:03:26,790 - INFO - Processing Fold 10/15
+2025-09-09 13:03:26,806 - INFO -   Using GPU sequential processing
+2025-09-09 13:09:41,446 - INFO - Fold 10 Summary:
+2025-09-09 13:09:41,448 - INFO -   Best OOS Sharpe: M66 (2.562, p=0.000)
+2025-09-09 13:09:41,448 - INFO -   Best Q-Sharpe:   M23 (0.998, OOS=-0.252)
+2025-09-09 13:09:41,448 - INFO -   Mean OOS Sharpe: 0.731
+2025-09-09 13:09:41,448 - INFO - 
+2025-09-09 13:09:41,458 - INFO - Processing Fold 11/15
+2025-09-09 13:09:41,479 - INFO -   Using GPU sequential processing

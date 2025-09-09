@@ -156,7 +156,7 @@ def train_models_multiprocessing(xgb_specs, X_train, y_train, X_inner_train, y_i
         args_list.append(args)
     
     # Execute in parallel
-    max_workers = min(6, mp.cpu_count(), len(xgb_specs))
+    max_workers = min(mp.cpu_count() - 2, mp.cpu_count(), len(xgb_specs))
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         results = list(executor.map(train_single_model_mp, args_list))
     
@@ -187,7 +187,7 @@ def process_single_fold(fold_idx, train_idx, test_idx, X, y, xgb_specs, quality_
     
     # Choose processing approach based on configuration
     if use_multiprocessing and not use_gpu and len(xgb_specs) > 1:
-        logger.info(f"  Using multiprocessing with {min(6, len(xgb_specs))} workers")
+        logger.info(f"  Using multiprocessing with {min(mp.cpu_count() - 2, len(xgb_specs))} workers")
         
         # Simplified multiprocessing - batch train all models
         fold_results, model_metrics = train_models_multiprocessing(
@@ -250,10 +250,10 @@ def choose_optimal_processing_mode(config, logger):
         use_multiprocessing = False
         mode_desc = "GPU sequential (optimal for large model counts)"
     elif total_models > 50:
-        # Medium-large model counts: CPU multiprocessing overcomes overhead
-        use_gpu = False
-        use_multiprocessing = True
-        mode_desc = f"CPU multiprocessing ({min(8, config.n_models)} workers)"
+        # Medium-large model counts: Use GPU sequential to avoid multiprocessing bugs
+        use_gpu = True
+        use_multiprocessing = False
+        mode_desc = "GPU sequential (avoiding multiprocessing issues)"
     else:
         # Fallback to CPU sequential
         use_gpu = False

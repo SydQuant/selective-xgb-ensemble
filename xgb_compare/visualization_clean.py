@@ -21,9 +21,17 @@ def create_fold_by_fold_tables(all_fold_results, config, timestamp, save_dir):
     n_folds = len(fold_keys)
     n_models = config.n_models
     
-    # PROPER DYNAMIC HEIGHT - scales with model count
+    # DYNAMIC TOP MODEL DISPLAY - show top N models ranked by Q-scores
+    if n_models > 50:
+        # For large model counts, show only top performers
+        top_models_to_show = min(20, max(10, n_models // 5))  # Show top 20 or 20% of models
+    elif n_models > 20:
+        top_models_to_show = min(20, n_models)  # Show up to 20 models
+    else:
+        top_models_to_show = n_models  # Show all models if ≤20
+    
     height_per_model = 0.35
-    height_per_fold = n_models * height_per_model + 2.5
+    height_per_fold = top_models_to_show * height_per_model + 2.5
     total_height = max(10, n_folds * height_per_fold)
     
     fig, axes = plt.subplots(n_folds, 1, figsize=(16, total_height))
@@ -36,21 +44,30 @@ def create_fold_by_fold_tables(all_fold_results, config, timestamp, save_dir):
             
         fold_df = all_fold_results[fold_key]['results_df'].copy()
         
-        # Find top 10% models based on Q-Sharpe for gradient highlighting
-        top_n = max(1, int(n_models * 0.1))  # Top 10%
-        if 'Q_Sharpe' in fold_df.columns:
-            top_q_models = fold_df.nlargest(top_n, 'Q_Sharpe')['Model'].tolist()
+        # Filter to show only top models ranked by Q-Sharpe
+        if 'Q_Sharpe' in fold_df.columns and len(fold_df) > top_models_to_show:
+            # Sort by Q-Sharpe and take top N
+            fold_df_display = fold_df.nlargest(top_models_to_show, 'Q_Sharpe')
+            # Find top 20% of displayed models for gradient highlighting  
+            top_n = max(1, int(top_models_to_show * 0.2))  # Top 20% of displayed
+            top_q_models = fold_df_display.nlargest(top_n, 'Q_Sharpe')['Model'].tolist()
         else:
-            top_q_models = []
+            # Show all models if Q_Sharpe not available or few models
+            fold_df_display = fold_df
+            top_n = max(1, int(len(fold_df) * 0.1))  # Top 10%
+            if 'Q_Sharpe' in fold_df.columns:
+                top_q_models = fold_df.nlargest(top_n, 'Q_Sharpe')['Model'].tolist()
+            else:
+                top_q_models = []
         
-        # Create table for ALL models
+        # Create table for TOP models only
         ax.axis('tight') 
         ax.axis('off')
         
         table_data = []
         row_colors = []
         
-        for _, row in fold_df.iterrows():
+        for _, row in fold_df_display.iterrows():
             model = row['Model']
             table_row = [
                 model,
@@ -108,7 +125,7 @@ def create_fold_by_fold_tables(all_fold_results, config, timestamp, save_dir):
         ax.set_title(title, fontsize=max(10, min(14, 300 // n_models)), fontweight='bold', pad=10)
     
     plt.suptitle(f'Fold-by-Fold Analysis - {config.target_symbol}\n'
-                f'ALL {n_models} Models | Q-Sharpe Highlighting Only', 
+                f'TOP {top_models_to_show} Models (ranked by Q-Sharpe) | Total: {n_models} Models', 
                 fontsize=16, fontweight='bold', y=0.99)
     plt.tight_layout()
     plt.subplots_adjust(top=0.98)
