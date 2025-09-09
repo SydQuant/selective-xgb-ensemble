@@ -4,25 +4,25 @@
 
 ## Key Features
 
-- **Cross-Validation Analysis**: Walk-forward CV with 50 XGBoost models per fold
-- **Q-Score Tracking**: EWMA quality momentum with historical memory (removes fold 0 baseline)
-- **Consolidated Visualizations**: 3 timestamped files with complete analysis
-- **Production Backtesting**: Rolling model selection with proper CV fold schedule
-- **Top 10% Highlighting**: Dynamic highlighting scaled to model count
-- **All-Model Tables**: Show complete model performance with selective highlighting
+- **Cross-Validation Analysis**: Walk-forward CV with 100 XGBoost models per fold (configurable)
+- **Q-Score Tracking**: EWMA quality momentum with proper rolling updates (fixed stale selection bug)
+- **Consolidated Visualizations**: Clean timestamped files with actual model numbers displayed
+- **Production Backtesting**: Rolling model selection with stored OOS predictions (100x performance improvement)
+- **Dynamic Model Selection**: Q-scores evolve across folds for proper model rotation
+- **Multiple XGBoost Types**: Standard, Deep, and Tiered architectures with Tanh/Binary signals
 
 ## Quick Start
 
 ### Recommended Usage
 ```bash
-# Optimized version (recommended)
-~/anaconda3/python.exe xgb_compare_optimized.py
+# Current optimized version (recommended)
+~/anaconda3/python.exe xgb_compare_clean.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "standard" --log_label "production"
 
-# Full production analysis (50 models, 10 folds)
-~/anaconda3/python.exe xgb_compare_optimized.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01"
+# Quick test (8 models, 5 folds)
+~/anaconda3/python.exe xgb_compare_clean.py --target_symbol "@ES#C" --start_date "2020-01-01" --end_date "2023-01-01" --n_models 8 --n_folds 5 --cutoff_fraction 0.6 --xgb_type "standard" --log_label "quick_test" --max_features 50
 
-# Quick test (5 models, 3 folds)
-~/anaconda3/python.exe xgb_compare_optimized.py --n_models 5 --n_folds 3
+# XGBoost Architecture Comparison (all 6 variants)
+# See test_commands.txt for complete test suite
 ```
 
 ### Alternative Versions

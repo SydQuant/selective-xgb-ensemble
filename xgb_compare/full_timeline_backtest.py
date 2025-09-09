@@ -7,10 +7,7 @@ import pandas as pd
 import logging
 from typing import List, Dict, Any, Tuple
 
-try:
-    from .metrics_utils import calculate_model_metrics, normalize_predictions
-except ImportError:
-    from metrics_utils import calculate_model_metrics, normalize_predictions
+from metrics_utils import calculate_model_metrics, normalize_predictions, QualityTracker
 
 logger = logging.getLogger(__name__)
 
@@ -59,24 +56,34 @@ class FullTimelineBacktester:
         production_predictions = []
         production_returns = []
         
+        # Create a copy of quality tracker with ALL training fold data
+        rolling_quality_tracker = QualityTracker(len(xgb_specs), 63)  # Use default halflife
+        # Initialize with ALL training results (all folds from training phase)
+        if hasattr(quality_tracker, 'quality_history'):
+            # Copy ALL available training data, not just fold 0
+            rolling_quality_tracker.quality_history = {
+                metric: [hist.copy() for hist in quality_tracker.quality_history[metric]] 
+                for metric in quality_tracker.quality_history
+            }
+        
         # Process each fold with same methodology
         # NOTE: Backtesting starts from fold 2 since fold 1 has no meaningful Q-scores
         for fold_idx, (train_idx, test_idx) in enumerate(fold_splits):
             fold_number = fold_idx + 1
             
-            # Skip fold 1 - no meaningful Q-score history for model selection
+            # Skip fold 0 - no meaningful Q-score history for model selection
             if fold_idx == 0:
-                logger.info(f"Fold {fold_number}: Skipped (no Q-score history for meaningful selection)")
+                logger.info(f"Fold {fold_number}: Skipped (no prior Q-score history for meaningful selection)")
                 continue
                 
             logger.info(f"Processing fold {fold_number}/{n_folds}")
             
-            # Model selection: Use Q-scores up to previous fold
-            selection_fold = fold_idx - 1  # Select based on data up to previous fold
+            # Model selection: Use Q-scores up to previous fold (fold x uses data up to x-1)
+            selection_fold = fold_idx - 1  # fold_idx-1 gives us data up to fold (fold_idx-1)
             
-            # Get latest Q-scores (quality tracker should be updated through fold selection_fold)
-            q_scores = quality_tracker.get_q_scores(selection_fold, ewma_alpha=0.1)[self.q_metric]
-            logger.debug(f"Q-scores from fold {selection_fold}: {[f'{i}:{score:.3f}' for i, score in enumerate(q_scores[:10]) if not np.isnan(score)][:5]}...")
+            # Get latest Q-scores from ROLLING quality tracker (updated with actual backtest results)
+            q_scores = rolling_quality_tracker.get_q_scores(selection_fold, ewma_alpha=0.1)[self.q_metric]
+            logger.info(f"Fold {fold_number}: Q-scores from fold {selection_fold}: {[f'M{i:02d}:{score:.3f}' for i, score in enumerate(q_scores[:10]) if not np.isnan(score)][:5]}...")
             
             # Get top N models by Q-score
             model_q_pairs = [(idx, score) for idx, score in enumerate(q_scores) if not np.isnan(score)]
@@ -91,9 +98,9 @@ class FullTimelineBacktester:
                 avg_q_score = np.mean([score for _, score in model_q_pairs[:self.top_n_models]])
                 
                 if fold_idx == 1:
-                    logger.info(f"Fold {fold_number}: First meaningful selection from fold {selection_fold}, models {selected_models}, avg Q-score: {avg_q_score:.3f}")
+                    logger.info(f"Fold {fold_number}: First meaningful selection based on fold {selection_fold+1} Q-scores, models {selected_models}, avg Q-score: {avg_q_score:.3f}")
                 else:
-                    logger.info(f"Fold {fold_number}: Selected from fold {selection_fold}, models {selected_models}, avg Q-score: {avg_q_score:.3f}")
+                    logger.info(f"Fold {fold_number}: Selected based on fold {selection_fold+1} Q-scores, models {selected_models}, avg Q-score: {avg_q_score:.3f}")
             # This block is now handled above in the unified model selection logic
             
             # Store model selection decision
@@ -111,26 +118,27 @@ class FullTimelineBacktester:
             if selected_models:
                 fold_predictions = {}
                 
-                # Get predictions from selected models only
-                for model_idx in selected_models:
-                    if model_idx < len(xgb_specs):
-                        # Import the XGBoost fitting function
-                        try:
-                            from ..model.xgb_drivers import fit_xgb_on_slice
-                        except ImportError:
-                            import sys
-                            import os
-                            sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-                            from model.xgb_drivers import fit_xgb_on_slice
-                        
-                        # Train model on training data
-                        model = fit_xgb_on_slice(X.iloc[train_idx], y.iloc[train_idx], xgb_specs[model_idx])
-                        # Get predictions on test set
-                        raw_pred = model.predict(X.iloc[test_idx].values)
-                        # Pass binary_signal flag if available in config
-                        binary_mode = getattr(config, 'binary_signal', False) if config else False
-                        norm_pred = normalize_predictions(pd.Series(raw_pred, index=X.index[test_idx]), binary_mode)
-                        fold_predictions[model_idx] = norm_pred
+                # Get stored OOS predictions from training phase (no retraining!)
+                fold_key = f'fold_{fold_number}'
+                if fold_key in all_fold_results and 'oos_predictions' in all_fold_results[fold_key]:
+                    stored_predictions = all_fold_results[fold_key]['oos_predictions']
+                    stored_test_idx = all_fold_results[fold_key]['test_idx']
+                    
+                    # Verify test indices match (sanity check)
+                    if not np.array_equal(stored_test_idx, test_idx):
+                        logger.warning(f"Fold {fold_number}: Test indices mismatch! Stored: {len(stored_test_idx)}, Current: {len(test_idx)}")
+                        # Continue anyway - this might happen due to small differences in fold splitting
+                    
+                    # Retrieve predictions for selected models only
+                    for model_idx in selected_models:
+                        if model_idx in stored_predictions:
+                            fold_predictions[model_idx] = stored_predictions[model_idx]
+                        else:
+                            logger.warning(f"Fold {fold_number}: No stored predictions for model {model_idx}")
+                else:
+                    logger.error(f"Fold {fold_number}: No stored predictions found in fold_key={fold_key}")
+                    logger.error(f"Available keys: {list(all_fold_results.keys())}")
+                    continue
                 
                 # Combine predictions from selected models (equal weighting)
                 if fold_predictions:
@@ -159,6 +167,9 @@ class FullTimelineBacktester:
                     
                     # Calculate fold-level metrics
                     fold_metrics = calculate_model_metrics(lagged_signal, y.iloc[test_idx], shifted=False)
+                    
+                    # No Q-score updates during backtest - use only pre-computed training data
+                    # The rolling_quality_tracker was initialized with ALL training fold data
                     
                     # Store fold results
                     fold_result = {

@@ -19,7 +19,7 @@ def create_detailed_production_analysis(quality_tracker, backtest_results, confi
     """
     fig = plt.figure(figsize=(24, 20))
     gs = fig.add_gridspec(5, 3, height_ratios=[2.5, 1.5, 1, 1, 1.5], width_ratios=[3, 2, 2], 
-                         hspace=0.35, wspace=0.3)
+                         hspace=0.45, wspace=0.35)
     
     # Find ACTUAL production models (only from production period folds)
     production_models = set()
@@ -36,16 +36,18 @@ def create_detailed_production_analysis(quality_tracker, backtest_results, confi
             fold_num = fold_result['fold']
             selected_models = fold_result.get('selected_models', [])
             
+            # Completely skip Fold 2 (uses Q=0 scores and selects M00-M09)
+            if fold_num == 2:
+                continue
+                
             if fold_num >= cutoff_fold_num:  # Production period
                 production_models.update(selected_models)
                 if fold_num not in production_folds:
                     production_folds.append(fold_num)
-            else:  # Training period - skip dummy selections from early folds
-                # Only include meaningful training selections (not M00-M04 from fold 2)
-                if not (fold_num == 2 and selected_models == [0, 1, 2, 3, 4]):
-                    training_models.update(selected_models)
-                    if fold_num not in training_folds:
-                        training_folds.append(fold_num)
+            else:  # Training period
+                training_models.update(selected_models)
+                if fold_num not in training_folds:
+                    training_folds.append(fold_num)
     
     production_models = sorted(list(production_models))
     training_models = sorted(list(training_models))
@@ -139,7 +141,7 @@ def create_detailed_production_analysis(quality_tracker, backtest_results, confi
                 'Sharpe': fold_metrics.get('sharpe', 0),
                 'Hit_Rate': fold_metrics.get('hit_rate', 0) * 100,
                 'Ann_Return': fold_metrics.get('ann_ret', 0) * 100,
-                'Models': f"{len(fold_result['selected_models'])} models"  # Just show count for space
+                'Models': ', '.join([f"M{m:02d}" for m in fold_result['selected_models']])  # Show actual model numbers
             })
         
         fold_df = pd.DataFrame(fold_data)
@@ -234,12 +236,18 @@ def create_detailed_production_analysis(quality_tracker, backtest_results, confi
             fold_num = fold_result['fold']
             selected_models = fold_result.get('selected_models', [])
             
-            # Skip dummy models from Fold 2 (M00-M04 baseline selection)
-            if not (fold_num == 2 and selected_models == [0, 1, 2, 3, 4]):
-                all_used_models.update(selected_models)
+            # Completely skip Fold 2 (uses Q=0 scores and selects M00-M09)
+            if fold_num == 2:
+                continue
+                
+            all_used_models.update(selected_models)
     
     model_names_list = sorted([f'M{m:02d}' for m in all_used_models])
     model_names_str = ', '.join(model_names_list)
+    
+    # Get signal type and Q-metric from config
+    signal_type = "Binary (+1/-1)" if getattr(config, 'binary_signal', False) else "Tanh Normalized"
+    q_metric = getattr(config, 'q_metric', 'sharpe').upper()
     
     summary_text = f"""{metrics_label.upper()} SUMMARY
 
@@ -250,6 +258,8 @@ Maximum Drawdown: {max_drawdown:.2%}
 Hit Rate: {metrics.get('hit_rate', 0):.1%}
 CB Ratio: {metrics.get('cb_ratio', 0):.3f}
 
+Signal Type: {signal_type}
+Q-Metric: {q_metric}
 Total Periods: {metrics.get('total_periods', 0)}
 Folds Analyzed: {len(backtest_results.get('fold_results', []))}
 Models Used: {model_names_str}
@@ -267,44 +277,53 @@ Unique Models: {len(all_used_models)}"""
     ax_usage = fig.add_subplot(gs[2, :])
     
     if 'fold_results' in backtest_results and backtest_results['fold_results']:
-        # Create comprehensive model usage matrix (exclude Fold 2 dummy models)
-        all_folds = [f['fold'] for f in backtest_results['fold_results']]
+        # Create comprehensive model usage matrix (completely exclude Fold 2)
+        valid_folds = []
         all_models_used = set()
+        
         for fold_result in backtest_results['fold_results']:
             fold_num = fold_result['fold']
             selected_models = fold_result['selected_models']
             
-            # Skip dummy models from Fold 2 (M00-M04 baseline selection)
-            if not (fold_num == 2 and selected_models == [0, 1, 2, 3, 4]):
-                all_models_used.update(selected_models)
+            # Completely skip Fold 2 (uses Q=0 scores and selects M00-M09)
+            if fold_num == 2:
+                continue
+                
+            valid_folds.append(fold_num)
+            all_models_used.update(selected_models)
         
         all_models_used = sorted(list(all_models_used))
         
-        # Create usage matrix: Rows=Models, Columns=Folds (exclude dummy selections)
-        usage_matrix = np.zeros((len(all_models_used), len(all_folds)))
+        # Create usage matrix: Rows=Models, Columns=Valid Folds (excluding Fold 2)
+        usage_matrix = np.zeros((len(all_models_used), len(valid_folds)))
         
-        for fold_idx, fold_result in enumerate(backtest_results['fold_results']):
+        valid_fold_idx = 0
+        for fold_result in backtest_results['fold_results']:
             fold_num = fold_result['fold']
             selected_models = fold_result['selected_models']
             
-            # Skip dummy models from Fold 2
-            if not (fold_num == 2 and selected_models == [0, 1, 2, 3, 4]):
-                for model_idx in selected_models:
-                    if model_idx in all_models_used:
-                        row_idx = all_models_used.index(model_idx)
-                        usage_matrix[row_idx, fold_idx] = 1
+            # Skip Fold 2 completely
+            if fold_num == 2:
+                continue
+            
+            for model_idx in selected_models:
+                if model_idx in all_models_used:
+                    row_idx = all_models_used.index(model_idx)
+                    usage_matrix[row_idx, valid_fold_idx] = 1
+            
+            valid_fold_idx += 1
         
         # Create heatmap
         sns.heatmap(usage_matrix, 
                     annot=True, fmt='.0f', cmap='RdYlGn', center=0.5,
-                    xticklabels=[f"Fold {f}" for f in all_folds], 
+                    xticklabels=[f"Fold {f}" for f in valid_folds], 
                     yticklabels=[f"M{m:02d}" for m in all_models_used],
                     ax=ax_usage, cbar_kws={'label': 'Used (1=Yes, 0=No)'},
                     linewidths=1, annot_kws={'size': 12, 'weight': 'bold'})
         
         ax_usage.set_title(f'Model Usage Matrix: Which Models Used When\n'
-                          f'Production Period Usage Across All Folds', fontsize=14, fontweight='bold')
-        ax_usage.set_xlabel('Production Fold Number', fontsize=12)
+                          f'(Rolling Selection - Each Fold Uses Previous Fold Q-Scores)', fontsize=14, fontweight='bold')
+        ax_usage.set_xlabel('Fold Number', fontsize=12)
         ax_usage.set_ylabel('Model ID', fontsize=12)
     
     # 6. COMPLETE PNL CURVE WITH TRAINING + PRODUCTION PERIODS  
@@ -475,7 +494,7 @@ Unique Models: {len(all_used_models)}"""
     
     plt.suptitle(f'Detailed Production Analysis - {config.target_symbol}\n'
                 f'Complete Breakdown: Q-Evolution + Fold Performance + Model Analysis + PnL Curve', 
-                fontsize=18, fontweight='bold')
+                fontsize=18, fontweight='bold', y=0.98)
     
     filename = f"backtest_{config.target_symbol}_{config.n_models}models_{config.n_folds}folds_{config.log_label}_{timestamp}.png"
     save_path = os.path.join(save_dir, filename)

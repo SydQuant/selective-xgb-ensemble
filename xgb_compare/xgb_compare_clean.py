@@ -88,7 +88,8 @@ def train_single_model(model_idx, spec, X_train, y_train, X_inner_train, y_inner
         'OOS_Sharpe': oos_metrics['sharpe'],
         'OOS_Hit_Rate': oos_metrics['hit_rate'],
         'OOS_Sharpe_p': p_sharpe,
-        'Q_Sharpe': 0.0  # Will be calculated by quality tracker
+        'Q_Sharpe': 0.0,  # Will be calculated by quality tracker
+        'OOS_Predictions': pred_test  # Store the actual predictions for backtesting
     }, oos_metrics
 
 def train_models_multiprocessing(xgb_specs, X_train, y_train, X_inner_train, y_inner_train, 
@@ -143,7 +144,8 @@ def train_models_multiprocessing(xgb_specs, X_train, y_train, X_inner_train, y_i
             'OOS_Sharpe': oos_metrics['sharpe'],
             'OOS_Hit_Rate': oos_metrics['hit_rate'],
             'OOS_Sharpe_p': p_sharpe,
-            'Q_Sharpe': 0.0
+            'Q_Sharpe': 0.0,
+            'OOS_Predictions': pred_test  # Store the actual predictions for backtesting
         }, oos_metrics
     
     # Prepare arguments
@@ -283,13 +285,22 @@ def run_cross_validation(X, y, config, logger):
     logger.info(f"Starting analysis: {config.n_models} {config.xgb_type} models x {len(fold_splits)} folds")
     
     for fold_idx, (train_idx, test_idx) in enumerate(fold_splits):
-        logger.info(f"Processing Fold {fold_idx+1}/{config.n_folds}")
+        logger.info(f"Processing Fold {fold_idx+1}/{len(fold_splits)}")
         fold_df, model_metrics = process_single_fold(fold_idx, train_idx, test_idx, X, y, 
                                                    xgb_specs, quality_tracker, config, logger,
                                                    use_gpu=use_gpu, use_multiprocessing=use_multiprocessing)
+        # Extract OOS predictions for backtesting
+        oos_predictions = {}
+        for i, row in fold_df.iterrows():
+            model_name = row['Model']
+            model_idx = int(model_name[1:])  # Extract index from "M00", "M01", etc.
+            oos_predictions[model_idx] = row['OOS_Predictions']
+        
         all_fold_results[f'fold_{fold_idx+1}'] = {
             'results_df': fold_df,
-            'model_metrics': model_metrics
+            'model_metrics': model_metrics,
+            'oos_predictions': oos_predictions,  # Store predictions for backtesting
+            'test_idx': test_idx  # Store test indices for proper alignment
         }
     
     return all_fold_results, quality_tracker, xgb_specs, fold_splits
