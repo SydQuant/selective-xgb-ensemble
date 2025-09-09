@@ -354,9 +354,14 @@ Unique Models: {len(all_used_models)}"""
             training_cumulative = pd.Series(training_returns).cumsum()
             logger.info(f"Using estimated training period PnL ({training_periods} days)")
         
-        # Combine training + production periods
+        # Combine training + production periods with proper continuity
         all_periods = list(range(-training_periods, 0)) + list(range(len(production_returns)))
-        all_cumulative = list(training_cumulative.values) + list(production_cumulative.values)
+        
+        # CRITICAL FIX: Production cumulative should continue from training end, not start from 0
+        training_end_value = training_cumulative.iloc[-1] if len(training_cumulative) > 0 else 0
+        production_cumulative_adjusted = production_cumulative + training_end_value
+        
+        all_cumulative = list(training_cumulative.values) + list(production_cumulative_adjusted.values)
         
         # Create proper x-axis using actual dates if available
         if 'production_dates' in backtest_results and backtest_results['production_dates']:
@@ -394,8 +399,8 @@ Unique Models: {len(all_used_models)}"""
                    linewidth=2, color='gray', linestyle='--', alpha=0.7, 
                    label=f'{training_label} ({len(training_returns)} days)')
         
-        # Production period (blue, solid)
-        ax_pnl.plot(production_x, production_cumulative.values, 
+        # Production period (blue, solid) - use adjusted values for continuity
+        ax_pnl.plot(production_x, production_cumulative_adjusted.values, 
                    linewidth=3, color='blue', label='Production Period (Actual)')
         
         # Add vertical line at backtest start

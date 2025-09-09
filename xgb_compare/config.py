@@ -40,6 +40,9 @@ class XGBCompareConfig:
     # Signal processing
     binary_signal: bool = False  # Use +1/-1 signals instead of tanh
     
+    # Cross-validation parameters
+    rolling_days: int = 0  # If > 0, use rolling window of this many days instead of expanding
+    
     # Analysis parameters
     n_bootstraps: int = 100
     log_label: str = 'comparison'
@@ -81,6 +84,7 @@ class XGBCompareConfig:
         logger.info(f"  Inner Val Fraction: {self.inner_val_frac}")
         logger.info(f"  EWMA Alpha: {self.ewma_alpha}, Quality Halflife: {self.quality_halflife} days")
         logger.info(f"  Signal Type: {'Binary (+1/-1)' if self.binary_signal else 'Tanh Normalized'}")
+        logger.info(f"  Cross-validation: {'Rolling ' + str(self.rolling_days) + ' days' if self.rolling_days > 0 else 'Expanding window'}")
         logger.info(f"  Production: Cutoff={self.cutoff_fraction}, Top N={self.top_n_models}, Q-Metric={self.q_metric}")
         logger.info(f"  Reselection: Every {self.reselection_frequency} fold(s)")
         logger.info("")
@@ -142,6 +146,10 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument('--binary_signal', action='store_true',
                        help='Use binary +1/-1 signals instead of tanh normalization')
     
+    # Cross-validation parameters
+    parser.add_argument('--rolling', type=int, default=0, dest='rolling_days',
+                       help='Use rolling window of N days instead of expanding window (0 = expanding)')
+    
     return parser
 
 def parse_config() -> XGBCompareConfig:
@@ -172,5 +180,6 @@ def parse_config() -> XGBCompareConfig:
         reselection_frequency=args.reselection_frequency,
         n_bootstraps=args.n_bootstraps,
         log_label=args.log_label,
-        binary_signal=args.binary_signal
+        binary_signal=args.binary_signal,
+        rolling_days=args.rolling_days
     )

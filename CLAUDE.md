@@ -27,8 +27,14 @@ This is a comprehensive machine learning trading system built around XGBoost ens
 # XGBoost architecture comparison (primary development tool)
 ~/anaconda3/python.exe xgb_compare/xgb_compare_clean.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "standard" --log_label "test_run"
 
-# Run all 6 XGBoost architecture tests
+# Run all 6 XGBoost architecture tests (Sharpe Q-metric)
 run_all_tests.bat
+
+# Run all 6 XGBoost architecture tests (Hit Rate Q-metric)  
+run_all_tests_hitrate.bat
+
+# Rolling window training (fixed window instead of expanding)
+~/anaconda3/python.exe xgb_compare/xgb_compare_clean.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "standard" --log_label "rolling_test" --rolling 504
 
 # Monitor running processes
 ~/anaconda3/python.exe -c "import psutil; [print(f'PID {p.pid}: {\" \".join(p.cmdline())}') for p in psutil.process_iter() if 'xgb_compare_clean.py' in ' '.join(p.cmdline())]"
@@ -42,7 +48,20 @@ tail -f xgb_compare/results/logs/*.log
 - `standard`: Default XGBoost hyperparameter ranges
 - `deep`: Deeper trees with more complex interactions  
 - `tiered`: Multi-level ensemble approach
+
+**Signal Processing Options**:
 - Add `--binary_signal` for +1/-1 signals instead of tanh normalization
+- Binary signals typically achieve higher hit rates due to decisive directional bets
+
+**Cross-Validation Options**:
+- Default: Expanding window (training data grows with each fold)
+- `--rolling N`: Fixed rolling window of N days for training (e.g., `--rolling 504` for 2-year window)
+
+**Q-Metric Options**:
+- Default: `sharpe` (risk-adjusted returns)
+- `--q_metric hit_rate`: Use directional accuracy for model selection
+- `--q_metric cb_ratio`: Calmar-Burke ratio (return/max drawdown)
+- `--q_metric adj_sharpe`: Adjusted Sharpe with turnover penalty
 
 ## System Architecture
 
@@ -167,3 +186,22 @@ For different testing scenarios:
 - **Quick testing**: 5 models, 3 folds, 1 year data, 50 features
 - **Development**: 15 models, 5 folds, 3 years data, 100 features  
 - **Production**: 100 models, 15 folds, 10 years data, 400 features
+
+## New Features (September 2024)
+
+### Rolling Window Training (`--rolling N`)
+- **Feature**: Fixed training window instead of expanding window
+- **Implementation**: `wfo_splits_rolling()` function in `cv/wfo.py`
+- **Usage**: `--rolling 504` for 2-year rolling window
+- **Benefit**: Focuses on more recent data patterns, may improve model adaptability
+- **Testing**: Successfully tested with small configurations
+
+### Hit Rate Q-Metric (`--q_metric hit_rate`)
+- **Feature**: Model selection based on directional accuracy instead of Sharpe ratio
+- **Implementation**: Uses existing hit_rate calculation in `metrics_utils.py`
+- **Usage**: `--q_metric hit_rate` in any xgb_compare command
+- **Test Suite**: `run_all_tests_hitrate.bat` runs all 6 architectures with hit_rate
+- **Benefit**: Prioritizes models with higher directional accuracy
+
+### Why Binary Signals Have Higher Hit Rates
+Binary signals (`--binary_signal`) convert continuous predictions to pure +1/-1 values based on z-score sign, creating decisive directional bets. Tanh normalization preserves continuous values that may include weak signals near zero, which can hurt hit rate despite potentially being profitable with proper position sizing.

@@ -27,7 +27,7 @@ from backtest_visualization import log_detailed_backtest_summary
 from data.data_utils_simple import prepare_real_data_simple
 from model.feature_selection import apply_feature_selection
 from model.xgb_drivers import generate_xgb_specs, generate_deep_xgb_specs, fit_xgb_on_slice
-from cv.wfo import wfo_splits
+from cv.wfo import wfo_splits, wfo_splits_rolling
 
 def setup_logging(config):
     """Setup logging and directories."""
@@ -278,7 +278,13 @@ def run_cross_validation(X, y, config, logger):
         xgb_specs = generate_deep_xgb_specs(config.n_models)
     else:
         xgb_specs = generate_xgb_specs(config.n_models)
-    fold_splits = list(wfo_splits(len(X), k_folds=config.n_folds))
+    # Choose between expanding and rolling window splits
+    if config.rolling_days > 0:
+        fold_splits = list(wfo_splits_rolling(len(X), k_folds=config.n_folds, rolling_days=config.rolling_days))
+        logger.info(f"Using rolling window: {config.rolling_days} days")
+    else:
+        fold_splits = list(wfo_splits(len(X), k_folds=config.n_folds))
+        logger.info("Using expanding window")
     quality_tracker = QualityTracker(config.n_models, config.quality_halflife)
     all_fold_results = {}
     
