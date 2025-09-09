@@ -1,0 +1,92 @@
+2025-09-09 09:52:47,482 - INFO - ================================================================================
+2025-09-09 09:52:47,482 - INFO - XGBoost Comparison Framework
+2025-09-09 09:52:47,482 - INFO - ================================================================================
+2025-09-09 09:52:47,482 - INFO - Configuration:
+2025-09-09 09:52:47,482 - INFO -   Target Symbol: @ES#C
+2025-09-09 09:52:47,482 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-09 09:52:47,482 - INFO -   Models: 100, Type: standard
+2025-09-09 09:52:47,482 - INFO -   Folds: 15
+2025-09-09 09:52:47,483 - INFO -   Max Features: -1 (All after cluster reduction)
+2025-09-09 09:52:47,483 - INFO -   Feature Selection: Enabled
+2025-09-09 09:52:47,483 - INFO -   Inner Val Fraction: 0.2
+2025-09-09 09:52:47,483 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-09 09:52:47,483 - INFO -   Signal Type: Tanh Normalized
+2025-09-09 09:52:47,483 - INFO -   Production: Cutoff=0.6, Top N=10, Q-Metric=sharpe
+2025-09-09 09:52:47,483 - INFO -   Reselection: Every 1 fold(s)
+2025-09-09 09:52:47,483 - INFO - 
+2025-09-09 09:52:50,210 - INFO - Loaded: (2733, 1054)
+2025-09-09 09:52:57,547 - INFO - Selected 50 features (threshold: 0.7)
+2025-09-09 09:52:57,553 - INFO - Features: 50
+2025-09-09 09:52:57,775 - INFO - GPU detection: CUDA GPU available
+2025-09-09 09:52:57,777 - INFO - ============================================================
+2025-09-09 09:52:57,777 - INFO - Starting Cross-Validation: 100 standard models x 13 folds
+2025-09-09 09:52:57,777 - INFO - Multiprocessing: Enabled
+2025-09-09 09:52:57,777 - INFO - ============================================================
+2025-09-09 09:52:57,777 - INFO - 
+Processing Fold 1/15
+2025-09-09 09:52:57,783 - INFO -   Train: 364, Val: 73, Test: 182 samples
+2025-09-09 09:52:57,784 - INFO -   CPU mode - Parallel processing (8 workers)
+2025-09-09 09:53:18,090 - INFO -   Best OOS: M43 (Sharpe=1.466, p=0.160)
+2025-09-09 09:53:18,090 - INFO -   Best Q:   M00 (Q=0.000)
+2025-09-09 09:53:18,091 - INFO -   Mean OOS Sharpe: -0.880
+
+2025-09-09 09:53:18,091 - INFO - 
+Processing Fold 2/15
+2025-09-09 09:53:18,098 - INFO -   Train: 546, Val: 110, Test: 182 samples
+2025-09-09 09:53:18,098 - INFO -   CPU mode - Parallel processing (8 workers)
+2025-09-09 09:53:39,270 - INFO -   Best OOS: M09 (Sharpe=0.793, p=0.430)
+2025-09-09 09:53:39,271 - INFO -   Best Q:   M43 (Q=1.466)
+2025-09-09 09:53:39,271 - INFO -   Mean OOS Sharpe: -0.928
+
+2025-09-09 09:53:39,271 - INFO - 
+Processing Fold 3/15
+2025-09-09 09:53:39,280 - INFO -   Train: 728, Val: 146, Test: 182 samples
+2025-09-09 09:53:39,280 - INFO -   CPU mode - Parallel processing (8 workers)
+2025-09-09 09:54:07,312 - INFO -   Best OOS: M14 (Sharpe=1.887, p=0.070)
+2025-09-09 09:54:07,312 - INFO -   Best Q:   M43 (Q=1.266)
+2025-09-09 09:54:07,312 - INFO -   Mean OOS Sharpe: -0.101
+
+2025-09-09 09:54:07,312 - INFO - 
+Processing Fold 4/15
+2025-09-09 09:54:07,321 - INFO -   Train: 910, Val: 182, Test: 182 samples
+2025-09-09 09:54:07,322 - INFO -   CPU mode - Parallel processing (8 workers)
+2025-09-09 09:54:30,792 - INFO -   Best OOS: M53 (Sharpe=2.332, p=0.070)
+2025-09-09 09:54:30,792 - INFO -   Best Q:   M43 (Q=1.094)
+2025-09-09 09:54:30,793 - INFO -   Mean OOS Sharpe: 0.521
+
+2025-09-09 09:54:30,793 - INFO - 
+Processing Fold 5/15
+2025-09-09 09:54:30,803 - INFO -   Train: 1092, Val: 219, Test: 182 samples
+2025-09-09 09:54:30,804 - INFO -   CPU mode - Parallel processing (8 workers)
+2025-09-09 09:55:37,598 - INFO -   Best OOS: M11 (Sharpe=2.440, p=0.050)
+2025-09-09 09:55:37,598 - INFO -   Best Q:   M43 (Q=1.055)
+2025-09-09 09:55:37,598 - INFO -   Mean OOS Sharpe: -0.424
+
+2025-09-09 09:55:37,599 - INFO - 
+Processing Fold 6/15
+2025-09-09 09:55:37,612 - INFO -   Train: 1274, Val: 255, Test: 182 samples
+2025-09-09 09:55:37,612 - INFO -   CPU mode - Parallel processing (8 workers)
+2025-09-09 09:55:59,721 - INFO -   Best OOS: M25 (Sharpe=2.736, p=0.010)
+2025-09-09 09:55:59,721 - INFO -   Best Q:   M43 (Q=0.884)
+2025-09-09 09:55:59,721 - INFO -   Mean OOS Sharpe: 1.170
+
+2025-09-09 09:55:59,722 - INFO - 
+Processing Fold 7/15
+2025-09-09 09:55:59,729 - INFO -   Train: 1456, Val: 292, Test: 182 samples
+2025-09-09 09:55:59,729 - INFO -   CPU mode - Parallel processing (8 workers)
+2025-09-09 09:56:25,276 - INFO -   Best OOS: M12 (Sharpe=1.929, p=0.080)
+2025-09-09 09:56:25,276 - INFO -   Best Q:   M12 (Q=0.845)
+2025-09-09 09:56:25,276 - INFO -   Mean OOS Sharpe: -0.950
+
+2025-09-09 09:56:25,277 - INFO - 
+Processing Fold 8/15
+2025-09-09 09:56:25,286 - INFO -   Train: 1638, Val: 328, Test: 182 samples
+2025-09-09 09:56:25,287 - INFO -   CPU mode - Parallel processing (8 workers)
+2025-09-09 09:56:52,878 - INFO -   Best OOS: M81 (Sharpe=3.603, p=0.010)
+2025-09-09 09:56:52,878 - INFO -   Best Q:   M12 (Q=0.953)
+2025-09-09 09:56:52,878 - INFO -   Mean OOS Sharpe: 1.512
+
+2025-09-09 09:56:52,879 - INFO - 
+Processing Fold 9/15
+2025-09-09 09:56:52,894 - INFO -   Train: 1820, Val: 364, Test: 182 samples
+2025-09-09 09:56:52,894 - INFO -   CPU mode - Parallel processing (8 workers)

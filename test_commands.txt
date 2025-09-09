@@ -1,0 +1,38 @@
+# XGBoost Comparison Framework - Test Commands
+# Parameters: 100 models, 15 folds, 2015-01-01 to 2025-08-01, 0.6 cutoff
+# Target: @ES#C (S&P 500 E-mini Futures)
+
+# 1. Standard XGBoost with Tanh normalization
+~/anaconda3/python.exe xgb_compare/xgb_compare_clean.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "standard" --log_label "standard_tanh"
+
+# 2. Standard XGBoost with Binary signals (+1/-1)
+~/anaconda3/python.exe xgb_compare/xgb_compare.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "standard" --log_label "standard_binary" --binary_signal
+
+# 3. Deep XGBoost with Tanh normalization
+~/anaconda3/python.exe xgb_compare/xgb_compare.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "deep" --log_label "deep_tanh"
+
+# 4. Deep XGBoost with Binary signals (+1/-1)
+~/anaconda3/python.exe xgb_compare/xgb_compare.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "deep" --log_label "deep_binary" --binary_signal
+
+# 5. Tiered XGBoost with Tanh normalization
+~/anaconda3/python.exe xgb_compare/xgb_compare.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "tiered" --log_label "tiered_tanh"
+
+# 6. Tiered XGBoost with Binary signals (+1/-1)
+~/anaconda3/python.exe xgb_compare/xgb_compare.py --target_symbol "@ES#C" --start_date "2015-01-01" --end_date "2025-08-01" --n_models 100 --n_folds 15 --cutoff_fraction 0.6 --xgb_type "tiered" --log_label "tiered_binary" --binary_signal
+
+# Additional options:
+# --no_feature_selection    : Skip feature selection (use all features)
+# --max_features N          : Limit features to N (default: automatic)
+# --use_multiprocessing     : Enable parallel processing (default: True)
+# --n_bootstraps N          : Number of bootstrap samples for p-values (default: 100)
+# --inner_val_frac F        : Inner validation fraction (default: 0.2)
+# --ewma_alpha A            : EWMA alpha for Q-score (default: 0.1)
+# --quality_halflife H      : Quality tracker halflife (default: 3)
+# --top_n_models N          : Top N models to select (default: 5)
+# --q_metric M              : Quality metric (default: "sharpe")
+
+# Notes:
+# - GPU acceleration is automatically detected and used when available
+# - Multiprocessing is enabled by default for CPU training
+# - Results are saved to xgb_compare/results/ directory
+# - Logs are saved to xgb_compare/results/logs/ directory

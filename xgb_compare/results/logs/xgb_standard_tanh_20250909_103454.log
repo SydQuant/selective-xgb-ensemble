@@ -1,0 +1,26 @@
+2025-09-09 10:34:54,020 - INFO - ================================================================================
+2025-09-09 10:34:54,020 - INFO - XGBoost Comparison Framework
+2025-09-09 10:34:54,020 - INFO - ================================================================================
+2025-09-09 10:34:54,020 - INFO - Configuration:
+2025-09-09 10:34:54,020 - INFO -   Target Symbol: @ES#C
+2025-09-09 10:34:54,020 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-09 10:34:54,021 - INFO -   Models: 100, Type: standard
+2025-09-09 10:34:54,021 - INFO -   Folds: 15
+2025-09-09 10:34:54,021 - INFO -   Max Features: -1 (All after cluster reduction)
+2025-09-09 10:34:54,021 - INFO -   Feature Selection: Enabled
+2025-09-09 10:34:54,021 - INFO -   Inner Val Fraction: 0.2
+2025-09-09 10:34:54,022 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-09 10:34:54,022 - INFO -   Signal Type: Tanh Normalized
+2025-09-09 10:34:54,022 - INFO -   Production: Cutoff=0.6, Top N=10, Q-Metric=sharpe
+2025-09-09 10:34:54,022 - INFO -   Reselection: Every 1 fold(s)
+2025-09-09 10:34:54,022 - INFO - 
+2025-09-09 10:34:58,086 - INFO - Loaded: (2733, 1054)
+2025-09-09 10:35:10,423 - INFO - Selected 401 features (threshold: 0.7)
+2025-09-09 10:35:10,433 - INFO - Features: 401
+2025-09-09 10:35:11,117 - INFO - GPU detection: CUDA GPU available
+2025-09-09 10:35:11,400 - INFO - ============================================================
+2025-09-09 10:35:11,401 - INFO - Cross-Validation: 100 standard models x 13 folds
+2025-09-09 10:35:11,401 - INFO - Processing: GPU Sequential
+2025-09-09 10:35:11,401 - INFO - ============================================================
+2025-09-09 10:35:11,401 - INFO - 
+Fold 1/13

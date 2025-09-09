@@ -1,0 +1,51 @@
+2025-09-09 10:04:46,047 - INFO - ================================================================================
+2025-09-09 10:04:46,047 - INFO - XGBoost Comparison Framework
+2025-09-09 10:04:46,047 - INFO - ================================================================================
+2025-09-09 10:04:46,047 - INFO - Configuration:
+2025-09-09 10:04:46,048 - INFO -   Target Symbol: @ES#C
+2025-09-09 10:04:46,048 - INFO -   Date Range: 2020-01-01 to 2022-01-01
+2025-09-09 10:04:46,048 - INFO -   Models: 3, Type: standard
+2025-09-09 10:04:46,048 - INFO -   Folds: 3
+2025-09-09 10:04:46,048 - INFO -   Max Features: -1 (All after cluster reduction)
+2025-09-09 10:04:46,048 - INFO -   Feature Selection: Enabled
+2025-09-09 10:04:46,048 - INFO -   Inner Val Fraction: 0.2
+2025-09-09 10:04:46,048 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-09 10:04:46,048 - INFO -   Signal Type: Tanh Normalized
+2025-09-09 10:04:46,048 - INFO -   Production: Cutoff=0.6, Top N=1, Q-Metric=sharpe
+2025-09-09 10:04:46,048 - INFO -   Reselection: Every 1 fold(s)
+2025-09-09 10:04:46,048 - INFO - 
+2025-09-09 10:04:47,122 - WARNING - Found 44 NaN values in feature columns after cleaning
+2025-09-09 10:04:47,135 - INFO - Loaded: (518, 1054)
+2025-09-09 10:04:53,619 - INFO - Selected 407 features (threshold: 0.7)
+2025-09-09 10:04:53,623 - INFO - Features: 407
+2025-09-09 10:04:53,878 - INFO - GPU detection: CUDA GPU available
+2025-09-09 10:04:53,878 - INFO - ============================================================
+2025-09-09 10:04:53,878 - INFO - Starting Cross-Validation: 3 standard models x 1 folds
+2025-09-09 10:04:53,878 - INFO - Multiprocessing: Enabled
+2025-09-09 10:04:53,878 - INFO - ============================================================
+2025-09-09 10:04:53,878 - INFO - 
+Processing Fold 1/3
+2025-09-09 10:04:53,996 - INFO -   Train: 344, Val: 69, Test: 174 samples
+2025-09-09 10:04:53,996 - INFO -   GPU mode - Sequential processing (3 models)
+2025-09-09 10:04:55,625 - INFO -   Best OOS: M02 (Sharpe=1.469, p=0.270)
+2025-09-09 10:04:55,625 - INFO -   Best Q:   M00 (Q=0.000)
+2025-09-09 10:04:55,625 - INFO -   Mean OOS Sharpe: 0.840
+
+2025-09-09 10:04:55,625 - INFO - 
+============================================================
+2025-09-09 10:04:55,625 - INFO - Starting Production Backtesting...
+2025-09-09 10:04:55,626 - INFO - ============================================================
+2025-09-09 10:04:55,626 - INFO - Running full timeline backtest with 1 folds (starting from fold 2)
+2025-09-09 10:04:55,626 - INFO - Fold 1 skipped (no Q-score history for meaningful selection)
+2025-09-09 10:04:55,626 - INFO - Effective backtest period: Folds 2-1 (0 folds)
+2025-09-09 10:04:55,626 - INFO - Training period: Folds 2-1
+2025-09-09 10:04:55,626 - INFO - Production period: Folds 2-1
+2025-09-09 10:04:55,626 - INFO - Using same OOS methodology for both periods
+2025-09-09 10:04:55,626 - INFO - Fold 1: Skipped (no Q-score history for meaningful selection)
+2025-09-09 10:04:55,626 - INFO - 
+Backtest Results:
+2025-09-09 10:04:55,626 - INFO - 
+Generating visualizations...
+2025-09-09 10:04:55,627 - INFO - Creating visualizations (3 models)...
+2025-09-09 10:04:56,040 - INFO - Fold-by-fold analysis saved to: fold_@ES#C_3models_3folds_standard_tanh_gpu_correlation_test_20250909_100455.png
+2025-09-09 10:04:56,063 - INFO - Using actual training period PnL (0 days)
