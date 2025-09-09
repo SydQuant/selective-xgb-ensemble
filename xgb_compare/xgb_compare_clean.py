@@ -12,6 +12,10 @@ import logging
 from datetime import datetime
 import pandas as pd
 import numpy as np
+import multiprocessing as mp
+
+# Fix NumExpr warning
+os.environ['NUMEXPR_MAX_THREADS'] = str(min(16, mp.cpu_count()))
 
 # Framework imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -59,9 +63,10 @@ def load_and_prepare_data(config, logger):
     return X, y
 
 def train_single_model(model_idx, spec, X_train, y_train, X_inner_train, y_inner_train, 
-                      X_inner_val, y_inner_val, X_test, y_test, config):
+                      X_inner_val, y_inner_val, X_test, y_test, config, use_gpu=False):
     """Train single model and return metrics."""
-    model = fit_xgb_on_slice(X_train, y_train, spec)
+    # Use GPU if available and requested, otherwise use CPU
+    model = fit_xgb_on_slice(X_train, y_train, spec, force_cpu=not use_gpu)
     
     # Predictions with normalization
     pred_inner_train = normalize_predictions(pd.Series(model.predict(X_inner_train.values), index=X_inner_train.index), config.binary_signal)
@@ -86,8 +91,86 @@ def train_single_model(model_idx, spec, X_train, y_train, X_inner_train, y_inner
         'Q_Sharpe': 0.0  # Will be calculated by quality tracker
     }, oos_metrics
 
-def process_single_fold(fold_idx, train_idx, test_idx, X, y, xgb_specs, quality_tracker, config, logger):
-    """Process single fold with all models."""
+def train_models_multiprocessing(xgb_specs, X_train, y_train, X_inner_train, y_inner_train, 
+                                X_inner_val, y_inner_val, X_test, y_test, config):
+    """Train models using multiprocessing - simplified version."""
+    from concurrent.futures import ProcessPoolExecutor
+    import multiprocessing as mp
+    
+    def train_single_model_mp(args):
+        """Single model training for multiprocessing."""
+        model_idx, spec, X_train_vals, y_train_vals, X_inner_train_vals, y_inner_train_vals, \
+        X_inner_val_vals, y_inner_val_vals, X_test_vals, y_test_vals, binary_signal = args
+        
+        # Import inside function
+        import pandas as pd
+        from model.xgb_drivers import fit_xgb_on_slice
+        from metrics_utils import normalize_predictions, calculate_model_metrics, calculate_metric_pvalue
+        
+        # Recreate DataFrames with simple indices
+        n_train = len(X_train_vals)
+        n_inner_train = len(X_inner_train_vals) 
+        n_inner_val = len(X_inner_val_vals)
+        n_test = len(X_test_vals)
+        
+        X_train_df = pd.DataFrame(X_train_vals, index=range(n_train))
+        y_train_series = pd.Series(y_train_vals, index=range(n_train))
+        X_inner_train_df = pd.DataFrame(X_inner_train_vals, index=range(n_inner_train))
+        y_inner_train_series = pd.Series(y_inner_train_vals, index=range(n_inner_train))
+        X_inner_val_df = pd.DataFrame(X_inner_val_vals, index=range(n_inner_val))
+        y_inner_val_series = pd.Series(y_inner_val_vals, index=range(n_inner_val))
+        
+        # Force CPU for multiprocessing
+        model = fit_xgb_on_slice(X_train_df, y_train_series, spec, force_cpu=True)
+        
+        # Predictions with normalization
+        pred_inner_train = normalize_predictions(pd.Series(model.predict(X_inner_train_vals), index=range(n_inner_train)), binary_signal)
+        pred_inner_val = normalize_predictions(pd.Series(model.predict(X_inner_val_vals), index=range(n_inner_val)), binary_signal)
+        pred_test = normalize_predictions(pd.Series(model.predict(X_test_vals), index=range(n_test)), binary_signal)
+        
+        # Metrics calculation
+        is_metrics = calculate_model_metrics(pred_inner_train, y_inner_train_series, shifted=False)
+        iv_metrics = calculate_model_metrics(pred_inner_val, y_inner_val_series, shifted=False)
+        oos_metrics = calculate_model_metrics(pred_test, pd.Series(y_test_vals, index=range(n_test)), shifted=True)
+        
+        # Statistical significance
+        p_sharpe = calculate_metric_pvalue(pred_test, pd.Series(y_test_vals, index=range(n_test)), 'sharpe', oos_metrics['sharpe'], 50)
+        
+        return {
+            'Model': f"M{model_idx:02d}",
+            'IS_Sharpe': is_metrics['sharpe'],
+            'IV_Sharpe': iv_metrics['sharpe'], 
+            'OOS_Sharpe': oos_metrics['sharpe'],
+            'OOS_Hit_Rate': oos_metrics['hit_rate'],
+            'OOS_Sharpe_p': p_sharpe,
+            'Q_Sharpe': 0.0
+        }, oos_metrics
+    
+    # Prepare arguments
+    args_list = []
+    for model_idx, spec in enumerate(xgb_specs):
+        args = (model_idx, spec, X_train.values, y_train.values, 
+               X_inner_train.values, y_inner_train.values,
+               X_inner_val.values, y_inner_val.values, 
+               X_test.values, y_test.values, config.binary_signal)
+        args_list.append(args)
+    
+    # Execute in parallel
+    max_workers = min(6, mp.cpu_count(), len(xgb_specs))
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        results = list(executor.map(train_single_model_mp, args_list))
+    
+    # Split results
+    fold_results = []
+    model_metrics = []
+    for model_result, metrics in results:
+        fold_results.append(model_result)
+        model_metrics.append(metrics)
+    
+    return fold_results, model_metrics
+
+def process_single_fold(fold_idx, train_idx, test_idx, X, y, xgb_specs, quality_tracker, config, logger, use_gpu=False, use_multiprocessing=False):
+    """Process single fold with all models using optimized GPU/CPU processing."""
     # Inner validation split
     inner_split_point = int(len(train_idx) * (1 - config.inner_val_frac))
     inner_train_idx = train_idx[:inner_split_point]
@@ -102,13 +185,27 @@ def process_single_fold(fold_idx, train_idx, test_idx, X, y, xgb_specs, quality_
     fold_results = []
     model_metrics = []
     
-    for model_idx, spec in enumerate(xgb_specs):
-        model_result, metrics = train_single_model(
-            model_idx, spec, X_train, y_train, X_inner_train, y_inner_train,
+    # Choose processing approach based on configuration
+    if use_multiprocessing and not use_gpu and len(xgb_specs) > 1:
+        logger.info(f"  Using multiprocessing with {min(6, len(xgb_specs))} workers")
+        
+        # Simplified multiprocessing - batch train all models
+        fold_results, model_metrics = train_models_multiprocessing(
+            xgb_specs, X_train, y_train, X_inner_train, y_inner_train,
             X_inner_val, y_inner_val, X_test, y_test, config
         )
-        fold_results.append(model_result)
-        model_metrics.append(metrics)
+    else:
+        # Sequential processing (for GPU, CPU small counts, or single model)
+        processing_type = "GPU sequential" if use_gpu else "CPU sequential"
+        logger.info(f"  Using {processing_type} processing")
+        
+        for model_idx, spec in enumerate(xgb_specs):
+            model_result, metrics = train_single_model(
+                model_idx, spec, X_train, y_train, X_inner_train, y_inner_train,
+                X_inner_val, y_inner_val, X_test, y_test, config, use_gpu=use_gpu
+            )
+            fold_results.append(model_result)
+            model_metrics.append(metrics)
     
     # Update quality tracker
     quality_tracker.update_quality(fold_idx, model_metrics)
@@ -133,8 +230,48 @@ def process_single_fold(fold_idx, train_idx, test_idx, X, y, xgb_specs, quality_
     
     return fold_df, model_metrics
 
+def choose_optimal_processing_mode(config, logger):
+    """Intelligently choose the best processing mode based on model count and hardware."""
+    from model.xgb_drivers import detect_gpu
+    
+    device = detect_gpu()
+    gpu_available = (device == "cuda")
+    total_models = config.n_models * config.n_folds
+    
+    # Smart decision logic based on performance testing
+    if total_models < 50:
+        # Small model counts: CPU sequential is fastest (no overhead)
+        use_gpu = False
+        use_multiprocessing = False
+        mode_desc = "CPU sequential (optimal for small model counts)"
+    elif gpu_available and total_models > 200:
+        # Large model counts with GPU: GPU can overcome transfer overhead
+        use_gpu = True
+        use_multiprocessing = False
+        mode_desc = "GPU sequential (optimal for large model counts)"
+    elif total_models > 50:
+        # Medium-large model counts: CPU multiprocessing overcomes overhead
+        use_gpu = False
+        use_multiprocessing = True
+        mode_desc = f"CPU multiprocessing ({min(8, config.n_models)} workers)"
+    else:
+        # Fallback to CPU sequential
+        use_gpu = False
+        use_multiprocessing = False
+        mode_desc = "CPU sequential (fallback)"
+    
+    logger.info(f"Processing mode: {mode_desc}")
+    logger.info(f"  Total models to train: {total_models}")
+    logger.info(f"  GPU available: {gpu_available}")
+    
+    return use_gpu, use_multiprocessing
+
 def run_cross_validation(X, y, config, logger):
-    """Run cross-validation analysis."""
+    """Run cross-validation analysis with intelligent processing mode selection."""
+    
+    # Choose optimal processing mode
+    use_gpu, use_multiprocessing = choose_optimal_processing_mode(config, logger)
+    
     if config.xgb_type == 'deep':
         xgb_specs = generate_deep_xgb_specs(config.n_models)
     else:
@@ -148,7 +285,8 @@ def run_cross_validation(X, y, config, logger):
     for fold_idx, (train_idx, test_idx) in enumerate(fold_splits):
         logger.info(f"Processing Fold {fold_idx+1}/{config.n_folds}")
         fold_df, model_metrics = process_single_fold(fold_idx, train_idx, test_idx, X, y, 
-                                                   xgb_specs, quality_tracker, config, logger)
+                                                   xgb_specs, quality_tracker, config, logger,
+                                                   use_gpu=use_gpu, use_multiprocessing=use_multiprocessing)
         all_fold_results[f'fold_{fold_idx+1}'] = {
             'results_df': fold_df,
             'model_metrics': model_metrics

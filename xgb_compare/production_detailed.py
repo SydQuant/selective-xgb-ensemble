@@ -477,7 +477,7 @@ Unique Models: {len(all_used_models)}"""
                 f'Complete Breakdown: Q-Evolution + Fold Performance + Model Analysis + PnL Curve', 
                 fontsize=18, fontweight='bold')
     
-    filename = f"detailed_production_{config.target_symbol}_{config.log_label}_{timestamp}.png"
+    filename = f"backtest_{config.target_symbol}_{config.n_models}models_{config.n_folds}folds_{config.log_label}_{timestamp}.png"
     save_path = os.path.join(save_dir, filename)
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.close()

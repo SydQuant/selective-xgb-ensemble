@@ -145,26 +145,87 @@ def stratified_xgb_bank(all_cols, n_models=50, seed=13):
 
     return specs, col_slices
 
-def fit_xgb_on_slice(X_tr: pd.DataFrame, y_tr: pd.Series, spec: Dict[str, Any]):
+def fit_xgb_on_slice(X_tr: pd.DataFrame, y_tr: pd.Series, spec: Dict[str, Any], force_cpu: bool = False):
+    """
+    Train XGBoost model with GPU support.
+    
+    Args:
+        X_tr: Training features
+        y_tr: Training targets
+        spec: XGBoost specification with device settings
+        force_cpu: If True, force CPU mode (for multiprocessing compatibility)
+    """
     if XGBRegressor is None:
         raise ImportError("xgboost is not installed. Please `pip install xgboost`.")
     
-    # Force CPU mode to avoid GPU/CPU data mismatch warnings
-    spec_cpu = spec.copy()
-    spec_cpu["device"] = "cpu"
-    spec_cpu["tree_method"] = "hist"
+    # Use original spec or force CPU if requested
+    final_spec = spec.copy()
+    if force_cpu:
+        final_spec["device"] = "cpu"
+        final_spec["tree_method"] = "hist"
     
-    model = XGBRegressor(**spec_cpu)
-    model.fit(X_tr.values, y_tr.values)
-    return model
+    try:
+        model = XGBRegressor(**final_spec)
+        model.fit(X_tr.values, y_tr.values)
+        return model
+    except Exception as e:
+        # Fallback to CPU if GPU fails
+        if not force_cpu and final_spec.get("device") == "cuda":
+            import logging
+            logging.getLogger(__name__).warning(f"GPU training failed, falling back to CPU: {e}")
+            final_spec["device"] = "cpu"
+            model = XGBRegressor(**final_spec)
+            model.fit(X_tr.values, y_tr.values)
+            return model
+        else:
+            raise
 
-def fold_train_predict(X_tr: pd.DataFrame, y_tr: pd.Series, X_te: pd.DataFrame, specs: List[Dict[str, Any]]):
+def fold_train_predict(X_tr: pd.DataFrame, y_tr: pd.Series, X_te: pd.DataFrame, specs: List[Dict[str, Any]], use_multiprocessing: bool = False):
+    """Train multiple models and predict with optional multiprocessing for CPU."""
     train_preds, test_preds = [], []
-    for spec in specs:
-        m = fit_xgb_on_slice(X_tr, y_tr, spec)
-        p_tr = pd.Series(m.predict(X_tr.values), index=X_tr.index, name="m")
-        p_te = pd.Series(m.predict(X_te.values), index=X_te.index, name="m")
-        train_preds.append(p_tr); test_preds.append(p_te)
+    
+    if use_multiprocessing and len(specs) > 1:
+        # Use multiprocessing for CPU training
+        from concurrent.futures import ProcessPoolExecutor
+        import multiprocessing as mp
+        
+        def train_predict_single(args):
+            spec, X_tr_vals, y_tr_vals, X_te_vals, X_tr_idx, X_te_idx = args
+            # Force CPU for multiprocessing compatibility
+            model = fit_xgb_on_slice(
+                pd.DataFrame(X_tr_vals, index=X_tr_idx), 
+                pd.Series(y_tr_vals, index=X_tr_idx), 
+                spec, force_cpu=True
+            )
+            p_tr = model.predict(X_tr_vals)
+            p_te = model.predict(X_te_vals)
+            return p_tr, p_te
+        
+        # Prepare arguments for multiprocessing
+        args_list = [
+            (spec, X_tr.values, y_tr.values, X_te.values, X_tr.index, X_te.index)
+            for spec in specs
+        ]
+        
+        # Use up to 8 workers, but don't exceed CPU count
+        max_workers = min(8, mp.cpu_count(), len(specs))
+        
+        with ProcessPoolExecutor(max_workers=max_workers) as executor:
+            results = list(executor.map(train_predict_single, args_list))
+        
+        # Convert results back to pandas Series
+        for i, (p_tr, p_te) in enumerate(results):
+            train_preds.append(pd.Series(p_tr, index=X_tr.index, name="m"))
+            test_preds.append(pd.Series(p_te, index=X_te.index, name="m"))
+    else:
+        # Sequential processing (original logic)
+        for spec in specs:
+            m = fit_xgb_on_slice(X_tr, y_tr, spec)
+            p_tr = pd.Series(m.predict(X_tr.values), index=X_tr.index, name="m")
+            p_te = pd.Series(m.predict(X_te.values), index=X_te.index, name="m")
+            train_preds.append(p_tr)
+            test_preds.append(p_te)
+    
     return train_preds, test_preds
 
 def fold_train_predict_tiered(X_tr: pd.DataFrame, y_tr: pd.Series, X_te: pd.DataFrame, specs: List[Dict[str, Any]], col_slices: List[List[str]]):

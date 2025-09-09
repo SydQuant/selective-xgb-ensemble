@@ -33,7 +33,7 @@ class XGBCompareConfig:
     
     # Production backtesting
     cutoff_fraction: float = 0.7
-    top_n_models: int = 5
+    top_n_models: int = 5  # Will be dynamically set to 10% of n_models
     q_metric: str = 'sharpe'
     reselection_frequency: int = 1
     
@@ -149,6 +149,11 @@ def parse_config() -> XGBCompareConfig:
     parser = create_argument_parser()
     args = parser.parse_args()
     
+    # Dynamic top_n_models: if not explicitly provided, use 10% of n_models
+    top_n_models = args.top_n_models
+    if top_n_models == 5:  # Default value, not explicitly set
+        top_n_models = max(1, int(0.1 * args.n_models))  # 10% of n_models, minimum 1
+    
     return XGBCompareConfig(
         target_symbol=args.target_symbol,
         start_date=args.start_date,
@@ -162,7 +167,7 @@ def parse_config() -> XGBCompareConfig:
         ewma_alpha=args.ewma_alpha,
         quality_halflife=args.quality_halflife,
         cutoff_fraction=args.cutoff_fraction,
-        top_n_models=args.top_n_models,
+        top_n_models=top_n_models,
         q_metric=args.q_metric,
         reselection_frequency=args.reselection_frequency,
         n_bootstraps=args.n_bootstraps,

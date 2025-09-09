@@ -113,7 +113,7 @@ def create_fold_by_fold_tables(all_fold_results, config, timestamp, save_dir):
     plt.tight_layout()
     plt.subplots_adjust(top=0.98)
     
-    filename = f"fold_by_fold_clean_{config.target_symbol}_{config.log_label}_{timestamp}.png"
+    filename = f"fold_{config.target_symbol}_{config.n_models}models_{config.n_folds}folds_{config.log_label}_{timestamp}.png"
     save_path = os.path.join(save_dir, filename)
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.close()
