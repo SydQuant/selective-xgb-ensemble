@@ -81,8 +81,30 @@ class FullTimelineBacktester:
             # Model selection: Use Q-scores up to previous fold (fold x uses data up to x-1)
             selection_fold = fold_idx - 1  # fold_idx-1 gives us data up to fold (fold_idx-1)
             
+            # Debug: Check if we have the required data
+            if selection_fold < 0:
+                logger.error(f"Fold {fold_number}: Invalid selection_fold={selection_fold}")
+                continue
+            
             # Get latest Q-scores from ROLLING quality tracker (updated with actual backtest results)
-            q_scores = rolling_quality_tracker.get_q_scores(selection_fold, ewma_alpha=0.1)[self.q_metric]
+            if self.q_metric in ['combined', 'sharpe_hit']:
+                # Handle combined Q-scores
+                if hasattr(config, 'q_sharpe_weight') and hasattr(config, 'q_use_zscore'):
+                    q_scores = rolling_quality_tracker.get_sharpe_hit_combined_q_scores(
+                        selection_fold, ewma_alpha=0.1, 
+                        sharpe_weight=config.q_sharpe_weight, 
+                        use_zscore=config.q_use_zscore
+                    )
+                else:
+                    # Default to 50/50 with z-score
+                    q_scores = rolling_quality_tracker.get_sharpe_hit_combined_q_scores(
+                        selection_fold, ewma_alpha=0.1, 
+                        sharpe_weight=0.5, 
+                        use_zscore=True
+                    )
+            else:
+                # Individual metrics
+                q_scores = rolling_quality_tracker.get_q_scores(selection_fold, ewma_alpha=0.1)[self.q_metric]
             logger.info(f"Fold {fold_number}: Q-scores from fold {selection_fold}: {[f'M{i:02d}:{score:.3f}' for i, score in enumerate(q_scores[:10]) if not np.isnan(score)][:5]}...")
             
             # Get top N models by Q-score
@@ -120,9 +142,12 @@ class FullTimelineBacktester:
                 
                 # Get stored OOS predictions from training phase (no retraining!)
                 fold_key = f'fold_{fold_number}'
+                logger.debug(f"Fold {fold_number}: Looking for key '{fold_key}' in {list(all_fold_results.keys())}")
+                
                 if fold_key in all_fold_results and 'oos_predictions' in all_fold_results[fold_key]:
                     stored_predictions = all_fold_results[fold_key]['oos_predictions']
                     stored_test_idx = all_fold_results[fold_key]['test_idx']
+                    logger.debug(f"Fold {fold_number}: Found stored predictions for {len(stored_predictions)} models")
                     
                     # Verify test indices match (sanity check)
                     if not np.array_equal(stored_test_idx, test_idx):

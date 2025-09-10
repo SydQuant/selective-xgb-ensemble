@@ -205,3 +205,65 @@ For different testing scenarios:
 
 ### Why Binary Signals Have Higher Hit Rates
 Binary signals (`--binary_signal`) convert continuous predictions to pure +1/-1 values based on z-score sign, creating decisive directional bets. Tanh normalization preserves continuous values that may include weak signals near zero, which can hurt hit rate despite potentially being profitable with proper position sizing.
+
+## XGBoost Comparison Framework Testing
+
+The XGBoost Comparison Framework (`xgb_compare/`) is the primary development tool for evaluating different XGBoost architectures and configurations. This framework provides comprehensive backtesting with rolling Q-score model selection.
+
+### Core Testing Scripts
+- `xgb_compare_clean.py` - Main comparison script with Q-score tracking
+- `full_timeline_backtest.py` - Production-style rolling backtest implementation  
+- `visualization_clean.py` - Performance visualization and analysis
+- `metrics_utils.py` - Quality tracking and performance metrics
+- `production_detailed.py` - Detailed backtest reporting
+
+### Test Automation
+```bash
+# Run all standard tests (Sharpe Q-metric) - takes 4-6 hours
+run_all_tests.bat
+
+# Run all hit rate tests - takes 4-6 hours  
+run_all_tests_hitrate.bat
+
+# Quick validation test - takes 15-30 minutes
+test_small.bat  # If available
+```
+
+### Alternative Testing Frameworks
+
+#### Horse Race Testing (`testing/experimental/`)
+Alternative model selection approaches that compete with GROPE optimization:
+
+```bash
+# Individual quality horse race (fastest)
+~/anaconda3/python.exe testing/experimental/test_horse_race.py
+
+# Stability ensemble horse race (most robust)
+~/anaconda3/python.exe testing/experimental/test_horse_race_stability.py
+
+# Optimized parallel horse race (development)
+~/anaconda3/python.exe testing/experimental/test_horse_race_optimized.py
+```
+
+## Development Environment Setup
+
+### Python Environment
+- **Required**: Windows with Anaconda Python
+- **Command prefix**: Always use `~/anaconda3/python.exe` for execution
+- **GPU Support**: CUDA-enabled XGBoost with automatic CPU fallback
+
+### Directory Structure
+```
+├── main.py                    # Main system orchestration
+├── xgb_compare/              # XGBoost comparison framework (primary tool)
+├── configs/                  # YAML configuration files  
+├── data/                     # Data loading and preprocessing
+├── model/                    # XGBoost drivers and feature selection
+├── ensemble/                 # Signal combination and selection
+├── opt/                      # GROPE optimization
+├── cv/                       # Cross-validation and walk-forward
+├── metrics/                  # Performance evaluation
+├── testing/experimental/     # Alternative frameworks
+├── artifacts/                # Output results and diagnostics
+└── logs/                     # Execution logs
+```

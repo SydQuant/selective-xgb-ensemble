@@ -164,7 +164,7 @@ def calculate_metric_pvalue(predictions: pd.Series, returns: pd.Series,
         return 0.5
 
 class QualityTracker:
-    """Track quality momentum for models using EWMA."""
+    """Track quality momentum for models using EWMA with combined metrics support."""
     
     def __init__(self, n_models: int, quality_halflife: int = 63):
         self.n_models = n_models
@@ -175,6 +175,7 @@ class QualityTracker:
             'adj_sharpe': [[] for _ in range(n_models)]
         }
         self.q_decay = np.exp(np.log(0.5) / max(1, quality_halflife))
+        self.halflife = quality_halflife
         
     def update_quality(self, fold_idx: int, model_metrics: list):
         """Update quality history for all models in current fold."""
@@ -207,3 +208,115 @@ class QualityTracker:
                     q_scores[metric][model_idx] = calculate_ewma_quality(historical_series, ewma_alpha)
         
         return q_scores
+    
+    def get_combined_q_scores(self, fold_idx: int, ewma_alpha: float = 0.1, 
+                             metric_weights: Dict[str, float] = None, 
+                             use_zscore: bool = True) -> list:
+        """
+        Calculate combined Q-scores using multiple metrics.
+        
+        CORRECTED APPROACH: Z-score normalization applied to raw historical values,
+        then EWMA applied to normalized series.
+        
+        Args:
+            fold_idx: Current fold index
+            ewma_alpha: EWMA alpha parameter  
+            metric_weights: Dict of metric weights, e.g. {'sharpe': 0.5, 'hit_rate': 0.5}
+            use_zscore: Whether to z-score normalize metrics before combining
+            
+        Returns:
+            List of combined Q-scores for all models
+        """
+        if metric_weights is None:
+            # Default: 50/50 Sharpe and Hit Rate
+            metric_weights = {'sharpe': 0.5, 'hit_rate': 0.5}
+        
+        combined_scores = [0.0] * self.n_models
+        
+        if use_zscore and len(metric_weights) > 1:
+            # Z-score normalization on raw history, then EWMA
+            combined_q_scores = {}
+            
+            # For each metric, calculate z-score normalized EWMA Q-scores
+            for metric_name, weight in metric_weights.items():
+                if weight <= 0 or metric_name not in self.quality_history:
+                    continue
+                
+                # Collect all raw values across all models/folds for z-score stats
+                all_values = []
+                for model_idx in range(self.n_models):
+                    history = self.quality_history[metric_name][model_idx]
+                    historical_data = history[:fold_idx+1] if fold_idx < len(history) else history
+                    all_values.extend(historical_data)
+                
+                # Calculate z-score stats
+                if len(all_values) > 0:
+                    mean_val = np.mean(all_values)
+                    std_val = np.std(all_values) if np.std(all_values) > 1e-9 else 1.0
+                else:
+                    mean_val, std_val = 0.0, 1.0
+                
+                # Calculate z-score normalized EWMA for each model
+                combined_q_scores[metric_name] = []
+                for model_idx in range(self.n_models):
+                    history = self.quality_history[metric_name][model_idx]
+                    if len(history) == 0:
+                        combined_q_scores[metric_name].append(0.0)
+                    else:
+                        historical_data = history[:fold_idx+1] if fold_idx < len(history) else history
+                        # Z-score normalize, then EWMA
+                        normalized_data = [(x - mean_val) / std_val for x in historical_data]
+                        ewma_result = calculate_ewma_quality(pd.Series(normalized_data), ewma_alpha)
+                        combined_q_scores[metric_name].append(ewma_result)
+            
+            # Weighted combination
+            total_weight = sum(weight for metric_name, weight in metric_weights.items() 
+                             if weight > 0 and metric_name in combined_q_scores)
+            
+            for model_idx in range(self.n_models):
+                combined_score = 0.0
+                for metric_name, weight in metric_weights.items():
+                    if weight > 0 and metric_name in combined_q_scores:
+                        combined_score += (weight / total_weight) * combined_q_scores[metric_name][model_idx]
+                combined_scores[model_idx] = combined_score
+                
+        else:
+            # Simple weighted average approach (no z-score normalization)
+            all_q_scores = self.get_q_scores(fold_idx, ewma_alpha)
+            
+            # Extract valid metrics to combine
+            metrics_to_combine = {}
+            for metric_name, weight in metric_weights.items():
+                if metric_name in all_q_scores and weight > 0:
+                    metrics_to_combine[metric_name] = (all_q_scores[metric_name], weight)
+            
+            if not metrics_to_combine:
+                # Fallback to Sharpe if no valid metrics
+                return all_q_scores.get('sharpe', [0.0] * self.n_models)
+            
+            total_weight = sum(weight for _, weight in metrics_to_combine.values())
+            for model_idx in range(self.n_models):
+                combined_score = 0.0
+                for metric_name, (scores, weight) in metrics_to_combine.items():
+                    combined_score += (weight / total_weight) * scores[model_idx]
+                combined_scores[model_idx] = combined_score
+        
+        return combined_scores
+    
+    def get_sharpe_hit_combined_q_scores(self, fold_idx: int, ewma_alpha: float = 0.1, 
+                                        sharpe_weight: float = 0.5, use_zscore: bool = True) -> list:
+        """
+        Convenience method for Sharpe + Hit Rate combination (most common use case).
+        
+        Args:
+            fold_idx: Current fold index
+            ewma_alpha: EWMA alpha parameter
+            sharpe_weight: Weight for Sharpe (Hit Rate gets 1 - sharpe_weight)
+            use_zscore: Whether to use z-score normalization
+            
+        Returns:
+            List of combined Q-scores for all models
+        """
+        hit_weight = 1.0 - sharpe_weight
+        metric_weights = {'sharpe': sharpe_weight, 'hit_rate': hit_weight}
+        return self.get_combined_q_scores(fold_idx, ewma_alpha, metric_weights, use_zscore)

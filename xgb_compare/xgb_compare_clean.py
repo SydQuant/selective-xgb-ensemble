@@ -215,19 +215,37 @@ def process_single_fold(fold_idx, train_idx, test_idx, X, y, xgb_specs, quality_
     # Create results dataframe
     fold_df = pd.DataFrame(fold_results)
     
-    # Update Q-scores
-    q_scores = quality_tracker.get_q_scores(fold_idx, config.ewma_alpha)['sharpe']
-    fold_df['Q_Sharpe'] = q_scores[:len(fold_df)]
+    # Update Q-scores based on configured metric
+    if config.q_metric in ['combined', 'sharpe_hit']:
+        # Use combined Q-scores
+        if config.q_metric == 'combined':
+            # Default 50/50 combined
+            q_scores = quality_tracker.get_combined_q_scores(fold_idx, config.ewma_alpha, use_zscore=config.q_use_zscore)
+        else:  # 'sharpe_hit'
+            # Sharpe + Hit Rate with configurable weights
+            q_scores = quality_tracker.get_sharpe_hit_combined_q_scores(fold_idx, config.ewma_alpha, 
+                                                                        config.q_sharpe_weight, config.q_use_zscore)
+        fold_df['Q_Combined'] = q_scores[:len(fold_df)]
+        q_column = 'Q_Combined'
+        q_label = f"Q-{config.q_metric.title()}"
+    else:
+        # Use single metric Q-scores
+        all_q_scores = quality_tracker.get_q_scores(fold_idx, config.ewma_alpha)
+        q_scores = all_q_scores[config.q_metric]
+        fold_df[f'Q_{config.q_metric.title()}'] = q_scores[:len(fold_df)]
+        q_column = f'Q_{config.q_metric.title()}'
+        q_label = f"Q-{config.q_metric.title()}"
     
     # Log summary
     best_oos = fold_df.loc[fold_df['OOS_Sharpe'].idxmax()]
-    best_q = fold_df.loc[fold_df['Q_Sharpe'].idxmax()]
+    best_q = fold_df.loc[fold_df[q_column].idxmax()]
     mean_sharpe = fold_df['OOS_Sharpe'].mean()
+    mean_hit = fold_df['OOS_Hit_Rate'].mean()
     
     logger.info(f"Fold {fold_idx+1} Summary:")
     logger.info(f"  Best OOS Sharpe: {best_oos['Model']} ({best_oos['OOS_Sharpe']:.3f}, p={best_oos['OOS_Sharpe_p']:.3f})")
-    logger.info(f"  Best Q-Sharpe:   {best_q['Model']} ({best_q['Q_Sharpe']:.3f}, OOS={best_q['OOS_Sharpe']:.3f})")
-    logger.info(f"  Mean OOS Sharpe: {mean_sharpe:.3f}")
+    logger.info(f"  Best {q_label}:  {best_q['Model']} ({best_q[q_column]:.3f}, OOS_Sharpe={best_q['OOS_Sharpe']:.3f}, OOS_Hit={best_q['OOS_Hit_Rate']:.3f})")
+    logger.info(f"  Mean OOS Sharpe: {mean_sharpe:.3f}, Mean Hit: {mean_hit:.3f}")
     logger.info("")
     
     return fold_df, model_metrics

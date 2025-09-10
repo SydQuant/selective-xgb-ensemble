@@ -313,13 +313,19 @@ Unique Models: {len(all_used_models)}"""
             
             valid_fold_idx += 1
         
-        # Create heatmap
-        sns.heatmap(usage_matrix, 
-                    annot=True, fmt='.0f', cmap='RdYlGn', center=0.5,
-                    xticklabels=[f"Fold {f}" for f in valid_folds], 
-                    yticklabels=[f"M{m:02d}" for m in all_models_used],
-                    ax=ax_usage, cbar_kws={'label': 'Used (1=Yes, 0=No)'},
-                    linewidths=1, annot_kws={'size': 12, 'weight': 'bold'})
+        # Create heatmap only if we have data
+        if usage_matrix.size > 0 and len(all_models_used) > 0 and len(valid_folds) > 0:
+            sns.heatmap(usage_matrix, 
+                        annot=True, fmt='.0f', cmap='RdYlGn', center=0.5,
+                        xticklabels=[f"Fold {f}" for f in valid_folds], 
+                        yticklabels=[f"M{m:02d}" for m in all_models_used],
+                        ax=ax_usage, cbar_kws={'label': 'Used (1=Yes, 0=No)'},
+                        linewidths=1, annot_kws={'size': 12, 'weight': 'bold'})
+        else:
+            # Show message when no data available
+            ax_usage.text(0.5, 0.5, 'No model usage data available\n(backtesting may be incomplete)', 
+                         ha='center', va='center', transform=ax_usage.transAxes,
+                         fontsize=12, bbox=dict(boxstyle='round', facecolor='lightgray'))
         
         ax_usage.set_title(f'Model Usage Matrix: Which Models Used When\n'
                           f'(Rolling Selection - Each Fold Uses Previous Fold Q-Scores)', fontsize=14, fontweight='bold')

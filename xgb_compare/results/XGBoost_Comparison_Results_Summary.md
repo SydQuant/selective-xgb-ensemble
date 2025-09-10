@@ -54,13 +54,30 @@
 - **8-10 folds** optimal for rolling windows (vs 20-40 fold overtraining)
 - **100 features** sufficient for most configurations
 
+### **Combined Q-Score Innovation (September 10, 2025)**
+- **Implementation**: Successfully added flexible Sharpe+Hit Rate combination with z-score normalization
+- **70% Sharpe + 30% Hit**: Q-scores 2.3-2.5, consistent M39 selection, balanced risk/accuracy
+- **50% Sharpe + 50% Hit**: Q-scores 2.1-2.3, M36 selection, emphasis on directional accuracy  
+- **Z-Score Critical**: Without normalization, Sharpe dominates due to scale differences
+- **Model Discovery**: Combined metrics reveal different optimal model selections vs pure Sharpe
+
 ## Technical Status
 
-- **Framework**: Production ready with P&L visualization fixes
-- **Total Tests**: 18 configurations, ~5,000 models trained
+- **Framework**: Production ready with P&L visualization fixes and combined Q-score support
+- **Total Tests**: 25+ configurations including combined Q-score variations, ~6,500+ models trained
 - **Optimal Setup**: 18-month rolling, Hit Rate Q-metric, 50 models, 8 folds, 100 features
 - **Expected Performance**: Sharpe 0.976, Return 5.49%, Hit Rate 54.9%
+- **Combined Q-Scores**: Fully implemented with z-score normalization and flexible weighting
+
+## Available Q-Score Metrics
+
+- **sharpe**: Risk-adjusted returns (original baseline)
+- **hit_rate**: Directional accuracy (optimal for rolling windows)
+- **cb_ratio**: Calmar-Burke ratio (return/max drawdown)
+- **adj_sharpe**: Adjusted Sharpe with turnover penalty
+- **combined**: Custom weighted combination with z-score normalization
+- **sharpe_hit**: 50/50 Sharpe+Hit Rate combination (recommended)
 
 ---
 
-**Generated:** September 9, 2025 | **XGBoost Framework v2025.09**
+**Generated:** September 10, 2025 | **XGBoost Framework v2025.09** | **Enhanced with Combined Q-Scores**

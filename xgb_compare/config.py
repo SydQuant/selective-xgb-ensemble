@@ -34,8 +34,13 @@ class XGBCompareConfig:
     # Production backtesting
     cutoff_fraction: float = 0.7
     top_n_models: int = 5  # Will be dynamically set to 10% of n_models
-    q_metric: str = 'sharpe'
+    q_metric: str = 'sharpe'  # 'sharpe', 'hit_rate', 'combined', 'sharpe_hit', 'cb_ratio', 'adj_sharpe'
     reselection_frequency: int = 1
+    
+    # Combined Q-score parameters
+    q_sharpe_weight: float = 0.5  # Weight for Sharpe in combined metrics (hit_rate gets 1-this)
+    q_use_zscore: bool = True  # Use z-score normalization for combined metrics
+    q_metric_weights: dict = None  # Custom metric weights dict (overrides q_sharpe_weight)
     
     # Signal processing
     binary_signal: bool = False  # Use +1/-1 signals instead of tanh
@@ -86,6 +91,8 @@ class XGBCompareConfig:
         logger.info(f"  Signal Type: {'Binary (+1/-1)' if self.binary_signal else 'Tanh Normalized'}")
         logger.info(f"  Cross-validation: {'Rolling ' + str(self.rolling_days) + ' days' if self.rolling_days > 0 else 'Expanding window'}")
         logger.info(f"  Production: Cutoff={self.cutoff_fraction}, Top N={self.top_n_models}, Q-Metric={self.q_metric}")
+        if self.q_metric in ['combined', 'sharpe_hit']:
+            logger.info(f"  Combined Q-Score: Sharpe={self.q_sharpe_weight:.1f}, Hit={1-self.q_sharpe_weight:.1f}, Z-score={self.q_use_zscore}")
         logger.info(f"  Reselection: Every {self.reselection_frequency} fold(s)")
         logger.info("")
 
@@ -133,10 +140,18 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument('--top_n_models', type=int, default=5, 
                        help='Number of top models to select for production')
     parser.add_argument('--q_metric', type=str, default='sharpe', 
-                       choices=['sharpe', 'hit_rate', 'cb_ratio', 'adj_sharpe'],
+                       choices=['sharpe', 'hit_rate', 'cb_ratio', 'adj_sharpe', 'combined', 'sharpe_hit'],
                        help='Q-score metric for model selection')
     parser.add_argument('--reselection_frequency', type=int, default=1, 
                        help='Model reselection frequency (in folds)')
+    
+    # Combined Q-score parameters
+    parser.add_argument('--q_sharpe_weight', type=float, default=0.5,
+                       help='Weight for Sharpe in combined Q-scores (hit_rate gets 1-this)')
+    parser.add_argument('--q_use_zscore', action='store_true', default=True,
+                       help='Use z-score normalization for combined Q-scores')
+    parser.add_argument('--q_no_zscore', dest='q_use_zscore', action='store_false',
+                       help='Disable z-score normalization (use simple weighted average)')
     
     # Analysis parameters
     parser.add_argument('--n_bootstraps', type=int, default=100, 
@@ -178,6 +193,8 @@ def parse_config() -> XGBCompareConfig:
         top_n_models=top_n_models,
         q_metric=args.q_metric,
         reselection_frequency=args.reselection_frequency,
+        q_sharpe_weight=args.q_sharpe_weight,
+        q_use_zscore=args.q_use_zscore,
         n_bootstraps=args.n_bootstraps,
         log_label=args.log_label,
         binary_signal=args.binary_signal,
