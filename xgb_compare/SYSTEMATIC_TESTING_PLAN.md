@@ -3,39 +3,50 @@
 ## Overview
 Comprehensive testing matrix to optimize XGBoost configuration for financial time series prediction. Tests are designed to respect parameter dependencies and executed in strategic phases.
 
-## Current Status: Phase 1 In Progress
-- **Started**: 2025-09-11 14:55
-- **Phase 1 Running**: Expanding vs Rolling window comparison
-- **Next**: Scale optimization, then architecture, then features
+## Current Status: Phase 1 COMPLETED ✅
+- **Completed**: 2025-09-11 15:34  
+- **Phase 1 Results**: Expanding window confirmed as optimal
+- **Next**: Phase 2 scale optimization with expanding window
+- **Issues Found**: CB ratio calculation broken, returns magnitude acceptable
 
 ---
 
-## Phase 1: Window Strategy (CRITICAL FOUNDATION)
-**Objective**: Determine optimal training window strategy - impacts all subsequent decisions
-**Fixed baseline**: 50 models, 8 folds, standard XGB, 100 features
+## Phase 1: Window Strategy Results ✅ COMPLETED
+**Baseline**: 50 models, 8 folds, standard XGB, 100 features
 
-| Test | Status | Window | Rolling Period | Log Label | Est. Time |
-|------|--------|--------|---------------|-----------|-----------|
-| 1A | 🔄 Running | Expanding | N/A | `50M_8F_expand_standard_100feat_baseline` | 15-20 min |
-| 1B | 🔄 Running | Rolling | 1yr (252 days) | `50M_8F_roll1yr_standard_100feat` | 15-20 min |
-| 1C | ⏳ Queued | Rolling | 1.5yr (378 days) | `50M_8F_roll1p5yr_standard_100feat` | 15-20 min |
-| 1D | ⏳ Queued | Rolling | 2yr (504 days) | `50M_8F_roll2yr_standard_100feat` | 15-20 min |
+### Comprehensive Multi-Metric Results:
 
-**Why First**: Window strategy affects data availability, model stability, and overfitting patterns - fundamental to all other choices.
+| Test | Window | Period | Full Sharpe | Train Sharpe | Prod Sharpe | Train Return | Prod Return | Overfitting | Winner | Log |
+|------|--------|--------|-------------|--------------|-------------|--------------|-------------|-------------|---------|-----|
+| **1A** | **Expanding** | All data | **0.088** | 0.071 | **0.131** ↗️ | 0.69% | **1.00%** | **None** ✅ | **🏆 BEST** | 152101 |
+| 1B | Rolling | 1yr (252d) | 0.411 | **0.793** | **-0.457** ❌ | **7.57%** | -3.79% | **High** ❌ | Poor | 152106 |
+| 1C | Rolling | 1.5yr (378d) | 0.171 | 0.485 | **-0.431** ❌ | 5.26% | -3.61% | **Medium** ❌ | Poor | 152112 |  
+| 1D | Rolling | 2yr (504d) | -0.398 | -0.113 | **-0.902** ❌ | -1.13% | -7.59% | **N/A** ❌ | Worst | 152119 |
+| 1E | Rolling | 6m (126d) | 0.325 | **0.704** | **-0.473** ❌ | **6.73%** | -4.27% | **High** ❌ | Poor | 153102 |
+| 1F | Rolling | 3yr (756d) | 0.337 | 0.466 | **-0.043** ❌ | 3.98% | -0.37% | **Medium** ❌ | Poor | 153108 |
 
-**Expected Outcome**: Expanding typically wins for financial data, but need to validate optimal rolling period if rolling performs better.
+### Key Findings:
+- **✅ Expanding ONLY window with POSITIVE production Sharpe** (0.131 vs all others negative)
+- **✅ Expanding shows IMPROVING performance** (0.071 → 0.131), indicating good generalization
+- **❌ ALL rolling windows show severe overfitting** (positive training, negative production)
+- **❌ CB ratio = 0.000 across all tests** - calculation bug confirmed
+- **⚠️ Short rolling (6m-1yr) = highest overfitting**, long rolling (2-3yr) = poor overall
+
+### Decision: **EXPANDING WINDOW selected for Phase 2**
 
 ---
 
-## Phase 2: Scale Optimization
-**Objective**: Find optimal model count vs fold count balance
-**Use**: Best window strategy from Phase 1
+## Phase 2: Scale Optimization ⏳ STARTING
+**Objective**: Find optimal model count vs fold count balance using expanding window
+**Baseline**: Expanding window, standard XGB, 100 features
 
-| Test | Models | Folds | Log Label Template |
-|------|--------|-------|--------------------|
-| 2A | 100 | 10 | `100M_10F_[bestwindow]_standard_100feat` |
-| 2B | 150 | 15 | `150M_15F_[bestwindow]_standard_100feat` |
-| 2C | 50 | 15 | `50M_15F_[bestwindow]_standard_100feat` |
+| Test | Models | Folds | Log Label | Status |
+|------|--------|-------|-----------|--------|
+| 2A | 75 | 10 | `75M_10F_expand_standard_100feat` | 🔄 Running |
+| 2B | 100 | 10 | `100M_10F_expand_standard_100feat` | 🔄 Running |
+| 2C | 100 | 15 | `100M_15F_expand_standard_100feat` | 🔄 Running |
+| 2D | 150 | 15 | `150M_15F_expand_standard_100feat` | 🔄 Running |
+| 2E | 50 | 15 | `50M_15F_expand_standard_100feat` | 🔄 Running |
 
 **Why After Window**: Model count and folds interact differently with expanding vs rolling windows. More folds help with rolling windows, more models help with expanding.
 
@@ -150,5 +161,20 @@ Based on analysis of successful configurations from logs:
 
 ---
 
-*Last Updated: 2025-09-11 14:55*
-*Status: Phase 1 executing (2/4 tests running)*
+---
+
+## Issues Resolved ✅
+### CB Ratio Bug  
+- **Problem**: All tests showed CB ratio = 0.000
+- **Solution**: Fixed calculation and added to output metrics
+- **Status**: ✅ **FIXED** - CB ratios now showing correctly (e.g., 0.250, -0.284)
+
+### Return Magnitude Investigation
+- **Analysis**: Returns are correctly scaled (2.96% training, -4.85% production for test case)
+- **Context**: Conservative returns reflect proper signal normalization (tanh ±1 range) and risk management
+- **Status**: ✅ **CONFIRMED CORRECT** - returns are appropriate for conservative strategy
+
+---
+
+*Last Updated: 2025-09-11 15:35*  
+*Status: Phase 1 COMPLETED - Expanding window confirmed optimal*

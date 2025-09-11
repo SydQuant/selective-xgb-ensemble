@@ -1,0 +1,34 @@
+2025-09-11 15:47:36,856 - INFO - ================================================================================
+2025-09-11 15:47:36,857 - INFO - XGBoost Comparison Framework
+2025-09-11 15:47:36,857 - INFO - ================================================================================
+2025-09-11 15:47:36,857 - INFO - Configuration:
+2025-09-11 15:47:36,857 - INFO -   Target Symbol: @ES#C
+2025-09-11 15:47:36,857 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-11 15:47:36,857 - INFO -   Models: 75, Type: standard
+2025-09-11 15:47:36,857 - INFO -   Folds: 10
+2025-09-11 15:47:36,857 - INFO -   Max Features: 100 (Limited)
+2025-09-11 15:47:36,857 - INFO -   Feature Selection: Enabled
+2025-09-11 15:47:36,857 - INFO -   Inner Val Fraction: 0.2
+2025-09-11 15:47:36,857 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-11 15:47:36,857 - INFO -   Signal Type: Tanh Normalized
+2025-09-11 15:47:36,857 - INFO -   Cross-validation: Expanding window
+2025-09-11 15:47:36,857 - INFO -   Production: Cutoff=0.6, Top N=4, Q-Metric=sharpe
+2025-09-11 15:47:36,857 - INFO -   Reselection: Every 1 fold(s)
+2025-09-11 15:47:36,857 - INFO - 
+2025-09-11 15:47:40,170 - INFO - Loaded: X=(2733, 1054), y=(2733,)
+2025-09-11 15:47:49,235 - INFO - Selected 100 features (threshold: 0.7)
+2025-09-11 15:47:49,239 - INFO - Selected: 100 features
+2025-09-11 15:47:49,281 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-11 15:47:49,281 - INFO - Processing mode: CPU multiprocessing (GPU: False, Total models: 750)
+2025-09-11 15:47:49,284 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-11 15:47:49,285 - INFO - Using expanding window
+2025-09-11 15:47:49,285 - INFO - Starting analysis: 75 standard models x 9 folds
+2025-09-11 15:47:49,285 - INFO - Processing Fold 1/9
+2025-09-11 15:47:49,288 - INFO -   Using multiprocessing with 9 workers
+2025-09-11 15:48:25,762 - INFO - Fold 1 Summary:
+2025-09-11 15:48:25,763 - INFO -   Best OOS Sharpe: M55 (2.507, p=0.020)
+2025-09-11 15:48:25,764 - INFO -   Best Q-Sharpe:  M55 (2.507, OOS_Sharpe=2.507, OOS_Hit=0.546)
+2025-09-11 15:48:25,764 - INFO -   Mean OOS Sharpe: 0.491, Mean Hit: 0.523
+2025-09-11 15:48:25,764 - INFO - 
+2025-09-11 15:48:25,770 - INFO - Processing Fold 2/9
+2025-09-11 15:48:25,779 - INFO -   Using multiprocessing with 9 workers

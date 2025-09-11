@@ -1,0 +1,18 @@
+2025-09-11 15:48:40,746 - INFO - ================================================================================
+2025-09-11 15:48:40,746 - INFO - XGBoost Comparison Framework
+2025-09-11 15:48:40,746 - INFO - ================================================================================
+2025-09-11 15:48:40,746 - INFO - Configuration:
+2025-09-11 15:48:40,746 - INFO -   Target Symbol: @ES#C
+2025-09-11 15:48:40,746 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-11 15:48:40,746 - INFO -   Models: 150, Type: standard
+2025-09-11 15:48:40,746 - INFO -   Folds: 15
+2025-09-11 15:48:40,746 - INFO -   Max Features: 100 (Limited)
+2025-09-11 15:48:40,746 - INFO -   Feature Selection: Enabled
+2025-09-11 15:48:40,746 - INFO -   Inner Val Fraction: 0.2
+2025-09-11 15:48:40,746 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-11 15:48:40,746 - INFO -   Signal Type: Tanh Normalized
+2025-09-11 15:48:40,746 - INFO -   Cross-validation: Expanding window
+2025-09-11 15:48:40,746 - INFO -   Production: Cutoff=0.6, Top N=8, Q-Metric=sharpe
+2025-09-11 15:48:40,746 - INFO -   Reselection: Every 1 fold(s)
+2025-09-11 15:48:40,746 - INFO - 
+2025-09-11 15:48:57,613 - INFO - Loaded: X=(2733, 1054), y=(2733,)

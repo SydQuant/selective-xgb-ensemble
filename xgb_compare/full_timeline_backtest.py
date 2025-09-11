@@ -7,7 +7,7 @@ import pandas as pd
 import logging
 from typing import List, Dict, Any, Tuple
 
-from metrics_utils import calculate_model_metrics, normalize_predictions, QualityTracker, calculate_annualized_sharpe
+from metrics_utils import calculate_model_metrics, normalize_predictions, QualityTracker, calculate_annualized_sharpe, calculate_cb_ratio
 
 logger = logging.getLogger(__name__)
 
@@ -228,12 +228,14 @@ class FullTimelineBacktester:
                 training_pred_series = training_pred_series.iloc[:min_len]
                 training_pnl_series = training_pnl_series.iloc[:min_len]
             
+            
             training_metrics = {
                 'ann_ret': training_pnl_series.mean() * 252,
                 'ann_vol': training_pnl_series.std() * np.sqrt(252),
                 'sharpe': calculate_annualized_sharpe(training_pnl_series),
                 'hit_rate': np.mean(np.sign(training_pred_series.values) == np.sign(training_pnl_series.values)) if len(training_pnl_series) > 0 else 0.0,
-                'total_periods': len(training_pnl)
+                'total_periods': len(training_pnl),
+                'cb_ratio': calculate_cb_ratio(training_pnl_series)
             }
             logger.info(f"Training Period Overall: Sharpe={training_metrics.get('sharpe', 0):.3f}, Hit={training_metrics.get('hit_rate', 0)*100:.1f}%")
         
@@ -248,12 +250,14 @@ class FullTimelineBacktester:
                 production_pred_series = production_pred_series.iloc[:min_len]
                 production_pnl_series = production_pnl_series.iloc[:min_len]
             
+            
             production_metrics = {
                 'ann_ret': production_pnl_series.mean() * 252,
                 'ann_vol': production_pnl_series.std() * np.sqrt(252),
                 'sharpe': calculate_annualized_sharpe(production_pnl_series),
                 'hit_rate': np.mean(np.sign(production_pred_series.values) == np.sign(production_pnl_series.values)) if len(production_pnl_series) > 0 else 0.0,
-                'total_periods': len(production_pnl)
+                'total_periods': len(production_pnl),
+                'cb_ratio': calculate_cb_ratio(production_pnl_series)
             }
             logger.info(f"Production Period Overall: Sharpe={production_metrics.get('sharpe', 0):.3f}, Hit={production_metrics.get('hit_rate', 0)*100:.1f}%")
         
@@ -273,7 +277,8 @@ class FullTimelineBacktester:
                 'ann_vol': full_pnl_series.std() * np.sqrt(252),
                 'sharpe': calculate_annualized_sharpe(full_pnl_series),
                 'hit_rate': np.mean(np.sign(full_pred_series.values) == np.sign(full_pnl_series.values)) if len(full_pnl_series) > 0 else 0.0,
-                'total_periods': len(full_timeline_returns)
+                'total_periods': len(full_timeline_returns),
+                'cb_ratio': calculate_cb_ratio(full_pnl_series)
             }
             logger.info(f"Full Timeline Overall: Sharpe={full_timeline_metrics.get('sharpe', 0):.3f}, Hit={full_timeline_metrics.get('hit_rate', 0)*100:.1f}%")
         

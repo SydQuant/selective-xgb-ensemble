@@ -308,15 +308,15 @@ def main():
     
     if 'training_metrics' in backtest_results and backtest_results['training_metrics']:
         train_metrics = backtest_results['training_metrics']
-        logger.info(f"Training Final: Sharpe={train_metrics.get('sharpe', 0):.3f} | Hit={train_metrics.get('hit_rate', 0):.1%} | Return={train_metrics.get('ann_ret', 0):.2%}")
+        logger.info(f"Training Final: Sharpe={train_metrics.get('sharpe', 0):.3f} | Hit={train_metrics.get('hit_rate', 0):.1%} | Return={train_metrics.get('ann_ret', 0):.2%} | CB={train_metrics.get('cb_ratio', 0):.3f}")
     
     if 'production_metrics' in backtest_results and backtest_results['production_metrics']:
         prod_metrics = backtest_results['production_metrics']  
-        logger.info(f"Production Final: Sharpe={prod_metrics.get('sharpe', 0):.3f} | Hit={prod_metrics.get('hit_rate', 0):.1%} | Return={prod_metrics.get('ann_ret', 0):.2%}")
+        logger.info(f"Production Final: Sharpe={prod_metrics.get('sharpe', 0):.3f} | Hit={prod_metrics.get('hit_rate', 0):.1%} | Return={prod_metrics.get('ann_ret', 0):.2%} | CB={prod_metrics.get('cb_ratio', 0):.3f}")
     
     if 'full_timeline_metrics' in backtest_results:
         full_metrics = backtest_results['full_timeline_metrics']
-        logger.info(f"Full Timeline Final: Sharpe={full_metrics.get('sharpe', 0):.3f} | Hit={full_metrics.get('hit_rate', 0):.1%} | Return={full_metrics.get('ann_ret', 0):.2%}")
+        logger.info(f"Full Timeline Final: Sharpe={full_metrics.get('sharpe', 0):.3f} | Hit={full_metrics.get('hit_rate', 0):.1%} | Return={full_metrics.get('ann_ret', 0):.2%} | CB={full_metrics.get('cb_ratio', 0):.3f}")
 
 if __name__ == "__main__":
     main()
