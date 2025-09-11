@@ -16,3 +16,68 @@
 2025-09-12 00:36:43,961 - INFO -   Reselection: Every 1 fold(s)
 2025-09-12 00:36:43,961 - INFO - 
 2025-09-12 00:36:49,765 - INFO - Loaded: X=(2735, 1906), y=(2735,)
+2025-09-12 00:37:33,447 - INFO - Selected 100 features (threshold: 0.7)
+2025-09-12 00:37:33,456 - INFO - Selected: 100 features
+2025-09-12 00:37:33,509 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-12 00:37:33,509 - INFO - Processing mode: CPU multiprocessing (GPU: False, Total models: 3000)
+2025-09-12 00:37:33,521 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-12 00:37:33,524 - INFO - Using expanding window
+2025-09-12 00:37:33,524 - INFO - Starting analysis: 150 standard models x 18 folds
+2025-09-12 00:37:33,525 - INFO - Processing Fold 1/18
+2025-09-12 00:37:33,528 - INFO -   Using multiprocessing with 9 workers
+2025-09-12 00:38:34,674 - INFO - Fold 1 Summary:
+2025-09-12 00:38:34,674 - INFO -   Best OOS Sharpe: M120 (3.759, p=0.020)
+2025-09-12 00:38:34,674 - INFO -   Best Q-Sharpe:  M120 (3.759, OOS_Sharpe=3.759, OOS_Hit=0.607)
+2025-09-12 00:38:34,674 - INFO -   Mean OOS Sharpe: 1.123, Mean Hit: 0.551
+2025-09-12 00:38:34,674 - INFO - 
+2025-09-12 00:38:34,683 - INFO - Processing Fold 2/18
+2025-09-12 00:38:34,689 - INFO -   Using multiprocessing with 9 workers
+2025-09-12 00:40:19,844 - INFO - Fold 2 Summary:
+2025-09-12 00:40:19,848 - INFO -   Best OOS Sharpe: M28 (2.990, p=0.000)
+2025-09-12 00:40:19,849 - INFO -   Best Q-Sharpe:  M120 (3.439, OOS_Sharpe=0.566, OOS_Hit=0.511)
+2025-09-12 00:40:19,849 - INFO -   Mean OOS Sharpe: 0.037, Mean Hit: 0.505
+2025-09-12 00:40:19,849 - INFO - 
+2025-09-12 00:40:19,860 - INFO - Processing Fold 3/18
+2025-09-12 00:40:19,879 - INFO -   Using multiprocessing with 9 workers
+2025-09-12 00:42:13,617 - INFO - Fold 3 Summary:
+2025-09-12 00:42:13,619 - INFO -   Best OOS Sharpe: M121 (4.562, p=0.000)
+2025-09-12 00:42:13,619 - INFO -   Best Q-Sharpe:  M145 (2.955, OOS_Sharpe=4.068, OOS_Hit=0.600)
+2025-09-12 00:42:13,619 - INFO -   Mean OOS Sharpe: 0.830, Mean Hit: 0.510
+2025-09-12 00:42:13,619 - INFO - 
+2025-09-12 00:42:13,632 - INFO - Processing Fold 4/18
+2025-09-12 00:42:13,644 - INFO -   Using multiprocessing with 9 workers
+2025-09-12 00:44:59,400 - INFO - Fold 4 Summary:
+2025-09-12 00:44:59,403 - INFO -   Best OOS Sharpe: M139 (2.841, p=0.020)
+2025-09-12 00:44:59,403 - INFO -   Best Q-Sharpe:  M120 (2.625, OOS_Sharpe=0.207, OOS_Hit=0.422)
+2025-09-12 00:44:59,403 - INFO -   Mean OOS Sharpe: -0.097, Mean Hit: 0.498
+2025-09-12 00:44:59,403 - INFO - 
+2025-09-12 00:44:59,419 - INFO - Processing Fold 5/18
+2025-09-12 00:44:59,436 - INFO -   Using multiprocessing with 9 workers
+2025-09-12 00:47:55,395 - INFO - Fold 5 Summary:
+2025-09-12 00:47:55,398 - INFO -   Best OOS Sharpe: M01 (2.197, p=0.060)
+2025-09-12 00:47:55,398 - INFO -   Best Q-Sharpe:  M120 (2.369, OOS_Sharpe=0.068, OOS_Hit=0.533)
+2025-09-12 00:47:55,398 - INFO -   Mean OOS Sharpe: -0.486, Mean Hit: 0.494
+2025-09-12 00:47:55,398 - INFO - 
+2025-09-12 00:47:55,424 - INFO - Processing Fold 6/18
+2025-09-12 00:47:55,445 - INFO -   Using multiprocessing with 9 workers
+2025-09-12 00:50:50,722 - INFO - Fold 6 Summary:
+2025-09-12 00:50:50,725 - INFO -   Best OOS Sharpe: M67 (3.717, p=0.000)
+2025-09-12 00:50:50,726 - INFO -   Best Q-Sharpe:  M112 (2.405, OOS_Sharpe=3.136, OOS_Hit=0.541)
+2025-09-12 00:50:50,726 - INFO -   Mean OOS Sharpe: 0.829, Mean Hit: 0.512
+2025-09-12 00:50:50,726 - INFO - 
+2025-09-12 00:50:50,750 - INFO - Processing Fold 7/18
+2025-09-12 00:50:50,774 - INFO -   Using multiprocessing with 9 workers
+2025-09-12 00:54:09,577 - INFO - Fold 7 Summary:
+2025-09-12 00:54:09,582 - INFO -   Best OOS Sharpe: M116 (3.238, p=0.000)
+2025-09-12 00:54:09,582 - INFO -   Best Q-Sharpe:  M112 (2.164, OOS_Sharpe=-0.005, OOS_Hit=0.452)
+2025-09-12 00:54:09,582 - INFO -   Mean OOS Sharpe: -0.863, Mean Hit: 0.446
+2025-09-12 00:54:09,582 - INFO - 
+2025-09-12 00:54:09,610 - INFO - Processing Fold 8/18
+2025-09-12 00:54:09,631 - INFO -   Using multiprocessing with 9 workers
+2025-09-12 00:57:50,077 - INFO - Fold 8 Summary:
+2025-09-12 00:57:50,081 - INFO -   Best OOS Sharpe: M131 (2.809, p=0.020)
+2025-09-12 00:57:50,082 - INFO -   Best Q-Sharpe:  M112 (2.120, OOS_Sharpe=1.726, OOS_Hit=0.474)
+2025-09-12 00:57:50,082 - INFO -   Mean OOS Sharpe: 0.208, Mean Hit: 0.473
+2025-09-12 00:57:50,082 - INFO - 
+2025-09-12 00:57:50,125 - INFO - Processing Fold 9/18
+2025-09-12 00:57:50,149 - INFO -   Using multiprocessing with 9 workers

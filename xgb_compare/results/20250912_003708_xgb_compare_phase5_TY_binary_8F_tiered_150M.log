@@ -16,3 +16,33 @@
 2025-09-12 00:37:08,515 - INFO -   Reselection: Every 1 fold(s)
 2025-09-12 00:37:08,515 - INFO - 
 2025-09-12 00:37:25,479 - INFO - Loaded: X=(2735, 1906), y=(2735,)
+2025-09-12 00:38:46,299 - INFO - Selected 100 features (threshold: 0.7)
+2025-09-12 00:38:46,359 - INFO - Selected: 100 features
+2025-09-12 00:38:46,473 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-12 00:38:46,474 - INFO - Processing mode: CPU multiprocessing (GPU: False, Total models: 1200)
+2025-09-12 00:38:46,481 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-12 00:38:46,494 - INFO - Using expanding window
+2025-09-12 00:38:46,494 - INFO - Starting analysis: 150 tiered models x 7 folds
+2025-09-12 00:38:46,494 - INFO - Processing Fold 1/7
+2025-09-12 00:38:46,502 - INFO -   Using multiprocessing with 9 workers
+2025-09-12 00:41:35,518 - INFO - Fold 1 Summary:
+2025-09-12 00:41:35,520 - INFO -   Best OOS Sharpe: M126 (1.313, p=0.240)
+2025-09-12 00:41:35,520 - INFO -   Best Q-Sharpe:  M126 (1.313, OOS_Sharpe=1.313, OOS_Hit=0.535)
+2025-09-12 00:41:35,520 - INFO -   Mean OOS Sharpe: -0.521, Mean Hit: 0.484
+2025-09-12 00:41:35,520 - INFO - 
+2025-09-12 00:41:35,534 - INFO - Processing Fold 2/7
+2025-09-12 00:41:35,556 - INFO -   Using multiprocessing with 9 workers
+2025-09-12 00:46:02,956 - INFO - Fold 2 Summary:
+2025-09-12 00:46:02,960 - INFO -   Best OOS Sharpe: M20 (1.649, p=0.020)
+2025-09-12 00:46:02,960 - INFO -   Best Q-Sharpe:  M126 (1.186, OOS_Sharpe=0.046, OOS_Hit=0.485)
+2025-09-12 00:46:02,960 - INFO -   Mean OOS Sharpe: -0.274, Mean Hit: 0.473
+2025-09-12 00:46:02,960 - INFO - 
+2025-09-12 00:46:02,985 - INFO - Processing Fold 3/7
+2025-09-12 00:46:03,003 - INFO -   Using multiprocessing with 9 workers
+2025-09-12 00:51:34,717 - INFO - Fold 3 Summary:
+2025-09-12 00:51:34,721 - INFO -   Best OOS Sharpe: M82 (2.149, p=0.020)
+2025-09-12 00:51:34,721 - INFO -   Best Q-Sharpe:  M126 (1.192, OOS_Sharpe=1.247, OOS_Hit=0.518)
+2025-09-12 00:51:34,721 - INFO -   Mean OOS Sharpe: 0.492, Mean Hit: 0.513
+2025-09-12 00:51:34,721 - INFO - 
+2025-09-12 00:51:34,752 - INFO - Processing Fold 4/7
+2025-09-12 00:51:34,776 - INFO -   Using multiprocessing with 9 workers
