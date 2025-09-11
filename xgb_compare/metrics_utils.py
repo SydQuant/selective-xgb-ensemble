@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Metrics calculation utilities for XGBoost comparison framework.
-Extracted and enhanced from existing analysis scripts.
+Metrics utilities for XGBoost comparison framework.
+Performance calculations, quality tracking, and signal processing.
 """
 
 import numpy as np
@@ -13,16 +13,26 @@ logger = logging.getLogger(__name__)
 
 def calculate_annualized_sharpe(returns: pd.Series) -> float:
     """Calculate annualized Sharpe ratio."""
-    if len(returns) == 0 or returns.std() == 0:
+    if len(returns) == 0:
         return 0.0
-    return (returns.mean() / returns.std()) * np.sqrt(252)
+    
+    mean_ret = returns.mean()
+    std_ret = returns.std()
+    
+    # Handle NaN and zero volatility cases
+    if std_ret == 0 or np.isnan(mean_ret) or np.isnan(std_ret):
+        return 0.0
+    
+    sharpe = (mean_ret / std_ret) * np.sqrt(252)
+    return sharpe if not np.isnan(sharpe) else 0.0
 
 def calculate_hit_rate(predictions: pd.Series, actual_returns: pd.Series) -> float:
     """Calculate hit rate (directional accuracy)."""
     if len(predictions) == 0 or len(actual_returns) == 0:
         return 0.0
-    pred_signs = np.sign(predictions)
-    actual_signs = np.sign(actual_returns)
+    # Use values to avoid index alignment issues
+    pred_signs = np.sign(predictions.values)
+    actual_signs = np.sign(actual_returns.values)
     return np.mean(pred_signs == actual_signs)
 
 def calculate_information_ratio(returns: pd.Series) -> float:
@@ -52,15 +62,17 @@ def calculate_dapy_binary(predictions: pd.Series, actual_returns: pd.Series) -> 
     """Calculate DAPY binary score."""
     if len(predictions) == 0 or len(actual_returns) == 0:
         return 0.0
-    correct = np.sign(predictions) == np.sign(actual_returns)
+    # Ensure index alignment by using values
+    correct = np.sign(predictions.values) == np.sign(actual_returns.values)
     return (np.mean(correct) - 0.5) * 252 * 100
 
 def calculate_dapy_both(predictions: pd.Series, actual_returns: pd.Series) -> float:
     """Calculate DAPY both score (direction + magnitude)."""
     if len(predictions) == 0 or len(actual_returns) == 0:
         return 0.0
-    direction_acc = np.mean(np.sign(predictions) == np.sign(actual_returns))
-    magnitude_corr = np.corrcoef(predictions, actual_returns)[0,1] if len(predictions) > 1 else 0.0
+    # Ensure index alignment by using values
+    direction_acc = np.mean(np.sign(predictions.values) == np.sign(actual_returns.values))
+    magnitude_corr = np.corrcoef(predictions.values, actual_returns.values)[0,1] if len(predictions) > 1 else 0.0
     combined_score = 0.7 * direction_acc + 0.3 * abs(magnitude_corr)
     return (combined_score - 0.5) * 252 * 100
 
@@ -85,17 +97,17 @@ def bootstrap_pvalue(actual_metric: float, returns: pd.Series, predictions: pd.S
     return better_count / len(bootstrap_metrics)
 
 def normalize_predictions(predictions: pd.Series, binary_signal: bool = False) -> pd.Series:
-    """Normalize predictions using z-score + tanh transformation or binary signals."""
+    """Normalize predictions: z-score + tanh or binary +1/-1 signals."""
     if predictions.std() == 0:
         return pd.Series(np.zeros_like(predictions), index=predictions.index)
     
     z_scores = (predictions - predictions.mean()) / predictions.std()
     
     if binary_signal:
-        # Binary signals: +1 for positive, -1 for negative z-scores
+        # Binary: +1 for positive, -1 for negative z-scores
         normalized = np.where(z_scores > 0, 1.0, -1.0)
     else:
-        # Standard tanh normalization
+        # Continuous: tanh normalization
         normalized = np.tanh(z_scores)
     
     return pd.Series(normalized, index=predictions.index)
@@ -109,9 +121,9 @@ def calculate_ewma_quality(series: pd.Series, alpha: float = 0.1) -> float:
 
 def calculate_model_metrics(predictions: pd.Series, returns: pd.Series, 
                           shifted: bool = False) -> Dict[str, float]:
-    """Calculate comprehensive metrics for a model's predictions."""
+    """Calculate comprehensive performance metrics for predictions."""
     if shifted:
-        # For OOS evaluation, shift predictions by 1 to avoid look-ahead
+        # Shift predictions for OOS evaluation (avoid look-ahead bias)
         signal = predictions.shift(1).fillna(0.0)
     else:
         signal = predictions

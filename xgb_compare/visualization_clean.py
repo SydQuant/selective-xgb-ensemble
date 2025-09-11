@@ -20,31 +20,11 @@ def create_fold_by_fold_tables(all_fold_results, config, timestamp, save_dir):
     n_folds = len(fold_keys)
     n_models = config.n_models
     
-    # DYNAMIC TOP MODEL DISPLAY - aggressive filtering for large configs
-    if n_models > 75:
-        # Very large configs: show only top 10-12 models to prevent pixel overflow
-        top_models_to_show = min(12, max(10, n_models // 10))  # Top 10-12 models
-    elif n_models > 50:
-        # Large configs: show top 15-20 models
-        top_models_to_show = min(20, max(15, n_models // 5))  # Show top 15-20 models
-    elif n_models > 20:
-        top_models_to_show = min(20, n_models)  # Show up to 20 models
-    else:
-        top_models_to_show = n_models  # Show all models if ≤20
-    
-    # Dynamic height scaling - smaller for large configs
-    if n_models > 75:
-        height_per_model = 0.22  # Compact for very large configs
-        fold_padding = 1.8       # Reduced padding
-    elif n_models > 50:
-        height_per_model = 0.25  # Slightly compact for large configs
-        fold_padding = 2.0       # Reduced padding
-    else:
-        height_per_model = 0.35  # Standard height for smaller configs
-        fold_padding = 2.5       # Standard padding
-    
-    height_per_fold = top_models_to_show * height_per_model + fold_padding
-    total_height = max(8, n_folds * height_per_fold)  # Reduced minimum height
+    # Simplified display logic
+    top_models_to_show = min(20, max(10, n_models // 5))  # Show 10-20 models based on total
+    height_per_model = 0.3 if n_models > 50 else 0.35
+    height_per_fold = top_models_to_show * height_per_model + 2.0
+    total_height = max(8, n_folds * height_per_fold)
     
     fig, axes = plt.subplots(n_folds, 1, figsize=(16, total_height))
     if n_folds == 1:
@@ -91,15 +71,11 @@ def create_fold_by_fold_tables(all_fold_results, config, timestamp, save_dir):
             ]
             table_data.append(table_row)
             
-            # Gradient highlighting for top 5 Q-Sharpe models
-            if model in top_q_models:
-                # Use named colors for gradient (matplotlib tables work better with named colors)
-                rank = top_q_models.index(model)
-                gradient_colors = ['darkgreen', 'forestgreen', 'limegreen', 'lightgreen', 'palegreen']
-                color_idx = min(rank, len(gradient_colors) - 1)
-                row_colors.append([gradient_colors[color_idx]] * len(table_row))
-            else:
-                row_colors.append(['white'] * len(table_row))
+            # Simple highlighting for top models
+            colors = ['lightgreen', 'lightblue', 'lightyellow', 'lightgray', 'white']
+            rank = top_q_models.index(model) if model in top_q_models else 4
+            color = colors[min(rank, 4)]
+            row_colors.append([color] * len(table_row))
         
         headers = ['Model', 'OOS Sharpe', 'Hit Rate', 'Q-Sharpe', 'P-Value (Sharpe)']
         table = ax.table(cellText=table_data,
@@ -108,13 +84,8 @@ def create_fold_by_fold_tables(all_fold_results, config, timestamp, save_dir):
                         loc='center',
                         cellColours=row_colors)
         
-        # Dynamic font size based on model count - ensure readability
-        if n_models > 75:
-            font_size = max(7, min(9, 150 // top_models_to_show))  # Maintain readability
-        elif n_models > 50:
-            font_size = max(8, min(10, 180 // top_models_to_show))
-        else:
-            font_size = max(8, min(12, 200 // n_models))
+        # Simplified font size logic
+        font_size = max(8, min(12, 150 // top_models_to_show))
         
         table.auto_set_font_size(False)
         table.set_fontsize(font_size)
@@ -169,10 +140,7 @@ def create_fold_by_fold_tables(all_fold_results, config, timestamp, save_dir):
     plt.savefig(save_path, dpi=dpi, bbox_inches='tight')
     plt.close()
     
-    logger.info(f"Saved with DPI={dpi}, estimated height={estimated_height_pixels:.0f}px, showing {top_models_to_show}/{n_models} models")
-    
     logger.info(f"Clean fold-by-fold analysis saved to: {filename}")
-    logger.info(f"Image optimized for {n_models} models x {n_folds} folds: DPI={dpi}, Height={total_height:.1f}in")
     return save_path
 
 def create_production_analysis(quality_tracker, backtest_results, config, timestamp, save_dir):

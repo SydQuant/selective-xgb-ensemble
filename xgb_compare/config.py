@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-Configuration management for XGBoost Comparison Framework.
-Centralizes argument parsing and configuration logic.
+Configuration management for XGBoost comparison framework.
 """
 
 import argparse
@@ -10,31 +9,30 @@ from typing import Dict, Any
 
 @dataclass
 class XGBCompareConfig:
-    """Configuration class for XGBoost comparison analysis."""
+    """Configuration for XGBoost comparison framework."""
     
-    # Core data parameters
+    # Data parameters
     target_symbol: str = '@ES#C'
     start_date: str = '2015-01-01'
     end_date: str = '2025-08-01'
     
-    # Model parameters
+    # Model training
     n_folds: int = 10
     n_models: int = 50
-    max_features: int = -1  # -1 for all after cluster reduction
+    max_features: int = -1  # -1 for auto selection
     xgb_type: str = 'standard'
     inner_val_frac: float = 0.2
-    
-    # Feature selection
     no_feature_selection: bool = False
     
-    # Q-score parameters
+    # Quality tracking
     ewma_alpha: float = 0.1
     quality_halflife: int = 63
     
-    # Production backtesting
-    cutoff_fraction: float = 0.7
-    top_n_models: int = 5  # Will be dynamically set to 10% of n_models
-    q_metric: str = 'sharpe'  # 'sharpe', 'hit_rate', 'combined', 'sharpe_hit', 'cb_ratio', 'adj_sharpe'
+    # Backtesting
+    cutoff_fraction: float = 0.6  # Training/production split
+    top_n_models: int = 5  # Auto-calculated from model_selection_pct
+    model_selection_pct: float = 0.05  # Top 5% of models
+    q_metric: str = 'sharpe'
     reselection_frequency: int = 1
     
     # Combined Q-score parameters
@@ -75,7 +73,7 @@ class XGBCompareConfig:
         }
     
     def log_config(self, logger):
-        """Log configuration in a clean format."""
+        """Log configuration."""
         logger.info("="*80)
         logger.info("XGBoost Comparison Framework")
         logger.info("="*80)
@@ -84,86 +82,47 @@ class XGBCompareConfig:
         logger.info(f"  Date Range: {self.start_date} to {self.end_date}")
         logger.info(f"  Models: {self.n_models}, Type: {self.xgb_type}")
         logger.info(f"  Folds: {self.n_folds}")
-        logger.info(f"  Max Features: {self.max_features} ({'All after cluster reduction' if self.max_features == -1 else 'Limited'})")
+        logger.info(f"  Max Features: {self.max_features} ({'Limited' if self.max_features > 0 else 'Auto'})")
         logger.info(f"  Feature Selection: {'Disabled' if self.no_feature_selection else 'Enabled'}")
         logger.info(f"  Inner Val Fraction: {self.inner_val_frac}")
         logger.info(f"  EWMA Alpha: {self.ewma_alpha}, Quality Halflife: {self.quality_halflife} days")
         logger.info(f"  Signal Type: {'Binary (+1/-1)' if self.binary_signal else 'Tanh Normalized'}")
         logger.info(f"  Cross-validation: {'Rolling ' + str(self.rolling_days) + ' days' if self.rolling_days > 0 else 'Expanding window'}")
         logger.info(f"  Production: Cutoff={self.cutoff_fraction}, Top N={self.top_n_models}, Q-Metric={self.q_metric}")
-        if self.q_metric in ['combined', 'sharpe_hit']:
-            logger.info(f"  Combined Q-Score: Sharpe={self.q_sharpe_weight:.1f}, Hit={1-self.q_sharpe_weight:.1f}, Z-score={self.q_use_zscore}")
         logger.info(f"  Reselection: Every {self.reselection_frequency} fold(s)")
         logger.info("")
 
 def create_argument_parser() -> argparse.ArgumentParser:
-    """Create and configure the argument parser."""
-    parser = argparse.ArgumentParser(
-        description='XGBoost Comparison Framework - Comprehensive model analysis with Q-scores and production backtesting',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
+    """Create argument parser."""
+    parser = argparse.ArgumentParser(description='XGBoost Comparison Framework', 
+                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     
-    # Core configuration
-    parser.add_argument('--target_symbol', type=str, default='@ES#C', 
-                       help='Target symbol for analysis')
-    parser.add_argument('--start_date', type=str, default='2015-01-01', 
-                       help='Start date (YYYY-MM-DD)')
-    parser.add_argument('--end_date', type=str, default='2025-08-01', 
-                       help='End date (YYYY-MM-DD)')
-    
-    # Model parameters
-    parser.add_argument('--n_folds', type=int, default=10, 
-                       help='Number of cross-validation folds')
-    parser.add_argument('--n_models', type=int, default=50, 
-                       help='Number of XGBoost models per fold')
-    parser.add_argument('--max_features', type=int, default=-1, 
-                       help='Maximum features after selection (-1 for all after cluster reduction)')
-    parser.add_argument('--xgb_type', type=str, default='standard', 
-                       choices=['standard', 'deep', 'tiered'],
-                       help='XGBoost architecture type')
-    parser.add_argument('--inner_val_frac', type=float, default=0.2, 
-                       help='Inner validation fraction for IS/IV split')
-    
-    # Feature selection
-    parser.add_argument('--no_feature_selection', action='store_true', 
-                       help='Skip feature selection entirely')
-    
-    # Q-score parameters
-    parser.add_argument('--ewma_alpha', type=float, default=0.1, 
-                       help='EWMA alpha parameter for Q-score calculation')
-    parser.add_argument('--quality_halflife', type=int, default=63, 
-                       help='Quality tracking halflife (days)')
-    
-    # Production backtesting
-    parser.add_argument('--cutoff_fraction', type=float, default=0.7, 
-                       help='Fraction of folds for model selection vs backtesting')
-    parser.add_argument('--top_n_models', type=int, default=5, 
-                       help='Number of top models to select for production')
+    # Core parameters - concise format
+    parser.add_argument('--target_symbol', type=str, default='@ES#C', help='Target symbol')
+    parser.add_argument('--start_date', type=str, default='2015-01-01', help='Start date (YYYY-MM-DD)')
+    parser.add_argument('--end_date', type=str, default='2025-08-01', help='End date (YYYY-MM-DD)')
+    parser.add_argument('--n_folds', type=int, default=10, help='Cross-validation folds')
+    parser.add_argument('--n_models', type=int, default=50, help='XGBoost models per fold')
+    parser.add_argument('--max_features', type=int, default=-1, help='Max features (-1=auto)')
+    parser.add_argument('--xgb_type', type=str, default='standard', choices=['standard', 'deep', 'tiered'], help='XGBoost type')
+    parser.add_argument('--inner_val_frac', type=float, default=0.2, help='Inner validation fraction')
+    parser.add_argument('--no_feature_selection', action='store_true', help='Skip feature selection')
+    parser.add_argument('--ewma_alpha', type=float, default=0.1, help='EWMA alpha for Q-scores')
+    parser.add_argument('--quality_halflife', type=int, default=63, help='Quality halflife (days)')
+    parser.add_argument('--cutoff_fraction', type=float, default=0.6, help='Training/production split fraction')
+    parser.add_argument('--top_n_models', type=int, default=5, help='Top models for production')
+    parser.add_argument('--model_selection_pct', type=float, default=0.05, help='Top percentage of models to select (0.05=5%)')
     parser.add_argument('--q_metric', type=str, default='sharpe', 
-                       choices=['sharpe', 'hit_rate', 'cb_ratio', 'adj_sharpe', 'combined', 'sharpe_hit'],
-                       help='Q-score metric for model selection')
-    parser.add_argument('--reselection_frequency', type=int, default=1, 
-                       help='Model reselection frequency (in folds)')
+                       choices=['sharpe', 'hit_rate', 'cb_ratio', 'adj_sharpe', 'combined', 'sharpe_hit'], help='Q-score metric')
+    parser.add_argument('--reselection_frequency', type=int, default=1, help='Reselection frequency (folds)')
     
-    # Combined Q-score parameters
-    parser.add_argument('--q_sharpe_weight', type=float, default=0.5,
-                       help='Weight for Sharpe in combined Q-scores (hit_rate gets 1-this)')
-    parser.add_argument('--q_use_zscore', action='store_true', default=True,
-                       help='Use z-score normalization for combined Q-scores')
-    parser.add_argument('--q_no_zscore', dest='q_use_zscore', action='store_false',
-                       help='Disable z-score normalization (use simple weighted average)')
-    
-    # Analysis parameters
-    parser.add_argument('--n_bootstraps', type=int, default=100, 
-                       help='Number of bootstrap iterations for p-values')
-    parser.add_argument('--log_label', type=str, default='comparison', 
-                       help='Label for output filenames')
-    parser.add_argument('--binary_signal', action='store_true',
-                       help='Use binary +1/-1 signals instead of tanh normalization')
-    
-    # Cross-validation parameters
-    parser.add_argument('--rolling', type=int, default=0, dest='rolling_days',
-                       help='Use rolling window of N days instead of expanding window (0 = expanding)')
+    # Optional parameters  
+    parser.add_argument('--q_sharpe_weight', type=float, default=0.5, help='Sharpe weight in combined Q-score')
+    parser.add_argument('--q_use_zscore', action='store_true', default=True, help='Use z-score normalization')
+    parser.add_argument('--n_bootstraps', type=int, default=100, help='Bootstrap iterations for p-values')
+    parser.add_argument('--log_label', type=str, default='comparison', help='Output filename label')
+    parser.add_argument('--binary_signal', action='store_true', help='Use binary +1/-1 signals')
+    parser.add_argument('--rolling', type=int, default=0, dest='rolling_days', help='Rolling window days (0=expanding)')
     
     return parser
 
@@ -172,10 +131,12 @@ def parse_config() -> XGBCompareConfig:
     parser = create_argument_parser()
     args = parser.parse_args()
     
-    # Dynamic top_n_models: if not explicitly provided, use 10% of n_models
+    # Dynamic top_n_models: calculate based on model_selection_pct
     top_n_models = args.top_n_models
     if top_n_models == 5:  # Default value, not explicitly set
-        top_n_models = max(1, int(0.1 * args.n_models))  # 10% of n_models, minimum 1
+        # Use model_selection_pct: 0.05 = top 5%, 0.10 = top 10%, etc.
+        # Use round() for standard rounding (2.5 → 3, 2.4 → 2)
+        top_n_models = max(1, round(args.model_selection_pct * args.n_models))
     
     return XGBCompareConfig(
         target_symbol=args.target_symbol,
@@ -191,6 +152,7 @@ def parse_config() -> XGBCompareConfig:
         quality_halflife=args.quality_halflife,
         cutoff_fraction=args.cutoff_fraction,
         top_n_models=top_n_models,
+        model_selection_pct=args.model_selection_pct,
         q_metric=args.q_metric,
         reselection_frequency=args.reselection_frequency,
         q_sharpe_weight=args.q_sharpe_weight,

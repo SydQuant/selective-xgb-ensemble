@@ -10,20 +10,38 @@ def detect_gpu() -> str:
     """Detect if GPU is available for XGBoost."""
     import platform
     import logging
+    import warnings
     logger = logging.getLogger(__name__)
     
-    # Check for CUDA support
+    # Check for CUDA support with proper warning detection
     try:
         import xgboost as xgb
-        xgb.XGBRegressor(tree_method="hist", device="cuda", n_estimators=1).fit([[1]], [1])
-        logger.info("GPU detection: CUDA GPU available")
-        return "cuda"
-    except Exception:
-        pass
+        
+        # Capture warnings to detect if XGBoost falls back to CPU
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            model = xgb.XGBRegressor(tree_method="hist", device="cuda", n_estimators=1)
+            model.fit([[1]], [1])
+            
+            # Check if any warnings about CUDA not being compiled were raised
+            cuda_warnings = [warning for warning in w if "CUDA support" in str(warning.message)]
+            
+            if cuda_warnings:
+                logger.info("GPU detection: XGBoost not compiled with CUDA support - using CPU")
+                return "cpu"
+            else:
+                logger.info("GPU detection: CUDA GPU available and working")
+                return "cuda"
+                
+    except Exception as e:
+        logger.info(f"GPU detection: CUDA test failed ({str(e)}) - using CPU")
     
     # Check if we're on Apple Silicon (future-proofing for MPS support)
-    if platform.system() == "Darwin" and platform.processor() == "arm":
-        logger.info("GPU detection: Apple Silicon detected, but XGBoost doesn't support MPS yet - using CPU")
+    if platform.system() == "Darwin":
+        if platform.processor() == "arm":
+            logger.info("GPU detection: Apple Silicon detected, but XGBoost doesn't support MPS yet - using CPU")
+        else:
+            logger.info("GPU detection: Intel Mac detected, no CUDA support - using CPU")
         # Future: could try device="mps" when XGBoost adds support
     else:
         logger.info("GPU detection: No CUDA GPU found - using CPU")

@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """
-XGBoost Comparison Framework - Clean & Optimized Final Version
-
-Complete XGBoost model comparison with Q-score tracking and production backtesting.
-All redundant code removed, optimized for clarity and performance.
+XGBoost Comparison Framework - Production Ready
+Complete model comparison with Q-score tracking and production backtesting.
 """
 
 import os
@@ -14,10 +12,8 @@ import pandas as pd
 import numpy as np
 import multiprocessing as mp
 
-# Fix NumExpr warning
+# Optimize NumExpr threads
 os.environ['NUMEXPR_MAX_THREADS'] = str(min(16, mp.cpu_count()))
-
-# Framework imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import parse_config
 from metrics_utils import QualityTracker, calculate_model_metrics, normalize_predictions, calculate_metric_pvalue
@@ -30,25 +26,21 @@ from model.xgb_drivers import generate_xgb_specs, generate_deep_xgb_specs, fit_x
 from cv.wfo import wfo_splits, wfo_splits_rolling
 
 def setup_logging(config):
-    """Setup logging and directories."""
+    """Initialize logging and result directories."""
     results_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'results')
     os.makedirs(results_dir, exist_ok=True)
-    
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     log_path = os.path.join(results_dir, f"{timestamp}_xgb_compare_{config.log_label}.log")
     
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=[logging.FileHandler(log_path, encoding='utf-8'), logging.StreamHandler()]
-    )
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
+                       handlers=[logging.FileHandler(log_path, encoding='utf-8'), logging.StreamHandler()])
     
     logger = logging.getLogger(__name__)
     config.log_config(logger)
     return logger, results_dir, timestamp
 
 def load_and_prepare_data(config, logger):
-    """Load data with feature selection."""
+    """Load financial data and apply feature selection."""
     df = prepare_real_data_simple(config.target_symbol, start_date=config.start_date, end_date=config.end_date)
     target_col = f"{config.target_symbol}_target_return"
     X, y = df[[c for c in df.columns if c != target_col]], df[target_col]
@@ -63,21 +55,21 @@ def load_and_prepare_data(config, logger):
 
 def train_single_model(model_idx, spec, X_train, y_train, X_inner_train, y_inner_train, 
                       X_inner_val, y_inner_val, X_test, y_test, config, use_gpu=False):
-    """Train single model and return metrics."""
-    # Use GPU if available and requested, otherwise use CPU
+    """Train single XGBoost model and calculate IS/IV/OOS metrics."""
+    # Train model
     model = fit_xgb_on_slice(X_train, y_train, spec, force_cpu=not use_gpu)
     
-    # Predictions with normalization
+    # Generate normalized predictions  
     pred_inner_train = normalize_predictions(pd.Series(model.predict(X_inner_train.values), index=X_inner_train.index), config.binary_signal)
     pred_inner_val = normalize_predictions(pd.Series(model.predict(X_inner_val.values), index=X_inner_val.index), config.binary_signal)
     pred_test = normalize_predictions(pd.Series(model.predict(X_test.values), index=X_test.index), config.binary_signal)
     
-    # Metrics calculation
+    # Calculate performance metrics
     is_metrics = calculate_model_metrics(pred_inner_train, y_inner_train, shifted=False)
     iv_metrics = calculate_model_metrics(pred_inner_val, y_inner_val, shifted=False)
     oos_metrics = calculate_model_metrics(pred_test, y_test, shifted=True)
     
-    # Statistical significance
+    # Statistical significance testing
     p_sharpe = calculate_metric_pvalue(pred_test, y_test, 'sharpe', oos_metrics['sharpe'], config.n_bootstraps)
     
     return {
@@ -87,124 +79,85 @@ def train_single_model(model_idx, spec, X_train, y_train, X_inner_train, y_inner
         'OOS_Sharpe': oos_metrics['sharpe'],
         'OOS_Hit_Rate': oos_metrics['hit_rate'],
         'OOS_Sharpe_p': p_sharpe,
-        'Q_Sharpe': 0.0,  # Will be calculated by quality tracker
-        'OOS_Predictions': pred_test  # Store the actual predictions for backtesting
+        'Q_Sharpe': 0.0,  # Updated by quality tracker
+        'OOS_Predictions': pred_test  # For backtesting
+    }, oos_metrics
+
+def _train_single_model_mp(args):
+    """Train single model in multiprocessing worker."""
+    model_idx, spec, X_train_vals, y_train_vals, X_inner_train_vals, y_inner_train_vals, \
+    X_inner_val_vals, y_inner_val_vals, X_test_vals, y_test_vals, binary_signal = args
+    
+    import pandas as pd
+    from model.xgb_drivers import fit_xgb_on_slice
+    from metrics_utils import normalize_predictions, calculate_model_metrics, calculate_metric_pvalue
+    
+    # Setup data 
+    n_train, n_inner_train, n_inner_val, n_test = len(X_train_vals), len(X_inner_train_vals), len(X_inner_val_vals), len(X_test_vals)
+    X_train_df = pd.DataFrame(X_train_vals, index=range(n_train))
+    y_train_series = pd.Series(y_train_vals, index=range(n_train))
+    
+    # Train and predict
+    model = fit_xgb_on_slice(X_train_df, y_train_series, spec, force_cpu=True)
+    pred_inner_train = normalize_predictions(pd.Series(model.predict(X_inner_train_vals), index=range(n_inner_train)), binary_signal)
+    pred_inner_val = normalize_predictions(pd.Series(model.predict(X_inner_val_vals), index=range(n_inner_val)), binary_signal)
+    pred_test = normalize_predictions(pd.Series(model.predict(X_test_vals), index=range(n_test)), binary_signal)
+    
+    # Calculate all metrics
+    is_metrics = calculate_model_metrics(pred_inner_train, pd.Series(y_inner_train_vals, index=range(n_inner_train)), shifted=False)
+    iv_metrics = calculate_model_metrics(pred_inner_val, pd.Series(y_inner_val_vals, index=range(n_inner_val)), shifted=False)
+    oos_metrics = calculate_model_metrics(pred_test, pd.Series(y_test_vals, index=range(n_test)), shifted=True)
+    p_sharpe = calculate_metric_pvalue(pred_test, pd.Series(y_test_vals, index=range(n_test)), 'sharpe', oos_metrics['sharpe'], 50)
+    
+    return {
+        'Model': f"M{model_idx:02d}", 'IS_Sharpe': is_metrics['sharpe'], 'IV_Sharpe': iv_metrics['sharpe'], 
+        'OOS_Sharpe': oos_metrics['sharpe'], 'OOS_Hit_Rate': oos_metrics['hit_rate'], 
+        'OOS_Sharpe_p': p_sharpe, 'Q_Sharpe': 0.0, 'OOS_Predictions': pred_test
     }, oos_metrics
 
 def train_models_multiprocessing(xgb_specs, X_train, y_train, X_inner_train, y_inner_train, 
                                 X_inner_val, y_inner_val, X_test, y_test, config):
-    """Train models using multiprocessing - simplified version."""
+    """Train models using multiprocessing."""
     from concurrent.futures import ProcessPoolExecutor
     import multiprocessing as mp
     
-    def train_single_model_mp(args):
-        """Single model training for multiprocessing."""
-        model_idx, spec, X_train_vals, y_train_vals, X_inner_train_vals, y_inner_train_vals, \
-        X_inner_val_vals, y_inner_val_vals, X_test_vals, y_test_vals, binary_signal = args
-        
-        # Import inside function
-        import pandas as pd
-        from model.xgb_drivers import fit_xgb_on_slice
-        from metrics_utils import normalize_predictions, calculate_model_metrics, calculate_metric_pvalue
-        
-        # Recreate DataFrames with simple indices
-        n_train = len(X_train_vals)
-        n_inner_train = len(X_inner_train_vals) 
-        n_inner_val = len(X_inner_val_vals)
-        n_test = len(X_test_vals)
-        
-        X_train_df = pd.DataFrame(X_train_vals, index=range(n_train))
-        y_train_series = pd.Series(y_train_vals, index=range(n_train))
-        X_inner_train_df = pd.DataFrame(X_inner_train_vals, index=range(n_inner_train))
-        y_inner_train_series = pd.Series(y_inner_train_vals, index=range(n_inner_train))
-        X_inner_val_df = pd.DataFrame(X_inner_val_vals, index=range(n_inner_val))
-        y_inner_val_series = pd.Series(y_inner_val_vals, index=range(n_inner_val))
-        
-        # Force CPU for multiprocessing
-        model = fit_xgb_on_slice(X_train_df, y_train_series, spec, force_cpu=True)
-        
-        # Predictions with normalization
-        pred_inner_train = normalize_predictions(pd.Series(model.predict(X_inner_train_vals), index=range(n_inner_train)), binary_signal)
-        pred_inner_val = normalize_predictions(pd.Series(model.predict(X_inner_val_vals), index=range(n_inner_val)), binary_signal)
-        pred_test = normalize_predictions(pd.Series(model.predict(X_test_vals), index=range(n_test)), binary_signal)
-        
-        # Metrics calculation
-        is_metrics = calculate_model_metrics(pred_inner_train, y_inner_train_series, shifted=False)
-        iv_metrics = calculate_model_metrics(pred_inner_val, y_inner_val_series, shifted=False)
-        oos_metrics = calculate_model_metrics(pred_test, pd.Series(y_test_vals, index=range(n_test)), shifted=True)
-        
-        # Statistical significance
-        p_sharpe = calculate_metric_pvalue(pred_test, pd.Series(y_test_vals, index=range(n_test)), 'sharpe', oos_metrics['sharpe'], 50)
-        
-        return {
-            'Model': f"M{model_idx:02d}",
-            'IS_Sharpe': is_metrics['sharpe'],
-            'IV_Sharpe': iv_metrics['sharpe'], 
-            'OOS_Sharpe': oos_metrics['sharpe'],
-            'OOS_Hit_Rate': oos_metrics['hit_rate'],
-            'OOS_Sharpe_p': p_sharpe,
-            'Q_Sharpe': 0.0,
-            'OOS_Predictions': pred_test  # Store the actual predictions for backtesting
-        }, oos_metrics
-    
     # Prepare arguments
-    args_list = []
-    for model_idx, spec in enumerate(xgb_specs):
-        args = (model_idx, spec, X_train.values, y_train.values, 
-               X_inner_train.values, y_inner_train.values,
-               X_inner_val.values, y_inner_val.values, 
-               X_test.values, y_test.values, config.binary_signal)
-        args_list.append(args)
+    args_list = [(i, spec, X_train.values, y_train.values, X_inner_train.values, y_inner_train.values,
+                  X_inner_val.values, y_inner_val.values, X_test.values, y_test.values, config.binary_signal)
+                 for i, spec in enumerate(xgb_specs)]
     
     # Execute in parallel
-    max_workers = min(mp.cpu_count() - 2, mp.cpu_count(), len(xgb_specs))
-    with ProcessPoolExecutor(max_workers=max_workers) as executor:
-        results = list(executor.map(train_single_model_mp, args_list))
+    with ProcessPoolExecutor(max_workers=min(mp.cpu_count() - 1, len(xgb_specs))) as executor:
+        results = list(executor.map(_train_single_model_mp, args_list))
     
-    # Split results
-    fold_results = []
-    model_metrics = []
-    for model_result, metrics in results:
-        fold_results.append(model_result)
-        model_metrics.append(metrics)
-    
-    return fold_results, model_metrics
+    fold_results, model_metrics = zip(*results) if results else ([], [])
+    return list(fold_results), list(model_metrics)
 
 def process_single_fold(fold_idx, train_idx, test_idx, X, y, xgb_specs, quality_tracker, config, logger, use_gpu=False, use_multiprocessing=False):
-    """Process single fold with all models using optimized GPU/CPU processing."""
-    # Inner validation split
+    """Process single fold with all models."""
+    # Prepare data splits
     inner_split_point = int(len(train_idx) * (1 - config.inner_val_frac))
-    inner_train_idx = train_idx[:inner_split_point]
-    inner_val_idx = train_idx[inner_split_point:]
+    inner_train_idx, inner_val_idx = train_idx[:inner_split_point], train_idx[inner_split_point:]
     
-    # Data slicing
     X_train, y_train = X.iloc[train_idx], y.iloc[train_idx]
     X_inner_train, y_inner_train = X.iloc[inner_train_idx], y.iloc[inner_train_idx]
     X_inner_val, y_inner_val = X.iloc[inner_val_idx], y.iloc[inner_val_idx]
     X_test, y_test = X.iloc[test_idx], y.iloc[test_idx]
     
-    fold_results = []
-    model_metrics = []
-    
-    # Choose processing approach based on configuration
+    # Train models based on processing mode
     if use_multiprocessing and not use_gpu and len(xgb_specs) > 1:
-        logger.info(f"  Using multiprocessing with {min(mp.cpu_count() - 2, len(xgb_specs))} workers")
-        
-        # Simplified multiprocessing - batch train all models
+        logger.info(f"  Using multiprocessing with {min(mp.cpu_count() - 1, len(xgb_specs))} workers")
         fold_results, model_metrics = train_models_multiprocessing(
             xgb_specs, X_train, y_train, X_inner_train, y_inner_train,
-            X_inner_val, y_inner_val, X_test, y_test, config
-        )
+            X_inner_val, y_inner_val, X_test, y_test, config)
     else:
-        # Sequential processing (for GPU, CPU small counts, or single model)
         processing_type = "GPU sequential" if use_gpu else "CPU sequential"
         logger.info(f"  Using {processing_type} processing")
-        
+        fold_results, model_metrics = [], []
         for model_idx, spec in enumerate(xgb_specs):
             model_result, metrics = train_single_model(
                 model_idx, spec, X_train, y_train, X_inner_train, y_inner_train,
-                X_inner_val, y_inner_val, X_test, y_test, config, use_gpu=use_gpu
-            )
+                X_inner_val, y_inner_val, X_test, y_test, config, use_gpu=use_gpu)
             fold_results.append(model_result)
             model_metrics.append(metrics)
     
@@ -215,25 +168,19 @@ def process_single_fold(fold_idx, train_idx, test_idx, X, y, xgb_specs, quality_
     fold_df = pd.DataFrame(fold_results)
     
     # Update Q-scores based on configured metric
-    if config.q_metric in ['combined', 'sharpe_hit']:
-        # Use combined Q-scores
-        if config.q_metric == 'combined':
-            # Default 50/50 combined
-            q_scores = quality_tracker.get_combined_q_scores(fold_idx, config.ewma_alpha, use_zscore=config.q_use_zscore)
-        else:  # 'sharpe_hit'
-            # Sharpe + Hit Rate with configurable weights
-            q_scores = quality_tracker.get_sharpe_hit_combined_q_scores(fold_idx, config.ewma_alpha, 
-                                                                        config.q_sharpe_weight, config.q_use_zscore)
-        fold_df['Q_Combined'] = q_scores[:len(fold_df)]
-        q_column = 'Q_Combined'
-        q_label = f"Q-{config.q_metric.title()}"
+    if config.q_metric == 'combined':
+        q_scores = quality_tracker.get_combined_q_scores(fold_idx, config.ewma_alpha, use_zscore=config.q_use_zscore)
+        q_column, q_label = 'Q_Combined', 'Q-Combined'
+    elif config.q_metric == 'sharpe_hit':
+        q_scores = quality_tracker.get_sharpe_hit_combined_q_scores(fold_idx, config.ewma_alpha, 
+                                                                    config.q_sharpe_weight, config.q_use_zscore)
+        q_column, q_label = 'Q_Combined', 'Q-Sharpe_Hit'
     else:
-        # Use single metric Q-scores
         all_q_scores = quality_tracker.get_q_scores(fold_idx, config.ewma_alpha)
         q_scores = all_q_scores[config.q_metric]
-        fold_df[f'Q_{config.q_metric.title()}'] = q_scores[:len(fold_df)]
-        q_column = f'Q_{config.q_metric.title()}'
-        q_label = f"Q-{config.q_metric.title()}"
+        q_column, q_label = f'Q_{config.q_metric.title()}', f"Q-{config.q_metric.title()}"
+    
+    fold_df[q_column] = q_scores[:len(fold_df)]
     
     # Log summary
     best_oos = fold_df.loc[fold_df['OOS_Sharpe'].idxmax()]
@@ -250,39 +197,23 @@ def process_single_fold(fold_idx, train_idx, test_idx, X, y, xgb_specs, quality_
     return fold_df, model_metrics
 
 def choose_optimal_processing_mode(config, logger):
-    """Intelligently choose the best processing mode based on model count and hardware."""
+    """Choose optimal processing mode: GPU if available, otherwise CPU multiprocessing."""
     from model.xgb_drivers import detect_gpu
     
-    device = detect_gpu()
-    gpu_available = (device == "cuda")
+    gpu_available = detect_gpu() == "cuda"
     total_models = config.n_models * config.n_folds
     
-    # Smart decision logic based on performance testing
-    if total_models < 50:
-        # Small model counts: CPU sequential is fastest (no overhead)
-        use_gpu = False
-        use_multiprocessing = False
-        mode_desc = "CPU sequential (optimal for small model counts)"
-    elif gpu_available and total_models > 200:
-        # Large model counts with GPU: GPU can overcome transfer overhead
-        use_gpu = True
-        use_multiprocessing = False
-        mode_desc = "GPU sequential (optimal for large model counts)"
+    if gpu_available:
+        use_gpu, use_multiprocessing = True, False
+        mode_desc = "GPU sequential"
     elif total_models > 50:
-        # Medium-large model counts: Use GPU sequential to avoid multiprocessing bugs
-        use_gpu = True
-        use_multiprocessing = False
-        mode_desc = "GPU sequential (avoiding multiprocessing issues)"
+        use_gpu, use_multiprocessing = False, True
+        mode_desc = "CPU multiprocessing"
     else:
-        # Fallback to CPU sequential
-        use_gpu = False
-        use_multiprocessing = False
-        mode_desc = "CPU sequential (fallback)"
+        use_gpu, use_multiprocessing = False, False
+        mode_desc = "CPU sequential"
     
-    logger.info(f"Processing mode: {mode_desc}")
-    logger.info(f"  Total models to train: {total_models}")
-    logger.info(f"  GPU available: {gpu_available}")
-    
+    logger.info(f"Processing mode: {mode_desc} (GPU: {gpu_available}, Total models: {total_models})")
     return use_gpu, use_multiprocessing
 
 def run_cross_validation(X, y, config, logger):
@@ -313,11 +244,7 @@ def run_cross_validation(X, y, config, logger):
                                                    xgb_specs, quality_tracker, config, logger,
                                                    use_gpu=use_gpu, use_multiprocessing=use_multiprocessing)
         # Extract OOS predictions for backtesting
-        oos_predictions = {}
-        for i, row in fold_df.iterrows():
-            model_name = row['Model']
-            model_idx = int(model_name[1:])  # Extract index from "M00", "M01", etc.
-            oos_predictions[model_idx] = row['OOS_Predictions']
+        oos_predictions = {int(row['Model'][1:]): row['OOS_Predictions'] for _, row in fold_df.iterrows()}
         
         all_fold_results[f'fold_{fold_idx+1}'] = {
             'results_df': fold_df,

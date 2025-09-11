@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Detailed production analysis with fold-by-fold and model-by-model breakdowns.
+Production analysis with Q-score evolution and performance breakdowns.
 """
 
 import numpy as np
@@ -14,31 +14,25 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 def create_detailed_production_analysis(quality_tracker, backtest_results, config, timestamp, save_dir):
-    """
-    Create comprehensive production analysis with detailed breakdowns.
-    """
+    """Create comprehensive production analysis visualization."""
     fig = plt.figure(figsize=(24, 20))
     gs = fig.add_gridspec(5, 3, height_ratios=[2.5, 1.5, 1, 1, 1.5], width_ratios=[3, 2, 2], 
                          hspace=0.45, wspace=0.35)
     
-    # Find ACTUAL production models (only from production period folds)
+    # Find production models from backtest results
     production_models = set()
     training_models = set()
     production_folds = []
     training_folds = []
     
     if 'fold_results' in backtest_results:
-        # Determine cutoff between training and production
+        # Determine training/production cutoff
         all_folds = [f['fold'] for f in backtest_results['fold_results']]
         cutoff_fold_num = int(len(all_folds) * config.cutoff_fraction) + 1
         
         for fold_result in backtest_results['fold_results']:
             fold_num = fold_result['fold']
             selected_models = fold_result.get('selected_models', [])
-            
-            # Completely skip Fold 2 (uses Q=0 scores and selects M00-M09)
-            if fold_num == 2:
-                continue
                 
             if fold_num >= cutoff_fold_num:  # Production period
                 production_models.update(selected_models)
@@ -364,7 +358,7 @@ Models: {len(all_used_models)} unique ({model_names_str})"""
             training_returns = backtest_results['training_returns']
             training_cumulative = pd.Series(training_returns).cumsum()
             training_periods = len(training_returns)
-            logger.info(f"Using actual training period PnL ({training_periods} days)")
+            # Remove verbose logging
         else:
             # Fallback: estimate training period performance
             avg_daily_return = metrics.get('ann_ret', 0) / 252
@@ -428,8 +422,8 @@ Models: {len(all_used_models)} unique ({model_names_str})"""
         # Plot production period from 0 (not adjusted) to match production metrics calculation
         production_only_x = list(range(len(production_returns)))
         ax_pnl.plot(production_only_x, production_cumulative.values, 
-                   linewidth=2, color='darkblue', linestyle='--', alpha=0.8,
-                   label='Production Period PnL (matches metrics)')
+                   linewidth=2, color='darkblue', linestyle='-', alpha=0.8,
+                   label='Production Period PnL')
         
         # Add vertical line at backtest start
         ax_pnl.axvline(x=0, color='red', linestyle='-', linewidth=3, alpha=0.9, 
