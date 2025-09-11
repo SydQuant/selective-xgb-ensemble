@@ -211,12 +211,17 @@ def create_detailed_production_analysis(quality_tracker, backtest_results, confi
     # 4. AGGREGATE PERFORMANCE SUMMARY
     ax_summary = fig.add_subplot(gs[1, 2])
     
-    # Use the correct metrics from the new data structure
-    if 'production_metrics' in backtest_results and backtest_results['production_metrics']:
-        metrics = backtest_results['production_metrics']
+    # Get all available metrics from the new data structure
+    production_metrics = backtest_results.get('production_metrics', {})
+    training_metrics = backtest_results.get('training_metrics', {})
+    full_timeline_metrics = backtest_results.get('full_timeline_metrics', {})
+    
+    # Use production metrics as primary, but display all periods
+    if production_metrics:
+        metrics = production_metrics
         metrics_label = 'Production Period'
-    elif 'full_timeline_metrics' in backtest_results:
-        metrics = backtest_results['full_timeline_metrics']
+    elif full_timeline_metrics:
+        metrics = full_timeline_metrics
         metrics_label = 'Full Timeline'
     else:
         metrics = {'sharpe': 0, 'ann_ret': 0, 'ann_vol': 0, 'hit_rate': 0, 'cb_ratio': 0, 'total_periods': 0}
@@ -249,21 +254,31 @@ def create_detailed_production_analysis(quality_tracker, backtest_results, confi
     signal_type = "Binary (+1/-1)" if getattr(config, 'binary_signal', False) else "Tanh Normalized"
     q_metric = getattr(config, 'q_metric', 'sharpe').upper()
     
-    summary_text = f"""{metrics_label.upper()} SUMMARY
+    # Create comprehensive summary with all periods
+    training_text = ""
+    production_text = ""
+    full_timeline_text = ""
+    
+    if training_metrics:
+        training_text = f"""TRAINING PERIOD:
+  Sharpe: {training_metrics.get('sharpe', 0):.3f} | Hit: {training_metrics.get('hit_rate', 0):.1%} | Return: {training_metrics.get('ann_ret', 0):.2%}
+"""
+    
+    if production_metrics:
+        production_text = f"""PRODUCTION PERIOD:
+  Sharpe: {production_metrics.get('sharpe', 0):.3f} | Hit: {production_metrics.get('hit_rate', 0):.1%} | Return: {production_metrics.get('ann_ret', 0):.2%}
+  Volatility: {production_metrics.get('ann_vol', 0):.2%} | Max DD: {max_drawdown:.2%} | CB: {production_metrics.get('cb_ratio', 0):.3f}
+"""
+    
+    if full_timeline_metrics:
+        full_timeline_text = f"""FULL TIMELINE:
+  Sharpe: {full_timeline_metrics.get('sharpe', 0):.3f} | Hit: {full_timeline_metrics.get('hit_rate', 0):.1%} | Return: {full_timeline_metrics.get('ann_ret', 0):.2%}
+"""
 
-Sharpe Ratio: {metrics.get('sharpe', 0):.3f}
-Annual Return: {metrics.get('ann_ret', 0):.2%}
-Annual Volatility: {metrics.get('ann_vol', 0):.2%}
-Maximum Drawdown: {max_drawdown:.2%}
-Hit Rate: {metrics.get('hit_rate', 0):.1%}
-CB Ratio: {metrics.get('cb_ratio', 0):.3f}
-
-Signal Type: {signal_type}
-Q-Metric: {q_metric}
-Total Periods: {metrics.get('total_periods', 0)}
-Folds Analyzed: {len(backtest_results.get('fold_results', []))}
-Models Used: {model_names_str}
-Unique Models: {len(all_used_models)}"""
+    summary_text = f"""{training_text}{production_text}{full_timeline_text}
+CONFIG: {signal_type} | Q-Metric: {q_metric}
+Periods: {metrics.get('total_periods', 0)} | Folds: {len(backtest_results.get('fold_results', []))}
+Models: {len(all_used_models)} unique ({model_names_str})"""
     
     ax_summary.text(0.05, 0.95, summary_text, transform=ax_summary.transAxes, 
                    fontsize=11, verticalalignment='top', fontfamily='monospace',
@@ -409,6 +424,13 @@ Unique Models: {len(all_used_models)}"""
         ax_pnl.plot(production_x, production_cumulative_adjusted.values, 
                    linewidth=3, color='blue', label='Production Period (Actual)')
         
+        # PRODUCTION PERIOD ONLY - separate plot to match metrics exactly
+        # Plot production period from 0 (not adjusted) to match production metrics calculation
+        production_only_x = list(range(len(production_returns)))
+        ax_pnl.plot(production_only_x, production_cumulative.values, 
+                   linewidth=2, color='darkblue', linestyle='--', alpha=0.8,
+                   label='Production Period PnL (matches metrics)')
+        
         # Add vertical line at backtest start
         ax_pnl.axvline(x=0, color='red', linestyle='-', linewidth=3, alpha=0.9, 
                       label=f'Production Start (Fold {cutoff_fold+1})', zorder=10)
@@ -497,8 +519,9 @@ Unique Models: {len(all_used_models)}"""
         training_info = 'OOS' if 'training_returns' in backtest_results else 'Est.'
         
         ax_pnl.set_title(f'{period_label} Trading: {display_metrics.get("ann_ret", 0)*100:.2f}% Annual | Sharpe {display_metrics.get("sharpe", 0):.2f}\n'
-                        f'Gray=Training({training_info}) | Blue=Production(OOS) | Models: {sorted([f"M{m:02d}" for m in all_used_models])}',
-                        fontsize=13, fontweight='bold')
+                        f'Gray=Training({training_info}) | Blue=Production(OOS) | DarkBlue=Production Only (metrics match this)\n'
+                        f'Models: {sorted([f"M{m:02d}" for m in all_used_models])}',
+                        fontsize=12, fontweight='bold')
         ax_pnl.legend(loc='upper left', fontsize=10)
         ax_pnl_twin.legend(loc='upper right', fontsize=10)
         ax_pnl.grid(True, alpha=0.3)
@@ -507,7 +530,7 @@ Unique Models: {len(all_used_models)}"""
                 f'Complete Breakdown: Q-Evolution + Fold Performance + Model Analysis + PnL Curve', 
                 fontsize=18, fontweight='bold', y=0.98)
     
-    filename = f"backtest_{config.target_symbol}_{config.n_models}models_{config.n_folds}folds_{config.log_label}_{timestamp}.png"
+    filename = f"{timestamp}_backtest_{config.target_symbol}_{config.n_models}models_{config.n_folds}folds_{config.log_label}.png"
     save_path = os.path.join(save_dir, filename)
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.close()
