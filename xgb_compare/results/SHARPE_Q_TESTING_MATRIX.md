@@ -83,7 +83,7 @@ Testing corrected backtesting logic with multiple bug fixes:
 | 4.5  | EU     | 250       | ✅     | 0.764           | **1.042**   | 51.9%    | 3.26%         | 221510        |
 | 4.6  | EU     | 741 (all) | ✅     | -0.349          | -0.095            | 48.6%    | -0.96%        | 002445        |
 
-### Phase 5: Optimal Configuration Testing (PENDING - Wait for Phase 1-4 completion)
+### Phase 5: Optimal Configuration Testing ✅ COMPLETED
 
 **Strategy**: Use best config from Phases 1-4 for each symbol with increased model counts
 
@@ -91,13 +91,11 @@ Testing corrected backtesting logic with multiple bug fixes:
 
 | Test | Symbol | Signal | Folds | Arch     | Features | Models | Status | Production Sharpe | Hit Rate | Log Timestamp |
 | ---- | ------ | ------ | ----- | -------- | -------- | ------ | ------ | ----------------- | -------- | ------------- |
-| 5.1a | ES     | binary | 20    | standard | 100      | 100    | 🔄     | -                 | -        | -             |
-| 5.1b | ES     | binary | 20    | standard | 100      | 150    | 🔄     | -                 | -        | -             |
-| 5.2a | TY     | binary | 8     | tiered   | 100      | 100    | 🔄     | -                 | -        | -             |
-| 5.2b | TY     | binary | 8     | tiered   | 100      | 150    | 🔄     | -                 | -        | -             |
-| 5.3a | EU     | tanh   | 10    | tiered   | 250      | 100    | ⏸️   | -                 | -        | -             |
-| 5.3b | EU     | tanh   | 10    | tiered   | 250      | 150    | ⏸️   | -                 | -        | -             |
-|      |        |        |       |          |          |        |        |                   |          |               |
-|      |        |        |       |          |          |        |        |                   | -        | -             |
+| 5.1a | ES     | binary | 20    | standard | 100      | 100    | ✅     | **1.327**         | 51.7%    | 003633        |
+| 5.1b | ES     | binary | 20    | standard | 100      | 150    | ✅     | **1.150**         | 51.0%    | 003643        |
+| 5.2a | TY     | binary | 8     | tiered   | 100      | 100    | ✅     | 0.656             | 51.5%    | 003655        |
+| 5.2b | TY     | binary | 8     | tiered   | 100      | 150    | ✅     | **1.642**         | 54.4%    | 003708        |
+| 5.3a | EU     | tanh   | 10    | tiered   | 250      | 100    | ✅     | **1.279**         | 53.4%    | 004058        |
+| 5.3b | EU     | tanh   | 10    | tiered   | 250      | 150    | ✅     | **1.132**         | 55.9%    | 004107        |
 
 ---

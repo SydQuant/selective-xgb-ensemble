@@ -34,11 +34,11 @@ This will test if hit rate-based model selection produces different/better resul
 
 | Test | Symbol | Folds | Status | Training Sharpe | Production Sharpe | Hit Rate | Annual Return | Log Timestamp |
 |------|--------|-------|--------|----------------|-------------------|----------|---------------|---------------|
-| H2.1 | ES     | 10    | ⏸️     | -              | -                 | -        | -             | - |
-| H2.2 | ES     | 15    | ⏸️     | -              | -                 | -        | -             | - |
-| H2.3 | ES     | 20    | ⏸️     | -              | -                 | -        | -             | - |
-| H2.4 | TY     | 10    | ⏸️     | -              | -                 | -        | -             | - |
-| H2.5 | TY     | 15    | ⏸️     | -              | -                 | -        | -             | - |
+| H2.1 | ES     | 10    | ✅     | 1.005          | **1.369**         | 50.7%    | 12.13%        | 012354 |
+| H2.2 | ES     | 15    | ✅     | 0.867          | **1.242**         | 50.2%    | 11.39%        | 012406 |
+| H2.3 | ES     | 20    | 🔄     | -              | -                 | -        | -             | - |
+| H2.4 | TY     | 10    | ✅     | 1.374          | **1.477**         | 52.5%    | 5.68%         | 012454 |
+| H2.5 | TY     | 15    | 🔄     | -              | -                 | -        | -             | - |
 | H2.6 | TY     | 20    | ⏸️     | -              | -                 | -        | -             | - |
 | H2.7 | EU     | 10    | ⏸️     | -              | -                 | -        | -             | - |
 | H2.8 | EU     | 15    | ⏸️     | -              | -                 | -        | -             | - |
@@ -49,15 +49,15 @@ This will test if hit rate-based model selection produces different/better resul
 
 | Test | Symbol | XGB Type | Status | Training Sharpe | Production Sharpe | Hit Rate | Annual Return | Log Timestamp |
 |------|--------|----------|--------|----------------|-------------------|----------|---------------|---------------|
-| H3.1 | ES     | standard | ⏸️     | -              | -                 | -        | -             | - |
-| H3.2 | ES     | tiered   | ⏸️     | -              | -                 | -        | -             | - |
-| H3.3 | ES     | deep     | ⏸️     | -              | -                 | -        | -             | - |
-| H3.4 | TY     | standard | ⏸️     | -              | -                 | -        | -             | - |
-| H3.5 | TY     | tiered   | ⏸️     | -              | -                 | -        | -             | - |
-| H3.6 | TY     | deep     | ⏸️     | -              | -                 | -        | -             | - |
+| H3.1 | ES     | standard | 🔄     | -              | -                 | -        | -             | - |
+| H3.2 | ES     | tiered   | ✅     | 1.105          | **1.938**         | 50.5%    | 15.00%        | 012425 |
+| H3.3 | ES     | deep     | 🔄     | -              | -                 | -        | -             | - |
+| H3.4 | TY     | standard | 🔄     | -              | -                 | -        | -             | - |
+| H3.5 | TY     | tiered   | 🔄     | -              | -                 | -        | -             | - |
+| H3.6 | TY     | deep     | 🔄     | -              | -                 | -        | -             | - |
 | H3.7 | EU     | standard | ⏸️     | -              | -                 | -        | -             | - |
 | H3.8 | EU     | tiered   | ⏸️     | -              | -                 | -        | -             | - |
-| H3.9 | EU     | deep     | ⏸️     | -              | -                 | -        | -             | - |
+| H3.9 | EU     | deep     | ✅     | 0.970          | 0.594             | 51.4%    | 2.20%         | 012521 |
 
 ### Phase 4: Feature Count Analysis (hit_Q, tanh signals)
 **Config**: 50 models, 8 folds, tanh signals, **--q_metric hit_rate**
@@ -65,13 +65,13 @@ This will test if hit rate-based model selection produces different/better resul
 | Test | Symbol | Features | Status | Training Sharpe | Production Sharpe | Hit Rate | Annual Return | Log Timestamp |
 |------|--------|----------|--------|----------------|-------------------|----------|---------------|---------------|
 | H4.1 | ES     | 100      | ⏸️     | -              | -                 | -        | -             | - |
-| H4.2 | ES     | 250      | ⏸️     | -              | -                 | -        | -             | - |
+| H4.2 | ES     | 250      | 🔄     | -              | -                 | -        | -             | - |
 | H4.3 | ES     | -1 (all) | ⏸️     | -              | -                 | -        | -             | - |
 | H4.4 | TY     | 100      | ⏸️     | -              | -                 | -        | -             | - |
-| H4.5 | TY     | 250      | ⏸️     | -              | -                 | -        | -             | - |
+| H4.5 | TY     | 250      | 🔄     | -              | -                 | -        | -             | - |
 | H4.6 | TY     | -1 (all) | ⏸️     | -              | -                 | -        | -             | - |
 | H4.7 | EU     | 100      | ⏸️     | -              | -                 | -        | -             | - |
-| H4.8 | EU     | 250      | ⏸️     | -              | -                 | -        | -             | - |
+| H4.8 | EU     | 250      | 🔄     | -              | -                 | -        | -             | - |
 | H4.9 | EU     | -1 (all) | ⏸️     | -              | -                 | -        | -             | - |
 
 ---
