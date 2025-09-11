@@ -1,0 +1,69 @@
+2025-09-12 09:12:16,236 - INFO - ================================================================================
+2025-09-12 09:12:16,236 - INFO - XGBoost Comparison Framework
+2025-09-12 09:12:16,236 - INFO - ================================================================================
+2025-09-12 09:12:16,236 - INFO - Configuration:
+2025-09-12 09:12:16,236 - INFO -   Target Symbol: @ES#C
+2025-09-12 09:12:16,236 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-12 09:12:16,236 - INFO -   Models: 150, Type: standard
+2025-09-12 09:12:16,236 - INFO -   Folds: 20
+2025-09-12 09:12:16,236 - INFO -   Max Features: 100 (Limited)
+2025-09-12 09:12:16,236 - INFO -   Feature Selection: Enabled
+2025-09-12 09:12:16,236 - INFO -   Inner Val Fraction: 0.2
+2025-09-12 09:12:16,236 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-12 09:12:16,236 - INFO -   Signal Type: Tanh Normalized
+2025-09-12 09:12:16,236 - INFO -   Cross-validation: Expanding window
+2025-09-12 09:12:16,236 - INFO -   Production: Cutoff=0.6, Top N=8, Q-Metric=hit_rate
+2025-09-12 09:12:16,236 - INFO -   Reselection: Every 1 fold(s)
+2025-09-12 09:12:16,236 - INFO - 
+2025-09-12 09:12:33,262 - INFO - Loaded: X=(2735, 1906), y=(2735,)
+2025-09-12 09:13:17,642 - INFO - Selected 100 features (threshold: 0.7)
+2025-09-12 09:13:17,649 - INFO - Selected: 100 features
+2025-09-12 09:13:17,710 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-12 09:13:17,710 - INFO - Processing mode: CPU multiprocessing (GPU: False, Total models: 3000)
+2025-09-12 09:13:17,737 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-12 09:13:17,739 - INFO - Using expanding window
+2025-09-12 09:13:17,740 - INFO - Starting analysis: 150 standard models x 18 folds
+2025-09-12 09:13:17,740 - INFO - Processing Fold 1/18
+2025-09-12 09:13:17,742 - INFO -   Using multiprocessing with 9 workers
+2025-09-12 09:19:33,344 - INFO - Fold 1 Summary:
+2025-09-12 09:19:33,461 - INFO -   Best OOS Sharpe: M14 (3.111, p=0.040)
+2025-09-12 09:19:33,461 - INFO -   Best Q-Hit_Rate:  M56 (0.652, OOS_Sharpe=2.475, OOS_Hit=0.652)
+2025-09-12 09:19:33,461 - INFO -   Mean OOS Sharpe: 1.141, Mean Hit: 0.551
+2025-09-12 09:19:33,461 - INFO - 
+2025-09-12 09:19:33,628 - INFO - Processing Fold 2/18
+2025-09-12 09:19:33,977 - INFO -   Using multiprocessing with 9 workers
+2025-09-12 09:27:55,785 - INFO - Fold 2 Summary:
+2025-09-12 09:27:55,808 - INFO -   Best OOS Sharpe: M54 (2.659, p=0.020)
+2025-09-12 09:27:55,808 - INFO -   Best Q-Hit_Rate:  M56 (0.634, OOS_Sharpe=-0.628, OOS_Hit=0.474)
+2025-09-12 09:27:55,808 - INFO -   Mean OOS Sharpe: -0.050, Mean Hit: 0.505
+2025-09-12 09:27:55,808 - INFO - 
+2025-09-12 09:27:55,877 - INFO - Processing Fold 3/18
+2025-09-12 09:27:56,048 - INFO -   Using multiprocessing with 9 workers
+2025-09-12 09:34:07,385 - INFO - Fold 3 Summary:
+2025-09-12 09:34:07,397 - INFO -   Best OOS Sharpe: M145 (3.933, p=0.020)
+2025-09-12 09:34:07,400 - INFO -   Best Q-Hit_Rate:  M56 (0.620, OOS_Sharpe=0.690, OOS_Hit=0.489)
+2025-09-12 09:34:07,400 - INFO -   Mean OOS Sharpe: 0.930, Mean Hit: 0.510
+2025-09-12 09:34:07,400 - INFO - 
+2025-09-12 09:34:07,465 - INFO - Processing Fold 4/18
+2025-09-12 09:34:07,543 - INFO -   Using multiprocessing with 9 workers
+2025-09-12 09:41:43,280 - INFO - Fold 4 Summary:
+2025-09-12 09:41:43,288 - INFO -   Best OOS Sharpe: M132 (2.906, p=0.000)
+2025-09-12 09:41:43,288 - INFO -   Best Q-Hit_Rate:  M56 (0.606, OOS_Sharpe=0.203, OOS_Hit=0.481)
+2025-09-12 09:41:43,288 - INFO -   Mean OOS Sharpe: -0.135, Mean Hit: 0.498
+2025-09-12 09:41:43,288 - INFO - 
+2025-09-12 09:41:43,317 - INFO - Processing Fold 5/18
+2025-09-12 09:41:43,365 - INFO -   Using multiprocessing with 9 workers
+2025-09-12 09:47:40,776 - INFO - Fold 5 Summary:
+2025-09-12 09:47:40,783 - INFO -   Best OOS Sharpe: M01 (2.925, p=0.000)
+2025-09-12 09:47:40,783 - INFO -   Best Q-Hit_Rate:  M56 (0.596, OOS_Sharpe=-0.524, OOS_Hit=0.504)
+2025-09-12 09:47:40,783 - INFO -   Mean OOS Sharpe: -0.612, Mean Hit: 0.494
+2025-09-12 09:47:40,783 - INFO - 
+2025-09-12 09:47:40,810 - INFO - Processing Fold 6/18
+2025-09-12 09:47:40,848 - INFO -   Using multiprocessing with 9 workers
+2025-09-12 09:53:45,923 - INFO - Fold 6 Summary:
+2025-09-12 09:53:45,930 - INFO -   Best OOS Sharpe: M112 (4.294, p=0.000)
+2025-09-12 09:53:45,930 - INFO -   Best Q-Hit_Rate:  M56 (0.586, OOS_Sharpe=1.444, OOS_Hit=0.504)
+2025-09-12 09:53:45,930 - INFO -   Mean OOS Sharpe: 1.168, Mean Hit: 0.512
+2025-09-12 09:53:45,930 - INFO - 
+2025-09-12 09:53:45,965 - INFO - Processing Fold 7/18
+2025-09-12 09:53:46,019 - INFO -   Using multiprocessing with 9 workers
