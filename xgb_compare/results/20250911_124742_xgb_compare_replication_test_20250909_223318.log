@@ -34,3 +34,17 @@
 2025-09-11 12:50:56,719 - INFO - 
 2025-09-11 12:50:56,720 - INFO - Processing Fold 2/6
 2025-09-11 12:50:56,724 - INFO -   Using GPU sequential processing
+2025-09-11 12:54:18,142 - INFO - Fold 2 Summary:
+2025-09-11 12:54:18,142 - INFO -   Best OOS Sharpe: M49 (1.857, p=0.030)
+2025-09-11 12:54:18,142 - INFO -   Best Q-Hit_Rate:  M24 (0.530, OOS_Sharpe=-0.721, OOS_Hit=0.469)
+2025-09-11 12:54:18,142 - INFO -   Mean OOS Sharpe: 0.401, Mean Hit: 0.482
+2025-09-11 12:54:18,142 - INFO - 
+2025-09-11 12:54:18,144 - INFO - Processing Fold 3/6
+2025-09-11 12:54:18,148 - INFO -   Using GPU sequential processing
+2025-09-11 12:58:45,224 - INFO - Fold 3 Summary:
+2025-09-11 12:58:45,224 - INFO -   Best OOS Sharpe: M45 (2.268, p=0.000)
+2025-09-11 12:58:45,224 - INFO -   Best Q-Hit_Rate:  M24 (0.527, OOS_Sharpe=0.570, OOS_Hit=0.504)
+2025-09-11 12:58:45,224 - INFO -   Mean OOS Sharpe: 1.069, Mean Hit: 0.514
+2025-09-11 12:58:45,225 - INFO - 
+2025-09-11 12:58:45,226 - INFO - Processing Fold 4/6
+2025-09-11 12:58:45,230 - INFO -   Using GPU sequential processing

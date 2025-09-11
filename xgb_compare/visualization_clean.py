@@ -267,7 +267,6 @@ def create_production_analysis(quality_tracker, backtest_results, config, timest
         # Integer ticks only
         integer_ticks = list(range(1, max_folds + 1))
         ax_q.set_xticks(integer_ticks)
-        ax_q.set_xticklabels([str(f) for f in integer_ticks])
     
     # 2. Model selection matrix (bottom left)
     ax_matrix = fig.add_subplot(gs[1, 0])
