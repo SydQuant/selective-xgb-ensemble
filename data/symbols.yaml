@@ -3,31 +3,54 @@
 
 # Default preset for futures trading
 default:
+  - '@AD#C'
+  - '@BO#C'
+  - '@BP#C'
+  - '@C#C'
+  - '@CT#C'
+  - '@ES#C'
+  - '@EU#C'
+  - '@FV#C'
+  - '@JY#C'
+  - '@KW#C'
+  - '@NQ#C'
+  - '@RTY#C'
+  - '@S#C'
+  - '@SM#C'
+  - '@TY#C'
+  - '@US#C'
+  - '@W#C'
+  - 'BD#C'
+  - 'BL#C'
+  - 'QBZ#C'
+  - 'QCL#C'
+  - 'QGC#C'
+  - 'QHG#C'
+  - 'QNG#C'
+  - 'QPL#C'
+  - 'QRB#C'
+  - 'QSI#C'
+
+
   # - '@AD#C'  # Australian Dollar
+  # - '@BP#C'  # British Pound
+  # - '@EU#C'  # Euro FX
+  # - '@JY#C'  # Japanese Yen
+
   # - '@ES#C'  # E-Mini S&P 500
-  # - 'QCL#C'  # Crude Oil
-  # - '@TY#C'   # 10 YR US Treasury Note 
+  # - '@NQ#C'  # E-Mini NASDAQ 100
+  # - '@RTY#C' # E-Mini Russell 2000
+
+  # - '@C#C'   # Corn
+  # - '@CT#C'  # Cotton
+  # - '@KW#C'  # Hard Red Winter Wheat
   # - '@S#C'   # Soybeans
-  
-  - '@AD#C'  # Australian Dollar
-  - '@BP#C'  # British Pound
-  - '@EU#C'  # Euro FX
-  - '@JY#C'  # Japanese Yen
+  # - '@SM#C'  # Soybean Meal
+  # - '@W#C'   # Wheat
 
-  - '@ES#C'  # E-Mini S&P 500
-  - '@NQ#C'  # E-Mini NASDAQ 100
-  - '@RTY#C' # E-Mini Russell 2000
-
-  - '@C#C'   # Corn
-  - '@CT#C'  # Cotton
-  - '@KW#C'  # Hard Red Winter Wheat
-  - '@S#C'   # Soybeans
-  - '@SM#C'  # Soybean Meal
-  - '@W#C'   # Wheat
-
-  - '@FV#C'  # 5 YR US Treasury Note
-  - '@TY#C'  # 10 YR US Treasury Note
-  - '@US#C'  # US Long Bond
+  # - '@FV#C'  # 5 YR US Treasury Note
+  # - '@TY#C'  # 10 YR US Treasury Note
+  # - '@US#C'  # US Long Bond
 
 # All available symbols (for reference)
 all_symbols:

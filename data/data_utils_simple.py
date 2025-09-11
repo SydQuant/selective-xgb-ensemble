@@ -235,7 +235,7 @@ def prepare_real_data_simple(target_symbol: str, symbols: List[str] = None, star
     try:
         futures_lib = get_arcticdb_connection()
         raw_data = {}
-        for symbol in symbols[:15]:  # Expanded to include @JY#C and @S#C for testing
+        for symbol in symbols:  # Expanded to include @JY#C and @S#C for testing
             try:
                 versioned_item = futures_lib.read(symbol)
                 df = versioned_item.data  # Extract DataFrame from VersionedItem

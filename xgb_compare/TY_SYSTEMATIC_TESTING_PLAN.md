@@ -4,12 +4,12 @@
 
 Comprehensive testing matrix to optimize XGBoost configuration for @TY#C (10-Year Treasury) financial time series prediction. Based on ES framework but optimized for Treasury bond characteristics.
 
-## Current Status: Phase 1 & 2 COMPLETED ✅
+## Current Status: COMPLETING TY OPTIMIZATION ⏳
 
-- **Completed**: 2025-09-11 16:44
-- **Results**: TY significantly more challenging than ES - all configs show poor performance
-- **Best TY**: 75M/10F expanding (Sharpe=0.112, Production=-0.103)
-- **Recommendation**: Focus optimization efforts on ES, TY needs fundamental strategy revision
+- **Phase 1&2 Partial**: Initial tests show TY more challenging than ES
+- **Currently Running**: TY 1C, 1D, 2C, 2D + Phase 3&4 tests to complete analysis
+- **Best TY so far**: 75M/10F expanding (Sharpe=0.112, Production=-0.103)
+- **Testing**: If 15-fold breakthrough applies to TY like ES
 
 ---
 
@@ -21,8 +21,8 @@ Comprehensive testing matrix to optimize XGBoost configuration for @TY#C (10-Yea
 | ---- | --------- | ------------ | ---------------- | ------------ | ------------------- | ------------ | ---------------- | ------------------- | ------- | ------ |
 | 1A   | Expanding | All data     | **-0.437** | -0.219       | **-0.767** ❌ | -0.55%       | **-2.61%** | **Medium** ❌ | Poor    | 160309 |
 | 1B   | Rolling   | 1yr (252d)   | **-0.514** | -0.819       | **-0.194** ❌ | -1.68%       | **-0.67%** | **Medium** ❌ | Poor    | 160323 |
-| 1C   | Rolling   | 1.5yr (378d) | ❌               | ❌           | ❌                  | ❌           | ❌               | ❌                  | Not run | -      |
-| 1D   | Rolling   | 2yr (504d)   | ❌               | ❌           | ❌                  | ❌           | ❌               | ❌                  | Not run | -      |
+| 1C   | Rolling   | 1.5yr (378d) | 🔄               | 🔄           | 🔄                  | 🔄           | 🔄               | 🔄                  | Running | TBD    |
+| 1D   | Rolling   | 2yr (504d)   | 🔄               | 🔄           | 🔄                  | 🔄           | 🔄               | 🔄                  | Running | TBD    |
 
 ### Key TY Findings:
 
@@ -49,10 +49,30 @@ Comprehensive testing matrix to optimize XGBoost configuration for @TY#C (10-Yea
 | ---- | ------ | ----- | --------------- | ------------ | ---------------- | ------------ | ----------- | ------- |
 | 2A   | 75     | 10    | **0.112** | 0.329        | **-0.103** | 0.66%        | -0.34%      | 160326  |
 | 2B   | 100    | 10    | **0.088** | 0.433        | **-0.276** | 0.86%        | -0.85%      | 160332  |
-| 2C   | 100    | 15    | ❌              | ❌           | ❌               | ❌           | ❌          | Not run |
-| 2D   | 150    | 15    | ❌              | ❌           | ❌               | ❌           | ❌          | Not run |
+| 2C   | 100    | 15    | 🔄              | 🔄           | 🔄               | 🔄           | 🔄          | TBD     |
+| 2D   | 150    | 15    | 🔄              | 🔄           | 🔄               | 🔄           | 🔄          | TBD     |
 
 ---
 
-*Last Updated: 2025-09-11 16:50*
-*Status: TY optimization complete - recommend focusing on ES*
+## Phase 3: Architecture Optimization for @TY#C ⏳ RUNNING
+**Baseline**: 75M/10F expanding window (current TY best), 100 features
+
+| Test | XGB Type | Log Label | Status |
+|------|----------|-----------|--------|
+| 3A | Tiered | `TY_75M_10F_expand_tiered_100feat` | 🔄 Running |
+| 3B | Deep | `TY_75M_10F_expand_deep_100feat` | 🔄 Running |
+
+---
+
+## Phase 4: Feature Optimization for @TY#C ⏳ RUNNING  
+**Baseline**: 75M/10F expanding window, standard XGB (current TY best)
+
+| Test | Features | Log Label | Status |
+|------|----------|-----------|--------|
+| 4A | 200 | `TY_75M_10F_expand_standard_200feat` | 🔄 Running |
+| 4B | All (~400) | `TY_75M_10F_expand_standard_allfeat` | 🔄 Running |
+
+---
+
+*Last Updated: 2025-09-11 18:20*
+*Status: Complete TY systematic optimization in progress*

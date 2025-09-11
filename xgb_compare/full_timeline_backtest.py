@@ -7,7 +7,7 @@ import pandas as pd
 import logging
 from typing import List, Dict, Any, Tuple
 
-from metrics_utils import calculate_model_metrics, normalize_predictions, QualityTracker, calculate_annualized_sharpe, calculate_cb_ratio
+from metrics_utils import calculate_model_metrics_from_pnl, QualityTracker
 
 logger = logging.getLogger(__name__)
 
@@ -41,12 +41,14 @@ class FullTimelineBacktester:
         logger.info(f"Production period: Folds {cutoff_fold+1}-{n_folds-1}")
         logger.info(f"Using consistent OOS methodology for all folds")
         
-        # Initialize result tracking
+        # Initialize result tracking - keep as lists for now for compatibility
         training_predictions = []
         training_pnl = []
+        training_returns = []  # Store actual returns for hit_rate calculation
         training_dates = []
         production_predictions = []
         production_pnl = []
+        production_returns = []  # Store actual returns for hit_rate calculation
         production_dates = []
         
         # Copy quality tracker for backtesting
@@ -145,42 +147,47 @@ class FullTimelineBacktester:
                     
                     combined_prediction = sum(predictions_list) / len(predictions_list)
                     
-                    # Apply signal lag to avoid look-ahead bias
-                    lagged_signal = combined_prediction.shift(1).fillna(0.0)
+                    # CORRECTED LOGIC: Direct calculation (signal and returns already properly aligned)
+                    # signal[Monday] predicts Monday→Tuesday return, y[Monday] is actual Monday→Tuesday return
+                    signal = combined_prediction
                     actual_returns = y.iloc[test_idx]
                     
                     # Ensure alignment and same length 
-                    min_len = min(len(lagged_signal), len(actual_returns))
-                    if len(lagged_signal) != len(actual_returns):
-                        logger.warning(f"Fold {fold_idx}: Signal/returns length mismatch ({len(lagged_signal)} vs {len(actual_returns)}), truncating to {min_len}")
-                        lagged_signal = lagged_signal.iloc[:min_len]
+                    min_len = min(len(signal), len(actual_returns))
+                    if len(signal) != len(actual_returns):
+                        logger.warning(f"Fold {fold_idx}: Signal/returns length mismatch ({len(signal)} vs {len(actual_returns)}), truncating to {min_len}")
+                        signal = signal.iloc[:min_len]
                         actual_returns = actual_returns.iloc[:min_len]
                     
-                    fold_pnl = lagged_signal * actual_returns
+                    # Direct PnL calculation - no artificial lag needed in backtest
+                    fold_pnl = signal * actual_returns
                     
                     # Store results
-                    lagged_values = lagged_signal.values
+                    signal_values = signal.values
                     pnl_values = fold_pnl.values
+                    returns_values = actual_returns.values
                     
                     # Add to appropriate period first (training vs production)
                     if fold_idx <= cutoff_fold:
-                        logger.debug(f"Fold {fold_idx}: Adding {len(lagged_values)} to training (current len: {len(training_predictions)})")
-                        training_predictions.extend(lagged_values)
+                        logger.debug(f"Fold {fold_idx}: Adding {len(signal_values)} to training (current len: {len(training_predictions)})")
+                        training_predictions.extend(signal_values)
                         training_pnl.extend(pnl_values)
+                        training_returns.extend(returns_values)
                         training_dates.extend(X.index[test_idx].tolist())
                         period_type = 'training'
                     else:
-                        logger.debug(f"Fold {fold_idx}: Adding {len(lagged_values)} to production (current len: {len(production_predictions)})")
-                        production_predictions.extend(lagged_values)
+                        logger.debug(f"Fold {fold_idx}: Adding {len(signal_values)} to production (current len: {len(production_predictions)})")
+                        production_predictions.extend(signal_values)
                         production_pnl.extend(pnl_values)
+                        production_returns.extend(returns_values)
                         production_dates.extend(X.index[test_idx].tolist())
                         period_type = 'production'
                     
                     # Build full timeline from period data (avoid double counting)
                     # Note: full_timeline lists will be built by combining training + production at the end
                     
-                    # Calculate fold-level metrics
-                    fold_metrics = calculate_model_metrics(lagged_signal, y.iloc[test_idx], shifted=False)
+                    # Calculate fold-level metrics using pre-calculated PnL (no redundant calculation)
+                    fold_metrics = calculate_model_metrics_from_pnl(fold_pnl, signal, actual_returns)
                     
                     # No Q-score updates during backtest - use only pre-computed training data
                     # The rolling_quality_tracker was initialized with ALL training fold data
@@ -204,7 +211,8 @@ class FullTimelineBacktester:
         
         # Build full timeline data from training + production (avoid double counting)
         full_timeline_predictions = training_predictions + production_predictions
-        full_timeline_returns = training_pnl + production_pnl
+        full_timeline_pnl = training_pnl + production_pnl
+        full_timeline_returns = training_returns + production_returns
         full_timeline_dates = training_dates + production_dates
         
         logger.debug(f"Final lengths: training_pred={len(training_predictions)}, training_pnl={len(training_pnl)}")
@@ -229,14 +237,10 @@ class FullTimelineBacktester:
                 training_pnl_series = training_pnl_series.iloc[:min_len]
             
             
-            training_metrics = {
-                'ann_ret': training_pnl_series.mean() * 252,
-                'ann_vol': training_pnl_series.std() * np.sqrt(252),
-                'sharpe': calculate_annualized_sharpe(training_pnl_series),
-                'hit_rate': np.mean(np.sign(training_pred_series.values) == np.sign(training_pnl_series.values)) if len(training_pnl_series) > 0 else 0.0,
-                'total_periods': len(training_pnl),
-                'cb_ratio': calculate_cb_ratio(training_pnl_series)
-            }
+            # Use simplified metrics calculation from PnL with correct returns
+            training_returns_series = pd.Series(training_returns)
+            training_metrics = calculate_model_metrics_from_pnl(training_pnl_series, training_pred_series, training_returns_series)
+            training_metrics['total_periods'] = len(training_pnl)
             logger.info(f"Training Period Overall: Sharpe={training_metrics.get('sharpe', 0):.3f}, Hit={training_metrics.get('hit_rate', 0)*100:.1f}%")
         
         if production_pnl:
@@ -251,18 +255,14 @@ class FullTimelineBacktester:
                 production_pnl_series = production_pnl_series.iloc[:min_len]
             
             
-            production_metrics = {
-                'ann_ret': production_pnl_series.mean() * 252,
-                'ann_vol': production_pnl_series.std() * np.sqrt(252),
-                'sharpe': calculate_annualized_sharpe(production_pnl_series),
-                'hit_rate': np.mean(np.sign(production_pred_series.values) == np.sign(production_pnl_series.values)) if len(production_pnl_series) > 0 else 0.0,
-                'total_periods': len(production_pnl),
-                'cb_ratio': calculate_cb_ratio(production_pnl_series)
-            }
+            # Use simplified metrics calculation from PnL with correct returns
+            production_returns_series = pd.Series(production_returns)
+            production_metrics = calculate_model_metrics_from_pnl(production_pnl_series, production_pred_series, production_returns_series)
+            production_metrics['total_periods'] = len(production_pnl)
             logger.info(f"Production Period Overall: Sharpe={production_metrics.get('sharpe', 0):.3f}, Hit={production_metrics.get('hit_rate', 0)*100:.1f}%")
         
-        if full_timeline_returns:
-            full_pnl_series = pd.Series(full_timeline_returns)
+        if full_timeline_pnl:
+            full_pnl_series = pd.Series(full_timeline_pnl)
             full_pred_series = pd.Series(full_timeline_predictions)
             
             # Debug length mismatch
@@ -272,14 +272,10 @@ class FullTimelineBacktester:
                 full_pred_series = full_pred_series.iloc[:min_len]
                 full_pnl_series = full_pnl_series.iloc[:min_len]
             
-            full_timeline_metrics = {
-                'ann_ret': full_pnl_series.mean() * 252,
-                'ann_vol': full_pnl_series.std() * np.sqrt(252),
-                'sharpe': calculate_annualized_sharpe(full_pnl_series),
-                'hit_rate': np.mean(np.sign(full_pred_series.values) == np.sign(full_pnl_series.values)) if len(full_pnl_series) > 0 else 0.0,
-                'total_periods': len(full_timeline_returns),
-                'cb_ratio': calculate_cb_ratio(full_pnl_series)
-            }
+            # Use simplified metrics calculation from PnL with correct returns
+            full_returns_series = pd.Series(full_timeline_returns)
+            full_timeline_metrics = calculate_model_metrics_from_pnl(full_pnl_series, full_pred_series, full_returns_series)
+            full_timeline_metrics['total_periods'] = len(full_timeline_pnl)
             logger.info(f"Full Timeline Overall: Sharpe={full_timeline_metrics.get('sharpe', 0):.3f}, Hit={full_timeline_metrics.get('hit_rate', 0)*100:.1f}%")
         
         return {
@@ -288,9 +284,9 @@ class FullTimelineBacktester:
             'production_metrics': production_metrics,
             'model_selection_history': self.model_selection_history,
             'fold_results': self.full_timeline_results,
-            'full_timeline_returns': full_timeline_returns,
-            'training_returns': training_pnl,
-            'production_returns': production_pnl,
+            'full_timeline_returns': full_timeline_pnl,  # PnL for backward compatibility
+            'training_returns': training_pnl,  # PnL for visualization
+            'production_returns': production_pnl,  # PnL for visualization
             'full_timeline_predictions': full_timeline_predictions,
             'full_timeline_dates': full_timeline_dates if full_timeline_dates else [],
             'cutoff_fold': cutoff_fold + 1,

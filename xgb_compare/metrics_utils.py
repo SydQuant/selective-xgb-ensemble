@@ -36,10 +36,9 @@ def calculate_hit_rate(predictions: pd.Series, actual_returns: pd.Series) -> flo
     return np.mean(pred_signs == actual_signs)
 
 def calculate_information_ratio(returns: pd.Series) -> float:
-    """Calculate annualized information ratio."""
-    if len(returns) == 0 or returns.std() == 0:
-        return 0.0
-    return (returns.mean() * 252) / (returns.std() * np.sqrt(252))
+    """Calculate annualized information ratio (essentially same as Sharpe for daily returns)."""
+    # Information ratio is the same as Sharpe ratio for absolute returns
+    return calculate_annualized_sharpe(returns)
 
 def calculate_adjusted_sharpe(returns: pd.Series, predictions: pd.Series, lambda_turnover: float = 0.1) -> float:
     """Calculate adjusted Sharpe ratio with turnover penalty."""
@@ -125,9 +124,51 @@ def calculate_ewma_quality(series: pd.Series, alpha: float = 0.1) -> float:
     ewma_vals = series.ewm(alpha=alpha, adjust=False).mean()
     return ewma_vals.iloc[-1] if len(ewma_vals) > 0 else 0.0
 
+def calculate_model_metrics_from_pnl(pnl_series: pd.Series, 
+                                   signal: pd.Series = None, 
+                                   returns: pd.Series = None) -> Dict[str, float]:
+    """
+    Calculate comprehensive performance metrics from pre-calculated PnL series.
+    This eliminates redundant PnL calculations across the system.
+    
+    Args:
+        pnl_series: Pre-calculated PnL series (signal * returns)
+        signal: Optional signal series for hit_rate and adjusted_sharpe calculations
+        returns: Optional returns series for hit_rate calculations
+    """
+    metrics = {
+        'ann_ret': pnl_series.mean() * 252,
+        'ann_vol': pnl_series.std() * np.sqrt(252),
+        'sharpe': calculate_annualized_sharpe(pnl_series),
+        'cb_ratio': calculate_cb_ratio(pnl_series),
+        'information_ratio': calculate_information_ratio(pnl_series),
+    }
+    
+    # Add signal-dependent metrics if signal and returns are provided
+    if signal is not None and returns is not None:
+        metrics.update({
+            'adj_sharpe': calculate_adjusted_sharpe(pnl_series, signal),
+            'hit_rate': calculate_hit_rate(signal, returns),
+            'dapy_binary': calculate_dapy_binary(signal, returns),
+            'dapy_both': calculate_dapy_both(signal, returns)
+        })
+    else:
+        # Default values when signal/returns not available
+        metrics.update({
+            'adj_sharpe': metrics['sharpe'],  # Fallback to regular sharpe
+            'hit_rate': 0.5,  # Neutral hit rate
+            'dapy_binary': 0.0,
+            'dapy_both': 0.0
+        })
+    
+    return metrics
+
 def calculate_model_metrics(predictions: pd.Series, returns: pd.Series, 
                           shifted: bool = False) -> Dict[str, float]:
-    """Calculate comprehensive performance metrics for predictions."""
+    """
+    Calculate comprehensive performance metrics for predictions.
+    DEPRECATED: Use calculate_model_metrics_from_pnl for better performance.
+    """
     if shifted:
         # Shift predictions for OOS evaluation (avoid look-ahead bias)
         signal = predictions.shift(1).fillna(0.0)
@@ -136,19 +177,8 @@ def calculate_model_metrics(predictions: pd.Series, returns: pd.Series,
     
     pnl = signal * returns
     
-    metrics = {
-        'ann_ret': pnl.mean() * 252,
-        'ann_vol': pnl.std() * np.sqrt(252),
-        'sharpe': calculate_annualized_sharpe(pnl),
-        'adj_sharpe': calculate_adjusted_sharpe(pnl, signal),
-        'hit_rate': calculate_hit_rate(signal, returns),
-        'cb_ratio': calculate_cb_ratio(pnl),
-        'information_ratio': calculate_information_ratio(pnl),
-        'dapy_binary': calculate_dapy_binary(signal, returns),
-        'dapy_both': calculate_dapy_both(signal, returns)
-    }
-    
-    return metrics
+    # Use the new PnL-based function internally
+    return calculate_model_metrics_from_pnl(pnl, signal, returns)
 
 def calculate_metric_pvalue(predictions: pd.Series, returns: pd.Series, 
                            metric_name: str, actual_value: float, 
@@ -232,92 +262,66 @@ class QualityTracker:
                              use_zscore: bool = True) -> list:
         """
         Calculate combined Q-scores using multiple metrics.
-        
-        CORRECTED APPROACH: Z-score normalization applied to raw historical values,
-        then EWMA applied to normalized series.
-        
-        Args:
-            fold_idx: Current fold index
-            ewma_alpha: EWMA alpha parameter  
-            metric_weights: Dict of metric weights, e.g. {'sharpe': 0.5, 'hit_rate': 0.5}
-            use_zscore: Whether to z-score normalize metrics before combining
-            
-        Returns:
-            List of combined Q-scores for all models
+        Simplified: Apply z-score normalization then EWMA for cleaner logic.
         """
         if metric_weights is None:
-            # Default: 50/50 Sharpe and Hit Rate
             metric_weights = {'sharpe': 0.5, 'hit_rate': 0.5}
         
         combined_scores = [0.0] * self.n_models
         
         if use_zscore and len(metric_weights) > 1:
-            # Z-score normalization on raw history, then EWMA
-            combined_q_scores = {}
+            # Simplified z-score normalization approach
+            normalized_scores = {}
             
-            # For each metric, calculate z-score normalized EWMA Q-scores
             for metric_name, weight in metric_weights.items():
                 if weight <= 0 or metric_name not in self.quality_history:
                     continue
                 
-                # Collect all raw values across all models/folds for z-score stats
-                all_values = []
+                # Get all historical values for z-score calculation
+                all_historical = []
                 for model_idx in range(self.n_models):
                     history = self.quality_history[metric_name][model_idx]
-                    historical_data = history[:fold_idx+1] if fold_idx < len(history) else history
-                    all_values.extend(historical_data)
+                    relevant_history = history[:fold_idx+1] if fold_idx < len(history) else history
+                    all_historical.extend(relevant_history)
                 
-                # Calculate z-score stats
-                if len(all_values) > 0:
-                    mean_val = np.mean(all_values)
-                    std_val = np.std(all_values) if np.std(all_values) > 1e-9 else 1.0
+                # Calculate normalization parameters
+                if all_historical:
+                    mean_val = np.mean(all_historical)
+                    std_val = np.std(all_historical)
+                    std_val = std_val if std_val > 1e-9 else 1.0
                 else:
                     mean_val, std_val = 0.0, 1.0
                 
-                # Calculate z-score normalized EWMA for each model
-                combined_q_scores[metric_name] = []
+                # Normalize and calculate EWMA for each model
+                normalized_scores[metric_name] = []
                 for model_idx in range(self.n_models):
                     history = self.quality_history[metric_name][model_idx]
-                    if len(history) == 0:
-                        combined_q_scores[metric_name].append(0.0)
+                    if not history:
+                        normalized_scores[metric_name].append(0.0)
                     else:
-                        historical_data = history[:fold_idx+1] if fold_idx < len(history) else history
-                        # Z-score normalize, then EWMA
-                        normalized_data = [(x - mean_val) / std_val for x in historical_data]
-                        ewma_result = calculate_ewma_quality(pd.Series(normalized_data), ewma_alpha)
-                        combined_q_scores[metric_name].append(ewma_result)
+                        relevant_history = history[:fold_idx+1] if fold_idx < len(history) else history
+                        # Normalize then apply EWMA
+                        normalized = [(x - mean_val) / std_val for x in relevant_history]
+                        ewma_score = calculate_ewma_quality(pd.Series(normalized), ewma_alpha)
+                        normalized_scores[metric_name].append(ewma_score)
             
-            # Weighted combination
-            total_weight = sum(weight for metric_name, weight in metric_weights.items() 
-                             if weight > 0 and metric_name in combined_q_scores)
-            
-            for model_idx in range(self.n_models):
-                combined_score = 0.0
-                for metric_name, weight in metric_weights.items():
-                    if weight > 0 and metric_name in combined_q_scores:
-                        combined_score += (weight / total_weight) * combined_q_scores[metric_name][model_idx]
-                combined_scores[model_idx] = combined_score
-                
+            # Combine weighted scores
+            if normalized_scores:
+                total_weight = sum(w for m, w in metric_weights.items() if m in normalized_scores)
+                for model_idx in range(self.n_models):
+                    for metric_name, weight in metric_weights.items():
+                        if metric_name in normalized_scores:
+                            combined_scores[model_idx] += (weight / total_weight) * normalized_scores[metric_name][model_idx]
         else:
-            # Simple weighted average approach (no z-score normalization)
-            all_q_scores = self.get_q_scores(fold_idx, ewma_alpha)
+            # Simple weighted average without z-score
+            q_scores = self.get_q_scores(fold_idx, ewma_alpha)
+            valid_metrics = {m: q_scores[m] for m in metric_weights if m in q_scores and metric_weights[m] > 0}
             
-            # Extract valid metrics to combine
-            metrics_to_combine = {}
-            for metric_name, weight in metric_weights.items():
-                if metric_name in all_q_scores and weight > 0:
-                    metrics_to_combine[metric_name] = (all_q_scores[metric_name], weight)
-            
-            if not metrics_to_combine:
-                # Fallback to Sharpe if no valid metrics
-                return all_q_scores.get('sharpe', [0.0] * self.n_models)
-            
-            total_weight = sum(weight for _, weight in metrics_to_combine.values())
-            for model_idx in range(self.n_models):
-                combined_score = 0.0
-                for metric_name, (scores, weight) in metrics_to_combine.items():
-                    combined_score += (weight / total_weight) * scores[model_idx]
-                combined_scores[model_idx] = combined_score
+            if valid_metrics:
+                total_weight = sum(metric_weights[m] for m in valid_metrics)
+                for model_idx in range(self.n_models):
+                    for metric_name, scores in valid_metrics.items():
+                        combined_scores[model_idx] += (metric_weights[metric_name] / total_weight) * scores[model_idx]
         
         return combined_scores
     

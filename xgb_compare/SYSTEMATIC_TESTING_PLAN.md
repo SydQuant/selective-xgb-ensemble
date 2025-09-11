@@ -70,15 +70,13 @@ Comprehensive testing matrix to optimize XGBoost configuration for financial tim
 
 ---
 
-## Phase 3: Architecture Optimization
+## Phase 3: Architecture Optimization ⏳ RUNNING
+**Baseline**: 100M/15F expanding window, 100 features
 
-**Objective**: Validate XGBoost architecture choice
-**Use**: Best window + scale combination from Phases 1-2
-
-| Test | XGB Type | Log Label Template                          |
-| ---- | -------- | ------------------------------------------- |
-| 3A   | Tiered   | `[bestscale]_[bestwindow]_tiered_100feat` |
-| 3B   | Deep     | `[bestscale]_[bestwindow]_deep_100feat`   |
+| Test | XGB Type | Log Label | Status |
+|------|----------|-----------|--------|
+| 3A | Tiered | `ES_100M_15F_expand_tiered_100feat` | 🔄 Running |
+| 3B | Deep | `ES_100M_15F_expand_deep_100feat` | 🔄 Running |
 
 **Why After Scale**: Architecture choice depends on model count:
 
@@ -88,15 +86,13 @@ Comprehensive testing matrix to optimize XGBoost configuration for financial tim
 
 ---
 
-## Phase 4: Feature Optimization
+## Phase 4: Feature Optimization ⏳ RUNNING  
+**Baseline**: 100M/15F expanding window, standard XGB
 
-**Objective**: Final feature count tuning
-**Use**: Best window + scale + architecture from Phases 1-3
-
-| Test | Features | Log Label Template       |
-| ---- | -------- | ------------------------ |
-| 4A   | 200      | `[best]_200feat_final` |
-| 4B   | -1 (all) | `[best]_allfeat_final` |
+| Test | Features | Log Label | Status |
+|------|----------|-----------|--------|
+| 4A | 200 | `ES_100M_15F_expand_standard_200feat` | 🔄 Running |
+| 4B | All (~400) | `ES_100M_15F_expand_standard_allfeat` | 🔄 Running |
 
 **Why Last**: Feature count should be optimized after all other architectural decisions are made. More complex architectures can handle more features.
 
