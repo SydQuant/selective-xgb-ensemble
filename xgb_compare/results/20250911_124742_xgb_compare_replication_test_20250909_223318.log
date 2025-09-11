@@ -27,3 +27,10 @@
 2025-09-11 12:47:52,459 - INFO - Starting analysis: 50 standard models x 6 folds
 2025-09-11 12:47:52,459 - INFO - Processing Fold 1/6
 2025-09-11 12:47:52,466 - INFO -   Using GPU sequential processing
+2025-09-11 12:50:56,718 - INFO - Fold 1 Summary:
+2025-09-11 12:50:56,719 - INFO -   Best OOS Sharpe: M01 (1.322, p=0.130)
+2025-09-11 12:50:56,719 - INFO -   Best Q-Hit_Rate:  M24 (0.537, OOS_Sharpe=0.687, OOS_Hit=0.537)
+2025-09-11 12:50:56,719 - INFO -   Mean OOS Sharpe: -0.549, Mean Hit: 0.463
+2025-09-11 12:50:56,719 - INFO - 
+2025-09-11 12:50:56,720 - INFO - Processing Fold 2/6
+2025-09-11 12:50:56,724 - INFO -   Using GPU sequential processing
