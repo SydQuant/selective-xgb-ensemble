@@ -7,7 +7,7 @@ import pandas as pd
 import logging
 from typing import List, Dict, Any, Tuple
 
-from metrics_utils import calculate_model_metrics_from_pnl, QualityTracker
+from metrics_utils import calculate_model_metrics_from_pnl, QualityTracker, combine_binary_signals
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +136,7 @@ class FullTimelineBacktester:
                     logger.error(f"Available keys: {list(all_fold_results.keys())}")
                     continue
                 
-                # Combine predictions from selected models (equal weighting)
+                # Combine predictions from selected models
                 if fold_predictions:
                     predictions_list = list(fold_predictions.values())
                     # Ensure all predictions have same length
@@ -145,7 +145,13 @@ class FullTimelineBacktester:
                         logger.warning(f"Fold {fold_idx}: Prediction length mismatch, truncating to {min_length}")
                         predictions_list = [pred.iloc[:min_length] for pred in predictions_list]
                     
-                    combined_prediction = sum(predictions_list) / len(predictions_list)
+                    # Use appropriate combination method based on signal type
+                    if config.binary_signal:
+                        # New binary logic: vote-based combination
+                        combined_prediction = combine_binary_signals(predictions_list)
+                    else:
+                        # Tanh logic: equal-weighted averaging
+                        combined_prediction = sum(predictions_list) / len(predictions_list)
                     
                     # CORRECTED LOGIC: Direct calculation (signal and returns already properly aligned)
                     # signal[Monday] predicts Monday→Tuesday return, y[Monday] is actual Monday→Tuesday return

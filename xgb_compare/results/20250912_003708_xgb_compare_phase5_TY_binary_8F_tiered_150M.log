@@ -1,0 +1,18 @@
+2025-09-12 00:37:08,515 - INFO - ================================================================================
+2025-09-12 00:37:08,515 - INFO - XGBoost Comparison Framework
+2025-09-12 00:37:08,515 - INFO - ================================================================================
+2025-09-12 00:37:08,515 - INFO - Configuration:
+2025-09-12 00:37:08,515 - INFO -   Target Symbol: @TY#C
+2025-09-12 00:37:08,515 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-12 00:37:08,515 - INFO -   Models: 150, Type: tiered
+2025-09-12 00:37:08,515 - INFO -   Folds: 8
+2025-09-12 00:37:08,515 - INFO -   Max Features: 100 (Limited)
+2025-09-12 00:37:08,515 - INFO -   Feature Selection: Enabled
+2025-09-12 00:37:08,515 - INFO -   Inner Val Fraction: 0.2
+2025-09-12 00:37:08,515 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-12 00:37:08,515 - INFO -   Signal Type: Binary (+1/-1)
+2025-09-12 00:37:08,515 - INFO -   Cross-validation: Expanding window
+2025-09-12 00:37:08,515 - INFO -   Production: Cutoff=0.6, Top N=8, Q-Metric=sharpe
+2025-09-12 00:37:08,515 - INFO -   Reselection: Every 1 fold(s)
+2025-09-12 00:37:08,515 - INFO - 
+2025-09-12 00:37:25,479 - INFO - Loaded: X=(2735, 1906), y=(2735,)

@@ -1,0 +1,27 @@
+2025-09-12 00:36:33,239 - INFO - ================================================================================
+2025-09-12 00:36:33,239 - INFO - XGBoost Comparison Framework
+2025-09-12 00:36:33,239 - INFO - ================================================================================
+2025-09-12 00:36:33,240 - INFO - Configuration:
+2025-09-12 00:36:33,240 - INFO -   Target Symbol: @ES#C
+2025-09-12 00:36:33,240 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-12 00:36:33,240 - INFO -   Models: 100, Type: standard
+2025-09-12 00:36:33,240 - INFO -   Folds: 20
+2025-09-12 00:36:33,240 - INFO -   Max Features: 100 (Limited)
+2025-09-12 00:36:33,240 - INFO -   Feature Selection: Enabled
+2025-09-12 00:36:33,240 - INFO -   Inner Val Fraction: 0.2
+2025-09-12 00:36:33,240 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-12 00:36:33,240 - INFO -   Signal Type: Binary (+1/-1)
+2025-09-12 00:36:33,240 - INFO -   Cross-validation: Expanding window
+2025-09-12 00:36:33,240 - INFO -   Production: Cutoff=0.6, Top N=5, Q-Metric=sharpe
+2025-09-12 00:36:33,240 - INFO -   Reselection: Every 1 fold(s)
+2025-09-12 00:36:33,240 - INFO - 
+2025-09-12 00:36:38,654 - INFO - Loaded: X=(2735, 1906), y=(2735,)
+2025-09-12 00:37:08,470 - INFO - Selected 100 features (threshold: 0.7)
+2025-09-12 00:37:08,485 - INFO - Selected: 100 features
+2025-09-12 00:37:08,526 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-12 00:37:08,527 - INFO - Processing mode: CPU multiprocessing (GPU: False, Total models: 2000)
+2025-09-12 00:37:08,529 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-12 00:37:08,531 - INFO - Using expanding window
+2025-09-12 00:37:08,531 - INFO - Starting analysis: 100 standard models x 18 folds
+2025-09-12 00:37:08,531 - INFO - Processing Fold 1/18
+2025-09-12 00:37:08,533 - INFO -   Using multiprocessing with 9 workers

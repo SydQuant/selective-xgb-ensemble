@@ -1,0 +1,109 @@
+# REMAINING TESTS COMMANDS
+# Run these commands to complete the comprehensive testing matrix
+# DO NOT run all at once - execute in batches to avoid system overload
+
+# =============================================================================
+# PHASE 1: Binary Signal Testing (Fixed Voting Logic)
+# =============================================================================
+
+# Test 1.1: ES Binary (Fixed Voting) - COMPLETED ✅
+# cd xgb_compare && python3 xgb_compare.py --target_symbol "@ES#C" --n_models 50 --n_folds 8 --max_features 100 --binary_signal --log_label "fixed_ES_binary_voting"
+
+# Test 1.2: TY Binary (Fixed Voting) - COMPLETED ✅  
+# cd xgb_compare && python3 xgb_compare.py --target_symbol "@TY#C" --n_models 50 --n_folds 8 --max_features 100 --binary_signal --log_label "fixed_TY_binary_voting"
+
+# Test 1.3: EU Binary (Fixed Voting) - PENDING
+cd xgb_compare && python3 xgb_compare.py --target_symbol "@EU#C" --n_models 50 --n_folds 8 --max_features 100 --binary_signal --log_label "fixed_EU_binary_voting"
+
+# =============================================================================
+# PHASE 2: Fold Count Analysis (Tanh Signals)
+# =============================================================================
+
+# Test 2.3: ES 20 Folds - PENDING
+cd xgb_compare && python3 xgb_compare.py --target_symbol "@ES#C" --n_models 50 --n_folds 20 --max_features 100 --log_label "corrected_ES_20folds_tanh"
+
+# Test 2.5: TY 15 Folds - PENDING  
+cd xgb_compare && python3 xgb_compare.py --target_symbol "@TY#C" --n_models 50 --n_folds 15 --max_features 100 --log_label "corrected_TY_15folds_tanh"
+
+# Test 2.6: TY 20 Folds - PENDING
+cd xgb_compare && python3 xgb_compare.py --target_symbol "@TY#C" --n_models 50 --n_folds 20 --max_features 100 --log_label "corrected_TY_20folds_tanh"
+
+# Test 2.8: EU 15 Folds - PENDING
+cd xgb_compare && python3 xgb_compare.py --target_symbol "@EU#C" --n_models 50 --n_folds 15 --max_features 100 --log_label "corrected_EU_15folds_tanh"
+
+# Test 2.9: EU 20 Folds - PENDING  
+cd xgb_compare && python3 xgb_compare.py --target_symbol "@EU#C" --n_models 50 --n_folds 20 --max_features 100 --log_label "corrected_EU_20folds_tanh"
+
+# =============================================================================
+# PHASE 3: Architecture Analysis (Fixed Tiered XGB)
+# =============================================================================
+
+# Test 3.1: ES Tiered (Fixed) - PENDING
+cd xgb_compare && python3 xgb_compare.py --target_symbol "@ES#C" --n_models 50 --n_folds 8 --max_features 100 --xgb_type tiered --log_label "fixed_ES_tiered_tanh"
+
+# Test 3.2: TY Tiered (Fixed) - PENDING
+cd xgb_compare && python3 xgb_compare.py --target_symbol "@TY#C" --n_models 50 --n_folds 8 --max_features 100 --xgb_type tiered --log_label "fixed_TY_tiered_tanh"
+
+# Test 3.3: EU Tiered (Fixed) - PENDING
+cd xgb_compare && python3 xgb_compare.py --target_symbol "@EU#C" --n_models 50 --n_folds 8 --max_features 100 --xgb_type tiered --log_label "fixed_EU_tiered_tanh"
+
+# DEEP XGB Tests (Complete Architecture Comparison):
+cd xgb_compare && python3 xgb_compare.py --target_symbol "@ES#C" --n_models 50 --n_folds 8 --max_features 100 --xgb_type deep --log_label "corrected_ES_deep_tanh"
+
+cd xgb_compare && python3 xgb_compare.py --target_symbol "@TY#C" --n_models 50 --n_folds 8 --max_features 100 --xgb_type deep --log_label "corrected_TY_deep_tanh"
+
+cd xgb_compare && python3 xgb_compare.py --target_symbol "@EU#C" --n_models 50 --n_folds 8 --max_features 100 --xgb_type deep --log_label "corrected_EU_deep_tanh"
+
+# =============================================================================
+# PHASE 4: Feature Count Analysis (Remaining)
+# =============================================================================
+
+# Test 4.4: TY All Features - PENDING
+cd xgb_compare && python3 xgb_compare.py --target_symbol "@TY#C" --n_models 50 --n_folds 8 --max_features -1 --log_label "corrected_TY_allfeat_tanh"
+
+# Test 4.5: EU 250 Features - PENDING
+cd xgb_compare && python3 xgb_compare.py --target_symbol "@EU#C" --n_models 50 --n_folds 8 --max_features 250 --log_label "corrected_EU_250feat_tanh"
+
+# Test 4.6: EU All Features - PENDING
+cd xgb_compare && python3 xgb_compare.py --target_symbol "@EU#C" --n_models 50 --n_folds 8 --max_features -1 --log_label "corrected_EU_allfeat_tanh"
+
+# =============================================================================
+# PHASE 5: Optimal Configuration Testing (Based on Phase 1-4 Results)
+# =============================================================================
+# WAIT FOR PHASE 1-4 COMPLETION TO DETERMINE OPTIMAL CONFIGS
+
+# Example Phase 5 commands (update configs based on final Phase 1-4 results):
+
+# ES Optimal Config (Preliminary: 15 folds, 100 features, tanh, standard):
+# cd xgb_compare && python3 xgb_compare.py --target_symbol "@ES#C" --n_models 100 --n_folds 15 --max_features 100 --log_label "phase5_ES_100models_optimal"
+# cd xgb_compare && python3 xgb_compare.py --target_symbol "@ES#C" --n_models 150 --n_folds 15 --max_features 100 --log_label "phase5_ES_150models_optimal"
+
+# TY Optimal Config (Preliminary: 8 folds, 100 features, tanh, standard):
+# cd xgb_compare && python3 xgb_compare.py --target_symbol "@TY#C" --n_models 100 --n_folds 8 --max_features 100 --log_label "phase5_TY_100models_optimal"
+# cd xgb_compare && python3 xgb_compare.py --target_symbol "@TY#C" --n_models 150 --n_folds 8 --max_features 100 --log_label "phase5_TY_150models_optimal"
+
+# EU Optimal Config (Preliminary: 10 folds, 100 features, tanh, standard):
+# cd xgb_compare && python3 xgb_compare.py --target_symbol "@EU#C" --n_models 100 --n_folds 10 --max_features 100 --log_label "phase5_EU_100models_optimal"
+# cd xgb_compare && python3 xgb_compare.py --target_symbol "@EU#C" --n_models 150 --n_folds 10 --max_features 100 --log_label "phase5_EU_150models_optimal"
+
+# =============================================================================
+# EXECUTION NOTES
+# =============================================================================
+# 
+# 1. Run tests in batches of 3-4 to avoid system overload
+# 2. Each test takes ~15-30 minutes depending on configuration  
+# 3. Monitor results and update CORRECTED_LOGIC_TESTING.md as each completes
+# 4. Bold production Sharpe values that exceed baseline in markdown
+# 5. Binary signals may be skipped due to persistent hit rate issues
+# 6. Focus on tanh signals for reliable, consistent results
+# 
+# BASELINE PERFORMANCE TO BEAT:
+# ES: Sharpe 0.996, Hit 50.6%, Return 12.77%
+# TY: Sharpe 1.609, Hit 52.6%, Return 3.43%  
+# EU: Sharpe 0.740, Hit 52.6%, Return 4.88%
+#
+# CURRENT BEST PERFORMERS:
+# ES 15 folds: Sharpe 1.015 (BEATS BASELINE!)
+# EU 10 folds: Sharpe 1.280 (BEATS BASELINE!)
+#
+# =============================================================================

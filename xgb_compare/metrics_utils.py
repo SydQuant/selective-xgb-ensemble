@@ -27,12 +27,24 @@ def calculate_annualized_sharpe(returns: pd.Series) -> float:
     return sharpe if not np.isnan(sharpe) else 0.0
 
 def calculate_hit_rate(predictions: pd.Series, actual_returns: pd.Series) -> float:
-    """Calculate hit rate (directional accuracy)."""
+    """Calculate hit rate (directional accuracy), excluding zero signals (no trade days)."""
     if len(predictions) == 0 or len(actual_returns) == 0:
         return 0.0
+    
     # Use values to avoid index alignment issues
-    pred_signs = np.sign(predictions.values)
-    actual_signs = np.sign(actual_returns.values)
+    pred_values = predictions.values
+    return_values = actual_returns.values
+    
+    # Exclude days with zero signals (no trade decisions)
+    non_zero_mask = pred_values != 0
+    
+    if not np.any(non_zero_mask):
+        return 0.0  # All signals are zero
+    
+    # Calculate hit rate only for non-zero signals
+    pred_signs = np.sign(pred_values[non_zero_mask])
+    actual_signs = np.sign(return_values[non_zero_mask])
+    
     return np.mean(pred_signs == actual_signs)
 
 def calculate_information_ratio(returns: pd.Series) -> float:
@@ -116,6 +128,29 @@ def normalize_predictions(predictions: pd.Series, binary_signal: bool = False) -
         normalized = np.tanh(z_scores)
     
     return pd.Series(normalized, index=predictions.index)
+
+def combine_binary_signals(binary_predictions_list: list) -> pd.Series:
+    """
+    Combine binary signals using simple voting: sum of +1/-1 votes.
+    If tied (even number, equal +1 and -1), result is 0.
+    
+    Example:
+    - Model predictions: [0.1, -0.3, 0.6] → Binary signals: [+1, -1, +1] → Sum: +1
+    - Model predictions: [0.1, -0.3] → Binary signals: [+1, -1] → Sum: 0 (tie)
+    """
+    if not binary_predictions_list:
+        return pd.Series(dtype=float)
+    
+    # Ensure all predictions have same index
+    index = binary_predictions_list[0].index
+    
+    # Sum the binary votes (+1/-1)
+    vote_sum = sum(binary_predictions_list)
+    
+    # Convert sum to final binary signal
+    final_signal = np.where(vote_sum > 0, 1.0, np.where(vote_sum < 0, -1.0, 0.0))
+    
+    return pd.Series(final_signal, index=index)
 
 def calculate_ewma_quality(series: pd.Series, alpha: float = 0.1) -> float:
     """Calculate EWMA quality metric."""

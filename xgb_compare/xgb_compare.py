@@ -22,7 +22,7 @@ from full_timeline_backtest import FullTimelineBacktester
 from backtest_visualization import log_detailed_backtest_summary
 from data.data_utils_simple import prepare_real_data_simple
 from model.feature_selection import apply_feature_selection
-from model.xgb_drivers import generate_xgb_specs, generate_deep_xgb_specs, fit_xgb_on_slice
+from model.xgb_drivers import generate_xgb_specs, generate_deep_xgb_specs, stratified_xgb_bank, fit_xgb_on_slice
 from cv.wfo import wfo_splits, wfo_splits_rolling
 
 def setup_logging(config):
@@ -225,6 +225,9 @@ def run_cross_validation(X, y, config, logger):
     
     if config.xgb_type == 'deep':
         xgb_specs = generate_deep_xgb_specs(config.n_models)
+    elif config.xgb_type == 'tiered':
+        # Use stratified_xgb_bank for tiered architecture (need feature columns)
+        xgb_specs, col_slices = stratified_xgb_bank(X.columns.tolist(), n_models=config.n_models)
     else:
         xgb_specs = generate_xgb_specs(config.n_models)
     # Choose between expanding and rolling window splits
