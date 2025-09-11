@@ -126,6 +126,7 @@ class FullTimelineBacktester:
                     for model_idx in selected_models:
                         if model_idx in stored_predictions:
                             fold_predictions[model_idx] = stored_predictions[model_idx]
+                            logger.debug(f"Fold {fold_idx}: Model {model_idx} predictions length: {len(stored_predictions[model_idx])}")
                         else:
                             logger.warning(f"Fold {fold_idx}: No stored predictions for model {model_idx}")
                 else:
@@ -163,11 +164,13 @@ class FullTimelineBacktester:
                     
                     # Add to appropriate period first (training vs production)
                     if fold_idx <= cutoff_fold:
+                        logger.debug(f"Fold {fold_idx}: Adding {len(lagged_values)} to training (current len: {len(training_predictions)})")
                         training_predictions.extend(lagged_values)
                         training_pnl.extend(pnl_values)
                         training_dates.extend(X.index[test_idx].tolist())
                         period_type = 'training'
                     else:
+                        logger.debug(f"Fold {fold_idx}: Adding {len(lagged_values)} to production (current len: {len(production_predictions)})")
                         production_predictions.extend(lagged_values)
                         production_pnl.extend(pnl_values)
                         production_dates.extend(X.index[test_idx].tolist())
@@ -203,6 +206,10 @@ class FullTimelineBacktester:
         full_timeline_predictions = training_predictions + production_predictions
         full_timeline_returns = training_pnl + production_pnl
         full_timeline_dates = training_dates + production_dates
+        
+        logger.debug(f"Final lengths: training_pred={len(training_predictions)}, training_pnl={len(training_pnl)}")
+        logger.debug(f"Final lengths: production_pred={len(production_predictions)}, production_pnl={len(production_pnl)}")
+        logger.debug(f"Final lengths: full_pred={len(full_timeline_predictions)}, full_pnl={len(full_timeline_returns)}")
         
         # Calculate overall metrics for each period
         training_metrics = {}

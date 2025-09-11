@@ -55,8 +55,14 @@ def calculate_cb_ratio(returns: pd.Series) -> float:
         return 0.0
     ann_ret = returns.mean() * 252
     cumulative = returns.cumsum()
-    max_dd = (cumulative.expanding().max() - cumulative).max()
-    return ann_ret / max_dd if max_dd > 0 else 0.0
+    peak = cumulative.expanding().max()
+    drawdown = peak - cumulative
+    max_dd = drawdown.max()
+    
+    if max_dd > 1e-6:  # Avoid division by very small numbers
+        return ann_ret / max_dd
+    else:
+        return 0.0  # No meaningful drawdown
 
 def calculate_dapy_binary(predictions: pd.Series, actual_returns: pd.Series) -> float:
     """Calculate DAPY binary score."""

@@ -86,28 +86,28 @@ def train_single_model(model_idx, spec, X_train, y_train, X_inner_train, y_inner
 def _train_single_model_mp(args):
     """Train single model in multiprocessing worker."""
     model_idx, spec, X_train_vals, y_train_vals, X_inner_train_vals, y_inner_train_vals, \
-    X_inner_val_vals, y_inner_val_vals, X_test_vals, y_test_vals, binary_signal = args
+    X_inner_val_vals, y_inner_val_vals, X_test_vals, y_test_vals, binary_signal, \
+    train_idx, inner_train_idx, inner_val_idx, test_idx = args
     
     import pandas as pd
     from model.xgb_drivers import fit_xgb_on_slice
     from metrics_utils import normalize_predictions, calculate_model_metrics, calculate_metric_pvalue
     
-    # Setup data 
-    n_train, n_inner_train, n_inner_val, n_test = len(X_train_vals), len(X_inner_train_vals), len(X_inner_val_vals), len(X_test_vals)
-    X_train_df = pd.DataFrame(X_train_vals, index=range(n_train))
-    y_train_series = pd.Series(y_train_vals, index=range(n_train))
+    # Setup data with correct indices
+    X_train_df = pd.DataFrame(X_train_vals, index=train_idx)
+    y_train_series = pd.Series(y_train_vals, index=train_idx)
     
     # Train and predict
     model = fit_xgb_on_slice(X_train_df, y_train_series, spec, force_cpu=True)
-    pred_inner_train = normalize_predictions(pd.Series(model.predict(X_inner_train_vals), index=range(n_inner_train)), binary_signal)
-    pred_inner_val = normalize_predictions(pd.Series(model.predict(X_inner_val_vals), index=range(n_inner_val)), binary_signal)
-    pred_test = normalize_predictions(pd.Series(model.predict(X_test_vals), index=range(n_test)), binary_signal)
+    pred_inner_train = normalize_predictions(pd.Series(model.predict(X_inner_train_vals), index=inner_train_idx), binary_signal)
+    pred_inner_val = normalize_predictions(pd.Series(model.predict(X_inner_val_vals), index=inner_val_idx), binary_signal)
+    pred_test = normalize_predictions(pd.Series(model.predict(X_test_vals), index=test_idx), binary_signal)
     
     # Calculate all metrics
-    is_metrics = calculate_model_metrics(pred_inner_train, pd.Series(y_inner_train_vals, index=range(n_inner_train)), shifted=False)
-    iv_metrics = calculate_model_metrics(pred_inner_val, pd.Series(y_inner_val_vals, index=range(n_inner_val)), shifted=False)
-    oos_metrics = calculate_model_metrics(pred_test, pd.Series(y_test_vals, index=range(n_test)), shifted=True)
-    p_sharpe = calculate_metric_pvalue(pred_test, pd.Series(y_test_vals, index=range(n_test)), 'sharpe', oos_metrics['sharpe'], 50)
+    is_metrics = calculate_model_metrics(pred_inner_train, pd.Series(y_inner_train_vals, index=inner_train_idx), shifted=False)
+    iv_metrics = calculate_model_metrics(pred_inner_val, pd.Series(y_inner_val_vals, index=inner_val_idx), shifted=False)
+    oos_metrics = calculate_model_metrics(pred_test, pd.Series(y_test_vals, index=test_idx), shifted=True)
+    p_sharpe = calculate_metric_pvalue(pred_test, pd.Series(y_test_vals, index=test_idx), 'sharpe', oos_metrics['sharpe'], 50)
     
     return {
         'Model': f"M{model_idx:02d}", 'IS_Sharpe': is_metrics['sharpe'], 'IV_Sharpe': iv_metrics['sharpe'], 
@@ -123,7 +123,8 @@ def train_models_multiprocessing(xgb_specs, X_train, y_train, X_inner_train, y_i
     
     # Prepare arguments
     args_list = [(i, spec, X_train.values, y_train.values, X_inner_train.values, y_inner_train.values,
-                  X_inner_val.values, y_inner_val.values, X_test.values, y_test.values, config.binary_signal)
+                  X_inner_val.values, y_inner_val.values, X_test.values, y_test.values, config.binary_signal,
+                  X_train.index.tolist(), X_inner_train.index.tolist(), X_inner_val.index.tolist(), X_test.index.tolist())
                  for i, spec in enumerate(xgb_specs)]
     
     # Execute in parallel
@@ -207,7 +208,7 @@ def choose_optimal_processing_mode(config, logger):
         use_gpu, use_multiprocessing = True, False
         mode_desc = "GPU sequential"
     elif total_models > 50:
-        use_gpu, use_multiprocessing = False, True
+        use_gpu, use_multiprocessing = False, True  # Re-enabled multiprocessing with fix
         mode_desc = "CPU multiprocessing"
     else:
         use_gpu, use_multiprocessing = False, False
@@ -305,9 +306,17 @@ def main():
     for path in image_paths:
         logger.info(f"  - {os.path.basename(path)}")
     
+    if 'training_metrics' in backtest_results and backtest_results['training_metrics']:
+        train_metrics = backtest_results['training_metrics']
+        logger.info(f"Training Final: Sharpe={train_metrics.get('sharpe', 0):.3f} | Hit={train_metrics.get('hit_rate', 0):.1%} | Return={train_metrics.get('ann_ret', 0):.2%}")
+    
+    if 'production_metrics' in backtest_results and backtest_results['production_metrics']:
+        prod_metrics = backtest_results['production_metrics']  
+        logger.info(f"Production Final: Sharpe={prod_metrics.get('sharpe', 0):.3f} | Hit={prod_metrics.get('hit_rate', 0):.1%} | Return={prod_metrics.get('ann_ret', 0):.2%}")
+    
     if 'full_timeline_metrics' in backtest_results:
-        metrics = backtest_results['full_timeline_metrics']
-        logger.info(f"\nFinal Results: Sharpe={metrics.get('sharpe', 0):.3f} | Hit={metrics.get('hit_rate', 0):.1%} | Return={metrics.get('ann_ret', 0):.2%}")
+        full_metrics = backtest_results['full_timeline_metrics']
+        logger.info(f"Full Timeline Final: Sharpe={full_metrics.get('sharpe', 0):.3f} | Hit={full_metrics.get('hit_rate', 0):.1%} | Return={full_metrics.get('ann_ret', 0):.2%}")
 
 if __name__ == "__main__":
     main()
