@@ -32,11 +32,10 @@ from cv.wfo import wfo_splits, wfo_splits_rolling
 def setup_logging(config):
     """Setup logging and directories."""
     results_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'results')
-    log_dir = os.path.join(results_dir, 'logs')
-    os.makedirs(log_dir, exist_ok=True)
+    os.makedirs(results_dir, exist_ok=True)
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_path = os.path.join(log_dir, f"xgb_compare_{config.log_label}_{timestamp}.log")
+    log_path = os.path.join(results_dir, f"{timestamp}_xgb_compare_{config.log_label}.log")
     
     logging.basicConfig(
         level=logging.INFO,
@@ -46,7 +45,7 @@ def setup_logging(config):
     
     logger = logging.getLogger(__name__)
     config.log_config(logger)
-    return logger, results_dir
+    return logger, results_dir, timestamp
 
 def load_and_prepare_data(config, logger):
     """Load data with feature selection."""
@@ -354,7 +353,7 @@ def run_production_backtest(X, y, all_fold_results, xgb_specs, fold_splits, conf
 def main():
     """Main execution pipeline."""
     config = parse_config()
-    logger, results_dir = setup_logging(config)
+    logger, results_dir, timestamp = setup_logging(config)
     
     # Data preparation
     X, y = load_and_prepare_data(config, logger)
@@ -367,7 +366,7 @@ def main():
     
     # Visualizations
     logger.info("Generating visualizations...")
-    image_paths = create_clean_visualizations(all_fold_results, quality_tracker, backtest_results, config, results_dir)
+    image_paths = create_clean_visualizations(all_fold_results, quality_tracker, backtest_results, config, results_dir, timestamp)
     
     # Final summary
     log_detailed_backtest_summary(backtest_results, logger)

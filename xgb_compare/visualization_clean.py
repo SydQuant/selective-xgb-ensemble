@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import logging
 import os
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +164,7 @@ def create_fold_by_fold_tables(all_fold_results, config, timestamp, save_dir):
     else:
         dpi = 300  # High DPI for standard configs
     
-    filename = f"fold_{config.target_symbol}_{config.n_models}models_{config.n_folds}folds_{config.log_label}_{timestamp}.png"
+    filename = f"{timestamp}_fold_{config.target_symbol}_{config.n_models}models_{config.n_folds}folds_{config.log_label}.png"
     save_path = os.path.join(save_dir, filename)
     plt.savefig(save_path, dpi=dpi, bbox_inches='tight')
     plt.close()
@@ -329,7 +328,7 @@ Date Range: {config.start_date[:4]}-{config.end_date[:4]}"""
     
     plt.suptitle(f'Production Analysis - {config.target_symbol}', fontsize=16, fontweight='bold')
     
-    filename = f"production_summary_{config.target_symbol}_{timestamp}.png"
+    filename = f"{timestamp}_production_summary_{config.target_symbol}.png"
     save_path = os.path.join(save_dir, filename)
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.close()
@@ -341,11 +340,10 @@ def calculate_ewma_quality(series, alpha=0.1):
         return 0.0
     return series.ewm(alpha=alpha, adjust=False).mean().iloc[-1]
 
-def create_clean_visualizations(all_fold_results, quality_tracker, backtest_results, config, save_dir):
+def create_clean_visualizations(all_fold_results, quality_tracker, backtest_results, config, save_dir, timestamp):
     """
     Create clean 2-file system: fold-by-fold + production analysis.
     """
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     generated_files = []
     
     logger.info(f"Creating clean visualizations for {config.n_models} models...")
