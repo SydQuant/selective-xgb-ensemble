@@ -28,9 +28,9 @@ def calculate_simple_features(df: pd.DataFrame) -> pd.DataFrame:
     atr_absolute = high_low.rolling(6).mean()
     result['atr'] = atr_absolute / result['close']  # ATR as % of price
     
-    # CRITICAL FIX: Forward-fill first-day NaN values in ATR to prevent feature contamination
+    # CRITICAL FIX: Forward-fill only (no future leakage) - use past data only
     # This fixes the 72 NaN values that were contaminating the feature space
-    result['atr'] = result['atr'].bfill().fillna(result['atr'].median())
+    result['atr'] = result['atr'].ffill().fillna(0.0)  # Forward fill only, no median (uses future)
     
     # Momentum features for various periods (following original pattern)  
     periods = [1, 2, 3, 4, 8, 12, 16, 20, 24, 28, 32]
@@ -44,8 +44,8 @@ def calculate_simple_features(df: pd.DataFrame) -> pd.DataFrame:
         result[f'velocity_{p}h'] = momentum.pct_change(fill_method=None).clip(-5, 5)
         result[f'rsi_{p}h'] = result['rsi'].rolling(p, min_periods=1).mean()
         atr_feature = atr_change.clip(-2, 2).rolling(p, min_periods=1).mean()
-        # CRITICAL FIX: Forward-fill NaN values in ATR timeframe features (part of 72 NaN fix)
-        result[f'atr_{p}h'] = atr_feature.bfill().fillna(0.0)
+        # CRITICAL FIX: Forward-fill only (no future leakage) - use past data only
+        result[f'atr_{p}h'] = atr_feature.ffill().fillna(0.0)  # Forward fill only, no bfill (uses future)
         
         # Breakout calculation (handle p=1 edge case)
         min_periods = 2 if p > 1 else 2  # Always use min_periods=2
@@ -177,8 +177,10 @@ def clean_data_simple(df: pd.DataFrame) -> pd.DataFrame:
         df_clean = df_clean.drop(columns=features_to_drop)
     
     # 3. Time-series respecting missing value handling
-    # Forward fill for time series continuity (no future leakage)
-    df_clean = df_clean.ffill()
+    # Forward fill ONLY feature columns (no future leakage)
+    # CRITICAL: Never forward-fill target columns (NaN targets should stay NaN)
+    if feature_cols:
+        df_clean[feature_cols] = df_clean[feature_cols].ffill()
     
     # Handle remaining NaNs (typically at start due to rolling windows)
     def handle_remaining_nans(col):
