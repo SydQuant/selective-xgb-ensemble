@@ -78,7 +78,7 @@ This will test if hit rate-based model selection produces different/better resul
 | H4.6 | TY     | -1 (all) | ✅     | 1.074           | 0.092             | 50.8%    | 0.30%         | 023133        |
 | H4.7 | EU     | 100      | ✅     | 1.375           | 0.134             | 48.5%    | 0.53%         | 023133        |
 | H4.8 | EU     | 250      | ✅     | 0.975           | 0.754             | 51.4%    | 2.94%         | 014747        |
-| H4.9 | EU     | -1 (all) | ✅     | -0.233          | -0.077            | 50.5%    | -0.31%        | 023134        |
+| H4.9 | EU     | -1 (all) | ✅     | -0.233          | -0.077            | 50.5%    | -0.31%        | 023135        |
 
 ### Phase 5: Optimal Hit_Q Configuration Testing
 
@@ -94,12 +94,12 @@ This will test if hit rate-based model selection produces different/better resul
 
 | Test  | Symbol | Signal | Folds | Arch   | Features | Models | Status | Production Sharpe | Hit Rate | Log Timestamp |
 | ----- | ------ | ------ | ----- | ------ | -------- | ------ | ------ | ----------------- | -------- | ------------- |
-| H5.1a | ES     | binary | 10    | deep   | 100      | 100    | ⏸️   | -                 | -        | -             |
-| H5.1b | ES     | binary | 10    | deep   | 100      | 150    | ⏸️   | -                 | -        | -             |
-| H5.2a | TY     | binary | 10    | tiered | 100      | 100    | ⏸️   | -                 | -        | -             |
-| H5.2b | TY     | binary | 10    | tiered | 100      | 150    | ⏸️   | -                 | -        | -             |
-| H5.3a | EU     | tanh   | 10    | tiered | 250      | 100    | ⏸️   | -                 | -        | -             |
-| H5.3b | EU     | tanh   | 10    | tiered | 250      | 150    | ⏸️   | -                 | -        | -             |
+| H5.1a | ES     | binary | 10    | deep   | 100      | 100    | ✅     | **2.065**         | 54.7%    | 110838        |
+| H5.1b | ES     | binary | 10    | deep   | 100      | 150    | 🔄     | -                 | -        | 110838        |
+| H5.2a | TY     | binary | 10    | tiered | 100      | 100    | ✅     | **1.283**         | 53.2%    | 110838        |
+| H5.2b | TY     | binary | 10    | tiered | 100      | 150    | 🔄     | -                 | -        | 110838        |
+| H5.3a | EU     | tanh   | 10    | tiered | 250      | 100    | 🔄     | -                 | -        | 110839        |
+| H5.3b | EU     | tanh   | 10    | tiered | 250      | 150    | 🔄     | -                 | -        | 110839        |
 
 #### **Phase 5 Commands:**
 
