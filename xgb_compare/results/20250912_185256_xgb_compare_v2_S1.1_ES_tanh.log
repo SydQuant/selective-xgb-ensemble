@@ -1,0 +1,41 @@
+2025-09-12 18:52:56,762 - INFO - ================================================================================
+2025-09-12 18:52:56,762 - INFO - XGBoost Comparison Framework
+2025-09-12 18:52:56,762 - INFO - ================================================================================
+2025-09-12 18:52:56,762 - INFO - Configuration:
+2025-09-12 18:52:56,762 - INFO -   Target Symbol: @ES#C
+2025-09-12 18:52:56,762 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-12 18:52:56,762 - INFO -   Models: 100, Type: standard
+2025-09-12 18:52:56,762 - INFO -   Folds: 8
+2025-09-12 18:52:56,762 - INFO -   Max Features: 100 (Limited)
+2025-09-12 18:52:56,762 - INFO -   Feature Selection: Enabled
+2025-09-12 18:52:56,762 - INFO -   Inner Val Fraction: 0.2
+2025-09-12 18:52:56,762 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-12 18:52:56,762 - INFO -   Signal Type: Tanh Normalized
+2025-09-12 18:52:56,762 - INFO -   Cross-validation: Expanding window
+2025-09-12 18:52:56,762 - INFO -   Production: Cutoff=0.6, Top N=5, Q-Metric=sharpe
+2025-09-12 18:52:56,762 - INFO -   Reselection: Every 1 fold(s)
+2025-09-12 18:52:56,762 - INFO - 
+2025-09-12 18:53:01,370 - INFO - Loaded: X=(2735, 1906), y=(2735,)
+2025-09-12 18:53:19,484 - INFO - Selected 100 features (threshold: 0.7)
+2025-09-12 18:53:19,494 - INFO - Selected: 100 features
+2025-09-12 18:53:19,731 - INFO - GPU detection: CUDA GPU available and working
+2025-09-12 18:53:19,731 - INFO - Processing mode: GPU sequential (GPU: True, Total models: 800)
+2025-09-12 18:53:19,739 - INFO - GPU detection: CUDA GPU available and working
+2025-09-12 18:53:19,741 - INFO - Using expanding window
+2025-09-12 18:53:19,741 - INFO - Starting analysis: 100 standard models x 7 folds
+2025-09-12 18:53:19,741 - INFO - Processing Fold 1/7
+2025-09-12 18:53:19,744 - INFO -   Using GPU sequential processing
+2025-09-12 18:53:41,216 - INFO - Fold 1 Summary:
+2025-09-12 18:53:41,216 - INFO -   Best OOS Sharpe: M20 (1.219, p=0.150)
+2025-09-12 18:53:41,216 - INFO -   Best Q-Sharpe:  M20 (1.219, OOS_Sharpe=1.219, OOS_Hit=0.548)
+2025-09-12 18:53:41,216 - INFO -   Mean OOS Sharpe: -0.238, Mean Hit: 0.489
+2025-09-12 18:53:41,216 - INFO - 
+2025-09-12 18:53:41,219 - INFO - Processing Fold 2/7
+2025-09-12 18:53:41,222 - INFO -   Using GPU sequential processing
+2025-09-12 18:54:06,566 - INFO - Fold 2 Summary:
+2025-09-12 18:54:06,566 - INFO -   Best OOS Sharpe: M56 (1.451, p=0.110)
+2025-09-12 18:54:06,566 - INFO -   Best Q-Sharpe:  M20 (1.089, OOS_Sharpe=-0.076, OOS_Hit=0.501)
+2025-09-12 18:54:06,566 - INFO -   Mean OOS Sharpe: 0.270, Mean Hit: 0.495
+2025-09-12 18:54:06,566 - INFO - 
+2025-09-12 18:54:06,568 - INFO - Processing Fold 3/7
+2025-09-12 18:54:06,572 - INFO -   Using GPU sequential processing
