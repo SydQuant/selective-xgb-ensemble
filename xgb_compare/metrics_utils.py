@@ -203,13 +203,12 @@ def calculate_model_metrics(predictions: pd.Series, returns: pd.Series,
     """
     Calculate comprehensive performance metrics for predictions.
     DEPRECATED: Use calculate_model_metrics_from_pnl for better performance.
-    """
-    if shifted:
-        # Shift predictions for OOS evaluation (avoid look-ahead bias)
-        signal = predictions.shift(1).fillna(0.0)
-    else:
-        signal = predictions
     
+    NOTE: shifted parameter removed - signals and targets are properly aligned.
+    No artificial lag needed since both represent the same time period.
+    """
+    # Direct calculation - no shift needed (signals and targets properly aligned)
+    signal = predictions
     pnl = signal * returns
     
     # Use the new PnL-based function internally
