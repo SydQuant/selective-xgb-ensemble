@@ -72,14 +72,14 @@ cd xgb_compare && ~/anaconda3/python.exe xgb_compare.py --target_symbol "@EU#C" 
 
 **Config**: 100 models, 8 folds, 100 features, tanh signals, SHARPE_Q selection
 
-| Test | Symbol | XGB Type | Status | Production Sharpe | Hit Rate | Annual Return | Log Timestamp |
-| ---- | ------ | -------- | ------ | ----------------- | -------- | ------------- | ------------- |
-| S3.1 | ES     | tiered   | ⏸️     | -                 | -        | -             | -             |
-| S3.2 | ES     | deep     | ⏸️     | -                 | -        | -             | -             |
-| S3.3 | TY     | tiered   | ⏸️     | -                 | -        | -             | -             |
-| S3.4 | TY     | deep     | ⏸️     | -                 | -        | -             | -             |
-| S3.5 | EU     | tiered   | ⏸️     | -                 | -        | -             | -             |
-| S3.6 | EU     | deep     | ⏸️     | -                 | -        | -             | -             |
+| Test | Symbol | XGB Type | Status | Training Sharpe | Training Hit | Production Sharpe | Production Hit | Full Timeline Sharpe | Full Timeline Hit | Log Timestamp |
+| ---- | ------ | -------- | ------ | --------------- | ------------ | ----------------- | -------------- | -------------------- | ----------------- | ------------- |
+| S3.1 | ES     | tiered   | ✅     | 1.033           | 51.3%        | 2.020             | 54.0%          | 1.450                | 52.4%             | 20250912_213001 |
+| S3.2 | ES     | deep     | ✅     | 0.814           | 51.0%        | 2.048             | 53.7%          | 1.305                | 52.1%             | 20250912_213039 |
+| S3.3 | TY     | tiered   | ✅     | 1.703           | 53.6%        | 1.423             | 52.3%          | 1.508                | 53.1%             | 20250912_213006 |
+| S3.4 | TY     | deep     | ✅     | 1.806           | 54.0%        | 1.408             | 52.9%          | 1.560                | 53.6%             | 20250912_213008 |
+| S3.5 | EU     | tiered   | ✅     | 1.650           | 52.8%        | 1.541             | 53.0%          | 1.581                | 52.9%             | 20250912_213113 |
+| S3.6 | EU     | deep     | ✅     | 1.547           | 52.9%        | 1.501             | 53.8%          | 1.516                | 53.3%             | 20250912_213008 |
 
 ---
 
