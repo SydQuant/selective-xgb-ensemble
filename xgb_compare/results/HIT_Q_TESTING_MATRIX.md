@@ -95,11 +95,11 @@ This will test if hit rate-based model selection produces different/better resul
 | Test  | Symbol | Signal | Folds | Arch   | Features | Models | Status | Production Sharpe | Hit Rate | Log Timestamp |
 | ----- | ------ | ------ | ----- | ------ | -------- | ------ | ------ | ----------------- | -------- | ------------- |
 | H5.1a | ES     | binary | 10    | deep   | 100      | 100    | ✅     | **2.065**         | 54.7%    | 110838        |
-| H5.1b | ES     | binary | 10    | deep   | 100      | 150    | 🔄     | -                 | -        | 110838        |
+| H5.1b | ES     | binary | 10    | deep   | 100      | 150    | ✅     | **2.101**         | 55.5%    | 110838        |
 | H5.2a | TY     | binary | 10    | tiered | 100      | 100    | ✅     | **1.283**         | 53.2%    | 110838        |
-| H5.2b | TY     | binary | 10    | tiered | 100      | 150    | 🔄     | -                 | -        | 110838        |
-| H5.3a | EU     | tanh   | 10    | tiered | 250      | 100    | 🔄     | -                 | -        | 110839        |
-| H5.3b | EU     | tanh   | 10    | tiered | 250      | 150    | 🔄     | -                 | -        | 110839        |
+| H5.2b | TY     | binary | 10    | tiered | 100      | 150    | ✅     | **1.187**         | 52.1%    | 110838        |
+| H5.3a | EU     | tanh   | 10    | tiered | 250      | 100    | ✅     | **1.084**         | 52.4%    | 110839        |
+| H5.3b | EU     | tanh   | 10    | tiered | 250      | 150    | ✅     | **1.207**         | 53.3%    | 110839        |
 
 #### **Phase 5 Commands:**
 
