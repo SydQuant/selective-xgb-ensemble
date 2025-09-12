@@ -67,7 +67,7 @@ def train_single_model(model_idx, spec, X_train, y_train, X_inner_train, y_inner
     # Calculate performance metrics
     is_metrics = calculate_model_metrics(pred_inner_train, y_inner_train, shifted=False)
     iv_metrics = calculate_model_metrics(pred_inner_val, y_inner_val, shifted=False)
-    oos_metrics = calculate_model_metrics(pred_test, y_test, shifted=True)
+    oos_metrics = calculate_model_metrics(pred_test, y_test, shifted=False)
     
     # Statistical significance testing
     p_sharpe = calculate_metric_pvalue(pred_test, y_test, 'sharpe', oos_metrics['sharpe'], config.n_bootstraps)
@@ -106,7 +106,7 @@ def _train_single_model_mp(args):
     # Calculate all metrics
     is_metrics = calculate_model_metrics(pred_inner_train, pd.Series(y_inner_train_vals, index=inner_train_idx), shifted=False)
     iv_metrics = calculate_model_metrics(pred_inner_val, pd.Series(y_inner_val_vals, index=inner_val_idx), shifted=False)
-    oos_metrics = calculate_model_metrics(pred_test, pd.Series(y_test_vals, index=test_idx), shifted=True)
+    oos_metrics = calculate_model_metrics(pred_test, pd.Series(y_test_vals, index=test_idx), shifted=False)
     p_sharpe = calculate_metric_pvalue(pred_test, pd.Series(y_test_vals, index=test_idx), 'sharpe', oos_metrics['sharpe'], 50)
     
     return {
