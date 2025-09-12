@@ -24,14 +24,14 @@ Complete retesting of SHARPE_Q model selection with latest code changes and enha
 
 **Config**: 100 models, 8 folds, 100 features, SHARPE_Q selection
 
-| Test | Symbol | Signal Type | Status | Production Sharpe | Hit Rate | Annual Return | Log Timestamp |
-| ---- | ------ | ----------- | ------ | ----------------- | -------- | ------------- | ------------- |
-| S1.1 | ES     | tanh        | ⏸️     | -                 | -        | -             | -             |
-| S1.2 | ES     | binary      | ⏸️     | -                 | -        | -             | -             |
-| S1.3 | TY     | tanh        | ⏸️     | -                 | -        | -             | -             |
-| S1.4 | TY     | binary      | ⏸️     | -                 | -        | -             | -             |
-| S1.5 | EU     | tanh        | ⏸️     | -                 | -        | -             | -             |
-| S1.6 | EU     | binary      | ⏸️     | -                 | -        | -             | -             |
+| Test | Symbol | Signal Type | Status | Training Sharpe | Training Hit | Production Sharpe | Production Hit | Full Timeline Sharpe | Full Timeline Hit | Log Timestamp |
+| ---- | ------ | ----------- | ------ | --------------- | ------------ | ----------------- | -------------- | -------------------- | ----------------- | ------------- |
+| S1.1 | ES     | tanh        | ✅     | 1.436           | 51.9%        | 1.675             | 52.5%          | 1.490                | 52.1%             | 20250912_185256 |
+| S1.2 | ES     | binary      | ✅     | 1.026           | 51.4%        | 1.136             | 52.1%          | 1.058                | 51.6%             | 20250912_185336 |
+| S1.3 | TY     | tanh        | ✅     | 1.305           | 51.8%        | 2.042             | 52.4%          | 1.588                | 52.0%             | 20250912_185336 |
+| S1.4 | TY     | binary      | ✅     | 0.808           | 51.0%        | 1.792             | 54.3%          | 1.190                | 52.1%             | 20250912_185339 |
+| S1.5 | EU     | tanh        | ✅     | 1.446           | 52.6%        | 1.429             | 50.4%          | 1.440                | 51.8%             | 20250912_185420 |
+| S1.6 | EU     | binary      | ✅     | 0.943           | 51.7%        | 1.083             | 52.2%          | 0.992                | 51.9%             | 20250912_185420 |
 
 ### Phase 1 Commands:
 ```bash
