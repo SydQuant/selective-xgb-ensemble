@@ -27,10 +27,10 @@
 
 | Test | Signal | Q-Metric | Status | Training Sharpe | Training Hit | Production Sharpe | Production Hit | Full Timeline Sharpe | Full Timeline Hit | Log Timestamp |
 | ---- | ------ | -------- | ------ | --------------- | ------------ | ----------------- | -------------- | -------------------- | ----------------- | ------------- |
-| S1.1 | tanh   | sharpe   | ⏸️     | -               | -            | -                 | -              | -                    | -                 | -             |
-| S1.2 | tanh   | hit_rate | ⏸️     | -               | -            | -                 | -              | -                    | -                 | -             |
-| S1.3 | binary | sharpe   | ⏸️     | -               | -            | -                 | -              | -                    | -                 | -             |
-| S1.4 | binary | hit_rate | ⏸️     | -               | -            | -                 | -              | -                    | -                 | -             |
+| S1.1 | tanh   | sharpe   | ✅     | 1.255           | 51.6%        | 1.828             | 54.1%          | 1.462                | 52.6%             | 20250913_082156 |
+| S1.2 | tanh   | hit_rate | ✅     | 1.389           | 52.9%        | 1.798             | 54.4%          | 1.520                | 53.6%             | 20250913_082208 |
+| S1.3 | binary | sharpe   | ✅     | 1.051           | 52.5%        | 1.579             | 55.4%          | 1.210                | 53.7%             | 20250913_082314 |
+| S1.4 | binary | hit_rate | ✅     | 1.388           | 53.8%        | 1.638             | 54.5%          | 1.451                | 54.1%             | 20250913_082222 |
 
 ### Phase 1 Commands:
 ```bash

@@ -85,16 +85,16 @@ cd xgb_compare && ~/anaconda3/python.exe xgb_compare.py --target_symbol "@EU#C" 
 
 ## Phase 4: Feature Count Analysis (SHARPE_Q)
 
-**Config**: 100 models, 8 folds, tanh signals, SHARPE_Q selection
+**Config**: 100 models, optimal folds + architecture, tanh signals, SHARPE_Q selection
 
-| Test | Symbol | Features | Status | Production Sharpe | Hit Rate | Annual Return | Log Timestamp |
-| ---- | ------ | -------- | ------ | ----------------- | -------- | ------------- | ------------- |
-| S4.1 | ES     | 250      | ⏸️     | -                 | -        | -             | -             |
-| S4.2 | ES     | -1 (all) | ⏸️     | -                 | -        | -             | -             |
-| S4.3 | TY     | 250      | ⏸️     | -                 | -        | -             | -             |
-| S4.4 | TY     | -1 (all) | ⏸️     | -                 | -        | -             | -             |
-| S4.5 | EU     | 250      | ⏸️     | -                 | -        | -             | -             |
-| S4.6 | EU     | -1 (all) | ⏸️     | -                 | -        | -             | -             |
+| Test | Symbol | Features | Status | Training Sharpe | Training Hit | Production Sharpe | Production Hit | Full Timeline Sharpe | Full Timeline Hit | Log Timestamp |
+| ---- | ------ | -------- | ------ | --------------- | ------------ | ----------------- | -------------- | -------------------- | ----------------- | ------------- |
+| S4.1 | ES     | 250      | ✅     | 0.317           | 49.3%        | 2.012             | 54.2%          | 0.992                | 51.4%             | 20250913_081702 |
+| S4.2 | ES     | -1 (all) | ✅     | 0.010           | 48.8%        | 0.392             | 49.0%          | 0.164                | 48.9%             | 20250913_081709 |
+| S4.3 | TY     | 250      | ✅     | 1.165           | 53.3%        | 2.046             | 53.9%          | 1.551                | 53.5%             | 20250913_081715 |
+| S4.4 | TY     | -1 (all) | ✅     | 0.692           | 50.2%        | 0.575             | 52.9%          | 0.624                | 51.2%             | 20250913_081720 |
+| S4.5 | EU     | 250      | ✅     | 1.050           | 50.0%        | 1.304             | 55.0%          | 1.161                | 52.1%             | 20250913_081728 |
+| S4.6 | EU     | -1 (all) | ✅     | -0.191          | 47.5%        | -0.083            | 52.6%          | -0.134               | 49.6%             | 20250913_081740 |
 
 ---
 
