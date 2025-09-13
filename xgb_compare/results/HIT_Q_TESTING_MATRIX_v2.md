@@ -102,14 +102,14 @@ cd xgb_compare && ~/anaconda3/python.exe xgb_compare.py --target_symbol "@EU#C" 
 
 **Strategy**: Use best config from Phases 1-4 for each symbol with 150/200 models
 
-| Test  | Symbol | Config | Models | Status | Training Sharpe | Training Hit | Production Sharpe | Production Hit | Full Timeline Sharpe | Full Timeline Hit | Log Timestamp |
-| ----- | ------ | ------ | ------ | ------ | --------------- | ------------ | ----------------- | -------------- | -------------------- | ----------------- | ------------- |
-| H5.1a | ES     | TBD    | 150    | ⏸️     | -               | -            | -                 | -              | -                    | -                 | -             |
-| H5.1b | ES     | TBD    | 200    | ⏸️     | -               | -            | -                 | -              | -                    | -                 | -             |
-| H5.2a | TY     | TBD    | 150    | ⏸️     | -               | -            | -                 | -              | -                    | -                 | -             |
-| H5.2b | TY     | TBD    | 200    | ⏸️     | -               | -            | -                 | -              | -                    | -                 | -             |
-| H5.3a | EU     | TBD    | 150    | ⏸️     | -               | -            | -                 | -              | -                    | -                 | -             |
-| H5.3b | EU     | TBD    | 200    | ⏸️     | -               | -            | -                 | -              | -                    | -                 | -             |
+| Test | Symbol | Config | Models | Status | Training Sharpe | Training Hit | Production Sharpe | Production Hit | Full Timeline Sharpe | Full Timeline Hit | Log Timestamp |
+| ---- | ------ | ------ | ------ | ------ | --------------- | ------------ | ----------------- | -------------- | -------------------- | ----------------- | ------------- |
+| H5.1 | ES     | 15F+std+100feat | 150 | ✅ | 0.736 | 52.0% | 2.319 | 53.7% | 1.391 | 52.7% | 20250913_161436 |
+| H5.2 | ES     | 15F+std+100feat | 200 | ✅ | 0.766 | 52.1% | 2.093 | 55.2% | 1.304 | 53.4% | 20250913_161442 |
+| H5.3 | TY     | 20F+std+250feat | 150 | ✅ | 1.262 | 53.7% | 1.672 | 53.8% | 1.429 | 53.7% | 20250913_161449 |
+| H5.4 | TY     | 20F+std+250feat | 200 | ✅ | 1.311 | 53.7% | 1.830 | 52.9% | 1.534 | 53.3% | 20250913_161456 |
+| H5.5 | EU     | 15F+std+250feat | 150 | ✅ | 1.272 | 51.3% | 1.506 | 54.3% | 1.367 | 52.6% | 20250913_161503 |
+| H5.6 | EU     | 15F+std+250feat | 200 | ✅ | 1.272 | 50.6% | 1.574 | 54.7% | 1.403 | 52.3% | 20250913_161510 |
 
 ---
 

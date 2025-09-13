@@ -51,8 +51,8 @@ cd xgb_compare && ~/anaconda3/python.exe xgb_compare.py --target_symbol "@S#C" -
 
 | Test | Architecture | Status | Training Sharpe | Training Hit | Production Sharpe | Production Hit | Full Timeline Sharpe | Full Timeline Hit | Log Timestamp |
 | ---- | ------------ | ------ | --------------- | ------------ | ----------------- | -------------- | -------------------- | ----------------- | ------------- |
-| S2.1 | tiered       | ⏸️     | -               | -            | -                 | -              | -                    | -                 | -             |
-| S2.2 | deep         | ⏸️     | -               | -            | -                 | -              | -                    | -                 | -             |
+| S2.1 | tiered       | ✅     | 1.036           | 51.3%        | 1.633             | 54.7%          | 1.241                | 52.7%             | 20250913_133632 |
+| S2.2 | deep         | ✅     | 1.346           | 51.3%        | 1.325             | 53.6%          | 1.329                | 52.3%             | 20250913_133637 |
 
 **Note**: Standard architecture baseline established in Phase 1. Only test tiered/deep for efficiency.
 
@@ -66,8 +66,8 @@ cd xgb_compare && ~/anaconda3/python.exe xgb_compare.py --target_symbol "@S#C" -
 
 | Test | Folds | Status | Training Sharpe | Training Hit | Production Sharpe | Production Hit | Full Timeline Sharpe | Full Timeline Hit | Log Timestamp |
 | ---- | ----- | ------ | --------------- | ------------ | ----------------- | -------------- | -------------------- | ----------------- | ------------- |
-| S3.1 | 10    | ⏸️     | -               | -            | -                 | -              | -                    | -                 | -             |
-| S3.2 | 20    | ⏸️     | -               | -            | -                 | -              | -                    | -                 | -             |
+| S3.1 | 10    | ✅     | 1.308           | 50.8%        | 1.757             | 54.2%          | 1.421                | 52.0%             | 20250913_161418 |
+| S3.2 | 20    | ✅     | 1.232           | 53.1%        | 1.673             | 54.5%          | 1.386                | 53.7%             | 20250913_161425 |
 
 **Note**: 15 folds baseline from Phase 1. Test 10F (efficiency) vs 20F (precision) for refinement.
 
@@ -81,8 +81,8 @@ cd xgb_compare && ~/anaconda3/python.exe xgb_compare.py --target_symbol "@S#C" -
 
 | Test | Features | Status | Training Sharpe | Training Hit | Production Sharpe | Production Hit | Full Timeline Sharpe | Full Timeline Hit | Log Timestamp |
 | ---- | -------- | ------ | --------------- | ------------ | ----------------- | -------------- | -------------------- | ----------------- | ------------- |
-| S4.1 | 250      | ⏸️     | -               | -            | -                 | -              | -                    | -                 | -             |
-| S4.2 | -1 (all) | ⏸️     | -               | -            | -                 | -              | -                    | -                 | -             |
+| S4.1 | 250      | ✅     | 1.392           | 51.8%        | 1.838             | 54.0%          | 1.519                | 52.7%             | 20250913_180506 |
+| S4.2 | -1 (all) | ✅     | 0.370           | 48.7%        | 0.288             | 50.4%          | 0.338                | 49.4%             | 20250913_180513 |
 
 **Note**: 100 features baseline established. Only test higher counts if justified by performance.
 
@@ -96,8 +96,8 @@ cd xgb_compare && ~/anaconda3/python.exe xgb_compare.py --target_symbol "@S#C" -
 
 | Test | Models | Status | Training Sharpe | Training Hit | Production Sharpe | Production Hit | Full Timeline Sharpe | Full Timeline Hit | Log Timestamp |
 | ---- | ------ | ------ | --------------- | ------------ | ----------------- | -------------- | -------------------- | ----------------- | ------------- |
-| S5.1 | 150    | ⏸️     | -               | -            | -                 | -              | -                    | -                 | -             |
-| S5.2 | 200    | ⏸️     | -               | -            | -                 | -              | -                    | -                 | -             |
+| S5.1 | 150    | ✅     | 1.318           | 52.2%        | 1.891             | 54.4%          | 1.521                | 53.1%             | 20250913_180521 |
+| S5.2 | 200    | ✅     | 1.347           | 52.8%        | 1.985             | 55.2%          | 1.569                | 53.8%             | 20250913_180527 |
 
 ---
 

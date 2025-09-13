@@ -102,14 +102,14 @@ cd xgb_compare && ~/anaconda3/python.exe xgb_compare.py --target_symbol "@EU#C" 
 
 **Strategy**: Use best config from Phases 1-4 for each symbol with 150/200 models
 
-| Test  | Symbol | Config | Models | Status | Production Sharpe | Hit Rate | Log Timestamp |
-| ----- | ------ | ------ | ------ | ------ | ----------------- | -------- | ------------- |
-| S5.1a | ES     | TBD    | 150    | ⏸️     | -                 | -        | -             |
-| S5.1b | ES     | TBD    | 200    | ⏸️     | -                 | -        | -             |
-| S5.2a | TY     | TBD    | 150    | ⏸️     | -                 | -        | -             |
-| S5.2b | TY     | TBD    | 200    | ⏸️     | -                 | -        | -             |
-| S5.3a | EU     | TBD    | 150    | ⏸️     | -                 | -        | -             |
-| S5.3b | EU     | TBD    | 200    | ⏸️     | -                 | -        | -             |
+| Test | Symbol | Config | Models | Status | Training Sharpe | Training Hit | Production Sharpe | Production Hit | Full Timeline Sharpe | Full Timeline Hit | Log Timestamp |
+| ---- | ------ | ------ | ------ | ------ | --------------- | ------------ | ----------------- | -------------- | -------------------- | ----------------- | ------------- |
+| S5.1 | ES     | 15F+deep+100feat | 150 | ✅ | 0.782 | 51.1% | 2.058 | 54.1% | 1.293 | 52.3% | 20250913_133646 |
+| S5.2 | ES     | 15F+deep+100feat | 200 | ✅ | 0.860 | 52.4% | 2.120 | 55.0% | 1.353 | 53.5% | 20250913_133653 |
+| S5.3 | TY     | 10F+tiered+250feat | 150 | ✅ | 1.277 | 53.4% | 1.831 | 54.8% | 1.508 | 53.9% | 20250913_133659 |
+| S5.4 | TY     | 10F+tiered+250feat | 200 | ✅ | 1.259 | 52.5% | 2.067 | 54.0% | 1.608 | 53.0% | 20250913_133706 |
+| S5.5 | EU     | 20F+tiered+100feat | 150 | ✅ | 1.783 | 53.0% | 1.247 | 53.9% | 1.507 | 53.4% | 20250913_133713 |
+| S5.6 | EU     | 20F+tiered+100feat | 200 | ✅ | 1.559 | 51.9% | 1.769 | 53.4% | 1.643 | 52.5% | 20250913_133720 |
 
 ---
 
