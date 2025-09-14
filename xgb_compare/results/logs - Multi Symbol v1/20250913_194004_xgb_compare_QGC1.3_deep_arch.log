@@ -1,0 +1,19 @@
+2025-09-13 19:40:04,497 - INFO - ================================================================================
+2025-09-13 19:40:04,497 - INFO - XGBoost Comparison Framework
+2025-09-13 19:40:04,497 - INFO - ================================================================================
+2025-09-13 19:40:04,497 - INFO - Configuration:
+2025-09-13 19:40:04,497 - INFO -   Target Symbol: @QGC#C
+2025-09-13 19:40:04,497 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-13 19:40:04,497 - INFO -   Models: 100, Type: deep
+2025-09-13 19:40:04,497 - INFO -   Folds: 15
+2025-09-13 19:40:04,497 - INFO -   Max Features: 100 (Limited)
+2025-09-13 19:40:04,497 - INFO -   Feature Selection: Enabled
+2025-09-13 19:40:04,498 - INFO -   Inner Val Fraction: 0.2
+2025-09-13 19:40:04,498 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-13 19:40:04,498 - INFO -   Signal Type: Tanh Normalized
+2025-09-13 19:40:04,498 - INFO -   Cross-validation: Expanding window
+2025-09-13 19:40:04,498 - INFO -   Production: Cutoff=0.6, Top N=5, Q-Metric=sharpe
+2025-09-13 19:40:04,498 - INFO -   Reselection: Every 1 fold(s)
+2025-09-13 19:40:04,498 - INFO - 
+2025-09-13 19:40:04,579 - WARNING - Failed to load data for symbol @QGC#C: E_NO_SUCH_VERSION read_dataframe_version: version matching query 'latest' not found for symbol '@QGC#C'
+2025-09-13 19:40:04,681 - ERROR - Error preparing data: Could not load data for target symbol @QGC#C

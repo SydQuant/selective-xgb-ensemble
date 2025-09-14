@@ -1,0 +1,60 @@
+2025-09-13 20:36:25,000 - INFO - ================================================================================
+2025-09-13 20:36:25,000 - INFO - XGBoost Comparison Framework
+2025-09-13 20:36:25,000 - INFO - ================================================================================
+2025-09-13 20:36:25,000 - INFO - Configuration:
+2025-09-13 20:36:25,001 - INFO -   Target Symbol: BD#C
+2025-09-13 20:36:25,001 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-13 20:36:25,001 - INFO -   Models: 2, Type: standard
+2025-09-13 20:36:25,001 - INFO -   Folds: 2
+2025-09-13 20:36:25,002 - INFO -   Max Features: 20 (Limited)
+2025-09-13 20:36:25,002 - INFO -   Feature Selection: Enabled
+2025-09-13 20:36:25,002 - INFO -   Inner Val Fraction: 0.2
+2025-09-13 20:36:25,002 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-13 20:36:25,002 - INFO -   Signal Type: Tanh Normalized
+2025-09-13 20:36:25,002 - INFO -   Cross-validation: Expanding window
+2025-09-13 20:36:25,002 - INFO -   Production: Cutoff=0.6, Top N=1, Q-Metric=sharpe
+2025-09-13 20:36:25,002 - INFO -   Reselection: Every 1 fold(s)
+2025-09-13 20:36:25,002 - INFO - 
+2025-09-13 20:36:30,426 - INFO - Dropped 40 rows due to NaN in target column BD#C_target_return
+2025-09-13 20:36:30,644 - INFO - Loaded: X=(2695, 1906), y=(2695,)
+2025-09-13 20:36:54,402 - INFO - Selected 20 features (threshold: 0.7)
+2025-09-13 20:36:54,412 - INFO - Selected: 20 features
+2025-09-13 20:36:54,770 - INFO - GPU detection: CUDA GPU available and working
+2025-09-13 20:36:54,770 - INFO - Processing mode: GPU sequential (GPU: True, Total models: 4)
+2025-09-13 20:36:54,859 - INFO - GPU detection: CUDA GPU available and working
+2025-09-13 20:36:54,859 - INFO - Using expanding window
+2025-09-13 20:36:54,859 - INFO - Starting analysis: 2 standard models x 1 folds
+2025-09-13 20:36:54,859 - INFO - Processing Fold 1/1
+2025-09-13 20:36:54,861 - INFO -   Using GPU sequential processing
+2025-09-13 20:36:58,524 - INFO - Fold 1 Summary:
+2025-09-13 20:36:58,524 - INFO -   Best OOS Sharpe: M01 (1.261, p=0.000)
+2025-09-13 20:36:58,524 - INFO -   Best Q-Sharpe:  M01 (1.261, OOS_Sharpe=1.261, OOS_Hit=0.516)
+2025-09-13 20:36:58,524 - INFO -   Mean OOS Sharpe: 0.749, Mean Hit: 0.511
+2025-09-13 20:36:58,524 - INFO - 
+2025-09-13 20:36:58,524 - INFO - Starting full timeline backtesting...
+2025-09-13 20:36:58,524 - INFO - Running full timeline backtest with 1 folds (0-based indexing)
+2025-09-13 20:36:58,524 - INFO - Fold 0 skipped (no prior Q-score history for meaningful selection)
+2025-09-13 20:36:58,524 - INFO - Effective backtest period: Folds 1-0 (0 folds)
+2025-09-13 20:36:58,524 - INFO - Training period: Folds 1-0
+2025-09-13 20:36:58,524 - INFO - Production period: Folds 1-0
+2025-09-13 20:36:58,525 - INFO - Using consistent OOS methodology for all folds
+2025-09-13 20:36:58,525 - INFO - Fold 0: Skipped (no prior Q-score history for meaningful selection)
+2025-09-13 20:36:58,525 - INFO - Generating visualizations...
+2025-09-13 20:36:58,525 - INFO - Creating clean visualizations for 2 models...
+2025-09-13 20:36:59,020 - INFO - Clean fold-by-fold analysis saved to: 20250913_203624_fold_BD#C_2models_2folds_test_BD_direct.png
+2025-09-13 20:37:00,084 - INFO - Detailed production analysis saved to: 20250913_203624_backtest_BD#C_2models_2folds_test_BD_direct.png
+2025-09-13 20:37:00,084 - INFO - ================================================================================
+2025-09-13 20:37:00,084 - INFO - BACKTEST SUMMARY
+2025-09-13 20:37:00,084 - INFO - ================================================================================
+2025-09-13 20:37:00,084 - INFO - Config: Cutoff=70%, Top N=5, Q-Metric=sharpe, Reselection=1 fold(s)
+2025-09-13 20:37:00,084 - INFO - Model Selection History:
+2025-09-13 20:37:00,084 - INFO - 
+2025-09-13 20:37:00,084 - INFO - Fold-by-Fold Performance:
+2025-09-13 20:37:00,084 - INFO - ================================================================================
+2025-09-13 20:37:00,084 - INFO - ================================================================================
+2025-09-13 20:37:00,084 - INFO - ANALYSIS COMPLETED SUCCESSFULLY!
+2025-09-13 20:37:00,084 - INFO - ================================================================================
+2025-09-13 20:37:00,084 - INFO - Generated 2 visualization files
+2025-09-13 20:37:00,084 - INFO -   - 20250913_203624_fold_BD#C_2models_2folds_test_BD_direct.png
+2025-09-13 20:37:00,085 - INFO -   - 20250913_203624_backtest_BD#C_2models_2folds_test_BD_direct.png
+2025-09-13 20:37:00,085 - INFO - Full Timeline Final: Sharpe=0.000 | Hit=0.0% | Return=0.00% | CB=0.000

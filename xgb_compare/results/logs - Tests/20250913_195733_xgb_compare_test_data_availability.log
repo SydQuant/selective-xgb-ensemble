@@ -1,0 +1,81 @@
+2025-09-13 19:57:33,321 - INFO - ================================================================================
+2025-09-13 19:57:33,321 - INFO - XGBoost Comparison Framework
+2025-09-13 19:57:33,321 - INFO - ================================================================================
+2025-09-13 19:57:33,322 - INFO - Configuration:
+2025-09-13 19:57:33,322 - INFO -   Target Symbol: @NQ#C
+2025-09-13 19:57:33,322 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-13 19:57:33,322 - INFO -   Models: 5, Type: standard
+2025-09-13 19:57:33,322 - INFO -   Folds: 3
+2025-09-13 19:57:33,322 - INFO -   Max Features: 50 (Limited)
+2025-09-13 19:57:33,322 - INFO -   Feature Selection: Enabled
+2025-09-13 19:57:33,322 - INFO -   Inner Val Fraction: 0.2
+2025-09-13 19:57:33,322 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-13 19:57:33,322 - INFO -   Signal Type: Tanh Normalized
+2025-09-13 19:57:33,322 - INFO -   Cross-validation: Expanding window
+2025-09-13 19:57:33,322 - INFO -   Production: Cutoff=0.6, Top N=1, Q-Metric=sharpe
+2025-09-13 19:57:33,322 - INFO -   Reselection: Every 1 fold(s)
+2025-09-13 19:57:33,322 - INFO - 
+2025-09-13 19:57:37,848 - INFO - Dropped 8 rows due to NaN in target column @NQ#C_target_return
+2025-09-13 19:57:38,020 - INFO - Loaded: X=(2727, 1906), y=(2727,)
+2025-09-13 19:57:55,622 - INFO - Selected 50 features (threshold: 0.7)
+2025-09-13 19:57:55,631 - INFO - Selected: 50 features
+2025-09-13 19:57:55,888 - INFO - GPU detection: CUDA GPU available and working
+2025-09-13 19:57:55,888 - INFO - Processing mode: GPU sequential (GPU: True, Total models: 15)
+2025-09-13 19:57:55,895 - INFO - GPU detection: CUDA GPU available and working
+2025-09-13 19:57:55,895 - INFO - Using expanding window
+2025-09-13 19:57:55,895 - INFO - Starting analysis: 5 standard models x 2 folds
+2025-09-13 19:57:55,895 - INFO - Processing Fold 1/2
+2025-09-13 19:57:55,898 - INFO -   Using GPU sequential processing
+2025-09-13 19:57:57,023 - INFO - Fold 1 Summary:
+2025-09-13 19:57:57,023 - INFO -   Best OOS Sharpe: M01 (1.406, p=0.010)
+2025-09-13 19:57:57,023 - INFO -   Best Q-Sharpe:  M01 (1.406, OOS_Sharpe=1.406, OOS_Hit=0.537)
+2025-09-13 19:57:57,023 - INFO -   Mean OOS Sharpe: 1.082, Mean Hit: 0.526
+2025-09-13 19:57:57,023 - INFO - 
+2025-09-13 19:57:57,023 - INFO - Processing Fold 2/2
+2025-09-13 19:57:57,026 - INFO -   Using GPU sequential processing
+2025-09-13 19:57:58,301 - INFO - Fold 2 Summary:
+2025-09-13 19:57:58,301 - INFO -   Best OOS Sharpe: M03 (1.222, p=0.030)
+2025-09-13 19:57:58,301 - INFO -   Best Q-Sharpe:  M01 (1.381, OOS_Sharpe=1.156, OOS_Hit=0.519)
+2025-09-13 19:57:58,301 - INFO -   Mean OOS Sharpe: 0.906, Mean Hit: 0.517
+2025-09-13 19:57:58,301 - INFO - 
+2025-09-13 19:57:58,301 - INFO - Starting full timeline backtesting...
+2025-09-13 19:57:58,301 - INFO - Running full timeline backtest with 2 folds (0-based indexing)
+2025-09-13 19:57:58,302 - INFO - Fold 0 skipped (no prior Q-score history for meaningful selection)
+2025-09-13 19:57:58,302 - INFO - Effective backtest period: Folds 1-1 (1 folds)
+2025-09-13 19:57:58,302 - INFO - Training period: Folds 1-1
+2025-09-13 19:57:58,302 - INFO - Production period: Folds 2-1
+2025-09-13 19:57:58,302 - INFO - Using consistent OOS methodology for all folds
+2025-09-13 19:57:58,302 - INFO - Fold 0: Skipped (no prior Q-score history for meaningful selection)
+2025-09-13 19:57:58,302 - INFO - 
+--- Processing fold 1/1 ---
+2025-09-13 19:57:58,303 - INFO - Fold 1: Q-scores from fold 0: ['M00:1.043', 'M01:1.406', 'M02:0.791', 'M03:1.391', 'M04:0.779']...
+2025-09-13 19:57:58,303 - INFO - Fold 1: Selected models [1] based on fold 0 Q-scores, avg Q-score: 1.406
+2025-09-13 19:57:58,305 - INFO - Fold 1 (Training): Sharpe=1.156, Hit=51.9%
+2025-09-13 19:57:58,306 - INFO - Training Period Overall: Sharpe=1.156, Hit=51.9%
+2025-09-13 19:57:58,307 - INFO - Full Timeline Overall: Sharpe=1.156, Hit=51.9%
+2025-09-13 19:57:58,307 - INFO - Training: Sharpe=1.156 | Hit=51.9% | Return=14.95%
+2025-09-13 19:57:58,307 - INFO - Full Timeline: Sharpe=1.156 | Hit=51.9% | Return=14.95%
+2025-09-13 19:57:58,307 - INFO - Generating visualizations...
+2025-09-13 19:57:58,307 - INFO - Creating clean visualizations for 5 models...
+2025-09-13 19:57:58,780 - INFO - Clean fold-by-fold analysis saved to: 20250913_195733_fold_@NQ#C_5models_3folds_test_data_availability.png
+2025-09-13 19:57:58,798 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-09-13 19:57:58,799 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-09-13 19:57:59,691 - INFO - Detailed production analysis saved to: 20250913_195733_backtest_@NQ#C_5models_3folds_test_data_availability.png
+2025-09-13 19:57:59,691 - INFO - ================================================================================
+2025-09-13 19:57:59,691 - INFO - BACKTEST SUMMARY
+2025-09-13 19:57:59,691 - INFO - ================================================================================
+2025-09-13 19:57:59,691 - INFO - Config: Cutoff=70%, Top N=5, Q-Metric=sharpe, Reselection=1 fold(s)
+2025-09-13 19:57:59,691 - INFO - Model Selection History:
+2025-09-13 19:57:59,691 - INFO -   Fold 1: M01 (Avg Q-sharpe: 1.406)
+2025-09-13 19:57:59,691 - INFO - 
+2025-09-13 19:57:59,691 - INFO - Fold-by-Fold Performance:
+2025-09-13 19:57:59,691 - INFO -   Fold 1: M01 | Sharpe=1.156 | Hit=51.9% | Samples=909
+2025-09-13 19:57:59,691 - INFO - ================================================================================
+2025-09-13 19:57:59,691 - INFO - ================================================================================
+2025-09-13 19:57:59,691 - INFO - ANALYSIS COMPLETED SUCCESSFULLY!
+2025-09-13 19:57:59,691 - INFO - ================================================================================
+2025-09-13 19:57:59,691 - INFO - Generated 2 visualization files
+2025-09-13 19:57:59,691 - INFO -   - 20250913_195733_fold_@NQ#C_5models_3folds_test_data_availability.png
+2025-09-13 19:57:59,691 - INFO -   - 20250913_195733_backtest_@NQ#C_5models_3folds_test_data_availability.png
+2025-09-13 19:57:59,691 - INFO - Training Final: Sharpe=1.156 | Hit=51.9% | Return=14.95% | CB=1.233
+2025-09-13 19:57:59,691 - INFO - Full Timeline Final: Sharpe=1.156 | Hit=51.9% | Return=14.95% | CB=1.233

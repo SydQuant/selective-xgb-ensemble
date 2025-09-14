@@ -1,0 +1,19 @@
+2025-09-13 20:30:23,951 - INFO - ================================================================================
+2025-09-13 20:30:23,951 - INFO - XGBoost Comparison Framework
+2025-09-13 20:30:23,951 - INFO - ================================================================================
+2025-09-13 20:30:23,951 - INFO - Configuration:
+2025-09-13 20:30:23,951 - INFO -   Target Symbol: QGC#C
+2025-09-13 20:30:23,951 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-13 20:30:23,951 - INFO -   Models: 5, Type: standard
+2025-09-13 20:30:23,951 - INFO -   Folds: 3
+2025-09-13 20:30:23,951 - INFO -   Max Features: 50 (Limited)
+2025-09-13 20:30:23,951 - INFO -   Feature Selection: Enabled
+2025-09-13 20:30:23,951 - INFO -   Inner Val Fraction: 0.2
+2025-09-13 20:30:23,951 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-13 20:30:23,951 - INFO -   Signal Type: Tanh Normalized
+2025-09-13 20:30:23,951 - INFO -   Cross-validation: Expanding window
+2025-09-13 20:30:23,951 - INFO -   Production: Cutoff=0.6, Top N=1, Q-Metric=sharpe
+2025-09-13 20:30:23,951 - INFO -   Reselection: Every 1 fold(s)
+2025-09-13 20:30:23,951 - INFO - 
+2025-09-13 20:30:31,507 - INFO - Dropped 6 rows due to NaN in target column QGC#C_target_return
+2025-09-13 20:30:31,851 - INFO - Loaded: X=(2729, 1906), y=(2729,)
