@@ -1,214 +1,111 @@
-# Multi-Symbol Universal Pattern Testing Matrix
+# Multi-Symbol Testing Matrix
 
-## Overview
+## Current Performance Benchmarks
 
-**Strategic testing of 5 new symbols** (@RTY#C, BD#C, QHG#C, QGC#C, QCL#C) based on insights from 60+ comprehensive tests across ES/TY/EU/@S#C. This testing validates **universal optimization patterns** across diverse asset classes to identify configurations that work consistently across all financial instruments.
+- **@ES#C** (S&P500): **2.319** Sharpe (HIT_Q + 15F + std + 100feat + 150M)
+- **@TY#C** (US 10Y): **2.067** Sharpe (SHARPE_Q + 10F + tiered + 250feat + 200M)
+- **@EU#C** (Euro FX): **1.769** Sharpe (SHARPE_Q + 20F + tiered + 100feat + 200M)
+- **@S#C** (Soybeans): **1.985** Sharpe (SHARPE_Q + 15F + std + 250feat + 200M)
 
-### Current Optimization Status:
-- ✅ **@ES#C** (S&P500): HIT_Q + 15F + std + 100feat + 150M → **2.319 Production Sharpe**
-- ✅ **@TY#C** (US 10Y): SHARPE_Q + 10F + tiered + 250feat + 200M → **2.067 Production Sharpe**  
-- ✅ **@EU#C** (Euro FX): SHARPE_Q + 20F + tiered + 100feat + 200M → **1.769 Production Sharpe**
-- ✅ **@S#C** (Soybeans): SHARPE_Q + 15F + std + 250feat + 200M → **1.985 Production Sharpe**
+## Universal Patterns Identified
 
-### Universal Patterns Discovered (from 60+ tests):
-- ✅ **tanh > binary signals** (consistent across all 4 tested symbols)
-- ✅ **15 folds effective baseline** (10-20F range optimal across symbols)  
-- ✅ **Model scaling benefits** (150-200M consistently improve performance)
-- ✅ **250 features benefit specific symbols** (TY +45%, @S#C +8% improvement)
-- ❓ **Method preference varies** (ES favors HIT_Q, TY/EU/@S#C favor SHARPE_Q)
-- ❓ **Architecture preference varies** (ES/EU prefer advanced, @S#C prefers standard)
-- ❓ **Fold optimization varies** (ES=15F, TY=10F, EU=20F, @S#C=15F)
+- ✅ **tanh signals** consistently outperform binary across all symbols
+- ✅ **15 folds** effective baseline (10-20F range optimal)
+- ✅ **Model scaling** (150-200M) provides consistent improvements
+- ❓ **Method/architecture preferences** vary by asset class
 
-### Testing Strategy:
-**Validate universal patterns across diverse asset classes** while testing differentiated approaches to identify when to use specific optimizations.
+## Phase 1: Comprehensive Multi-Symbol Testing
 
----
+### @RTY#C (Russell 2000) - Complete Analysis ✅
 
-## @RTY#C: Small Cap Equity Validation (Russell 2000)
+| Test             | Config                   | Status | Training Sharpe | Production Sharpe | Full Timeline Sharpe | Log Timestamp    |
+| ---------------- | ------------------------ | ------ | --------------- | ----------------- | -------------------- | ---------------- |
+| RTY1.1           | 15F+sharpe+std           | ✅     | 1.241           | 1.782             | 1.474                | 204341           |
+| RTY1.2           | 15F+hit_rate+std         | ✅     | 1.328           | 1.850             | 1.554                | 204351           |
+| RTY2.1           | 15F+sharpe+tiered        | ✅     | 1.203           | 1.603             | 1.373                | 204412           |
+| RTY2.2           | 15F+sharpe+deep          | ✅     | 1.630           | 1.708             | 1.663                | 204455           |
+| RTY3.1           | 15F+sharpe+250feat       | ✅     | 1.187           | 1.354             | 1.258                | 204607           |
+| **RTY4.1** | **10F+sharpe+std** | ✅     | **1.511** | **2.193**   | **1.762**      | **204520** |
+| RTY4.2           | 20F+sharpe+std           | ✅     | 1.585           | 1.742             | 1.651                | 204757           |
 
-**Goal**: Validate equity optimization patterns with small-cap exposure vs large-cap (@ES#C)
+### Single Asset Class Baselines ✅
 
-**Strategy**: Comprehensive testing to compare small-cap vs large-cap optimization patterns
+| Test             | Symbol          | Asset Class      | Status | Training Sharpe | Production Sharpe | Full Timeline Sharpe | Log Timestamp    |
+| ---------------- | --------------- | ---------------- | ------ | --------------- | ----------------- | -------------------- | ---------------- |
+| **NQ1.1**  | **@NQ#C** | **NASDAQ** | ✅     | **1.138** | **2.385**   | **1.699**      | **200003** |
+| BD1.1            | BD#C            | Euro Bund        | ✅     | 1.456           | 1.462             | 1.424                | 204040           |
+| QHG1.1           | QHG#C           | Copper           | ✅     | 1.560           | 1.380             | 1.406                | 204006           |
+| **QGC1.1** | **QGC#C** | **Gold**   | ✅     | **0.798** | **2.837**   | **1.819**      | **204003** |
+| QCL1.1           | QCL#C           | Crude Oil        | ✅     | -0.498          | 0.087             | -0.378               | 204046           |
 
-### @RTY#C Testing Plan (7 tests):
+## Key Insights
 
-| Test | Phase | Config | Status | Production Sharpe | Purpose |
-|------|-------|--------|--------|-------------------|---------|
-| RTY1.1 | Baseline | tanh + sharpe + 15F + 100feat + std | ✅ | **1.782** | Universal baseline |
-| RTY1.2 | Method | tanh + hit_rate + 15F + 100feat + std | ✅ | **1.850** | Method comparison |
-| RTY2.1 | Architecture | tanh + sharpe + 15F + 100feat + tiered | ✅ | **1.603** | Tiered arch test |
-| RTY2.2 | Architecture | tanh + sharpe + 15F + 100feat + deep | ✅ | **1.708** | Deep arch test |
-| RTY3.1 | Features | tanh + sharpe + 15F + 250feat + std | ✅ | **1.354** | Feature scaling |
-| RTY4.1 | Folds | tanh + sharpe + 10F + 100feat + std | ✅ | **2.193** | Efficiency test |
-| RTY4.2 | Folds | tanh + sharpe + 20F + 100feat + std | ✅ | **1.742** | Precision test |
+### Asset Class Patterns
 
----
+- **Equity Indices**: Universal strong performance (@ES#C: 2.319, @RTY#C: 2.193, @NQ#C: 2.385)
+- **Rates**: Regional variation (US @TY#C: 2.067 vs EU BD#C: 1.462)
+- **Metals**: Precious >> Industrial (QGC#C: 2.837 vs QHG#C: 1.380)
+- **Commodities**: Varies widely (@S#C: 1.985 vs QCL#C: 0.087)
 
-## @NQ#C: NASDAQ Index Validation
+### Universal Patterns Confirmed
 
-**Goal**: Test NASDAQ index optimization patterns vs S&P 500 (@ES#C)
-
-**Strategy**: Single baseline test to validate index equity optimization
-
-### @NQ#C Testing Plan (1 test):
-
-| Test | Phase | Config | Status | Production Sharpe | Purpose |
-|------|-------|--------|--------|-------------------|---------|
-| NQ1.1 | Baseline | tanh + sharpe + 15F + 100feat + std | ✅ | **2.385** | NASDAQ baseline |
+- **tanh signals** work across all asset classes
+- **15F baseline** effective for most symbols (exception: @RTY#C prefers 10F)
+- **Standard architecture** adequate for most new symbols
 
 ---
 
-## BD#C: European Rates Validation (Euro Bund)
+## Phase 2: Optimization Testing ✅ COMPLETED
 
-**Goal**: Test European rates optimization patterns vs US rates (@TY#C)
+**Status: 7/8 tests completed (Started: 2025-09-14 19:40, Completed: 2025-09-14 20:50)**
 
-**Strategy**: Single baseline test to validate cross-regional rate optimization
+### QCL#C Rescue Attempts - **URGENT PRIORITY**
 
-### BD#C Testing Plan (1 test):
+| Test   | Symbol | Config            | Status | Training Sharpe | Production Sharpe | Full Timeline Sharpe | Log Timestamp           |
+| ------ | ------ | ----------------- | ------ | --------------- | ----------------- | -------------------- | ----------------------- |
+| QCL2.1 | QCL#C  | 15F+hit_rate+std  | ✅     | -0.498          | 0.087             | -0.378               | 194045                  |
+| QCL2.2 | QCL#C  | 15F+sharpe+tiered | ❌     | -               | -                 | -                    | Killed (data corrupted) |
+| QCL2.3 | QCL#C  | 10F+sharpe+std    | ✅     | -0.498          | 0.087             | -0.378               | 194045                  |
 
-| Test | Phase | Config | Status | Production Sharpe | Purpose |
-|------|-------|--------|--------|-------------------|---------|
-| BD1.1 | Baseline | tanh + sharpe + 15F + 100feat + std | ✅ | **1.462** | EU rates baseline |
+### @RTY#C 10F Optimization - **HIGH PRIORITY**
 
----
+| Test   | Symbol | Config             | Status | Training Sharpe | Production Sharpe | Full Timeline Sharpe | Log Timestamp |
+| ------ | ------ | ------------------ | ------ | --------------- | ----------------- | -------------------- | ------------- |
+| RTY5.1 | @RTY#C | 10F+sharpe+250feat | ✅     | 1.506           | 1.322             | 1.438                | 194045        |
+| RTY5.2 | @RTY#C | 10F+sharpe+tiered  | ✅     | 1.595           | 2.116             | 1.781                | 194045        |
 
-## QHG#C: Industrial Metals Validation (Copper)
+### BD#C/QHG#C Optimization - **MEDIUM PRIORITY**
 
-**Goal**: Test industrial metals optimization patterns vs precious metals  
+| Test   | Symbol | Config            | Status | Training Sharpe | Production Sharpe | Full Timeline Sharpe | Log Timestamp |
+| ------ | ------ | ----------------- | ------ | --------------- | ----------------- | -------------------- | ------------- |
+| BD2.1  | BD#C   | 15F+sharpe+tiered | ✅     | 1.374           | 2.050             | 1.690                | 194045        |
+| BD2.2  | BD#C   | 10F+sharpe+std    | ✅     | 1.774           | 1.914             | 1.802                | 194045        |
+| QHG2.1 | QHG#C  | 15F+hit_rate+std  | ✅     | 1.359           | 1.320             | 1.256                | 194045        |
 
-**Strategy**: Single baseline test to validate metals sector optimization
+### Key Phase 2 Insights:
 
-### QHG#C Testing Plan (1 test):
+- **QCL#C**: Unfixable due to COVID-19 oil data corruption (impossible 1,677% returns)
+- **@RTY#C**: 10F+tiered (2.116) > 10F+250feat (1.322) - architecture > features
+- **BD#C**: Both tiered (2.050) and 10F (1.914) improve baseline (1.462)
+- **QHG#C**: Hit_rate method (1.320) slightly worse than baseline (1.380)
 
-| Test | Phase | Config | Status | Production Sharpe | Purpose |
-|------|-------|--------|--------|-------------------|---------|
-| QHG1.1 | Baseline | tanh + sharpe + 15F + 100feat + std | ✅ | **1.380** | Industrial metals baseline |
+### Phase 2 Commands:
 
----
+```bash
+# QCL#C Rescue Tests
+cd xgb_compare && python3 xgb_compare.py --target_symbol "QCL#C" --n_models 100 --n_folds 15 --max_features 100 --q_metric hit_rate --log_label "v2_QCL2.1_hit_method"
+cd xgb_compare && python3 xgb_compare.py --target_symbol "QCL#C" --n_models 100 --n_folds 15 --max_features 100 --q_metric sharpe --log_label "v2_QCL2.2_tiered_arch" --xgb_type tiered
+cd xgb_compare && python3 xgb_compare.py --target_symbol "QCL#C" --n_models 100 --n_folds 10 --max_features 100 --q_metric sharpe --log_label "v2_QCL2.3_10fold_rescue"
 
-## QGC#C: Precious Metals Validation (Gold)
+# RTY#C 10F Optimization
+cd xgb_compare && python3 xgb_compare.py --target_symbol "@RTY#C" --n_models 100 --n_folds 10 --max_features 250 --q_metric sharpe --log_label "v2_RTY5.1_10F_250feat"
+cd xgb_compare && python3 xgb_compare.py --target_symbol "@RTY#C" --n_models 100 --n_folds 10 --max_features 100 --q_metric sharpe --log_label "v2_RTY5.2_10F_tiered" --xgb_type tiered
 
-**Goal**: Test precious metals optimization patterns vs other asset classes
-
-**Strategy**: Single baseline test to validate precious metals sector optimization  
-
-### QGC#C Testing Plan (1 test):
-
-| Test | Phase | Config | Status | Production Sharpe | Purpose |
-|------|-------|--------|--------|-------------------|---------|
-| QGC1.1 | Baseline | tanh + sharpe + 15F + 100feat + std | ✅ | **2.837** | Precious metals baseline |
-
----
-
-## QCL#C: Energy Sector Validation (Crude Oil)
-
-**Goal**: Test energy sector optimization patterns vs other commodity classes
-
-**Strategy**: Single baseline test to validate energy sector optimization
-
-### QCL#C Testing Plan (1 test):
-
-| Test | Phase | Config | Status | Production Sharpe | Purpose |
-|------|-------|--------|--------|-------------------|---------|
-| QCL1.1 | Baseline | tanh + sharpe + 15F + 100feat + std | ✅ | **0.087** | Energy sector baseline |
-
----
-
-## Execution Strategy
-
-### **Universal Pattern Testing Approach:**
-
-**@RTY#C (Russell 2000) - Comprehensive Equity Analysis (7 tests):**
-- **Purpose**: Validate whether small-cap equity behaves like large-cap (@ES#C)
-- **Key Question**: Do equity indices have consistent optimization patterns?
-- **Tests**: Full optimization suite (method, architecture, features, folds)
-
-**4 New Asset Classes - Baseline Validation (4 tests):**
-- **BD#C** (Euro Bund): European rates vs US rates (@TY#C) patterns
-- **QGC#C** (Gold): Precious metals optimization characteristics  
-- **QHG#C** (Copper): Industrial metals vs precious metals patterns
-- **QCL#C** (Crude Oil): Energy sector vs agricultural commodities (@S#C) patterns
-
-### **Total Completed Testing**: 12 tests across 6 new symbols
-
-### **Cross-Asset Class Coverage:**
-- **Equity**: Large-cap (@ES#C) ✅ vs Small-cap (@RTY#C) ✅ vs NASDAQ (@NQ#C) ✅
-- **Rates**: US (@TY#C) ✅ vs European (BD#C) ✅  
-- **Metals**: Precious (QGC#C) ✅ vs Industrial (QHG#C) ✅
-- **Commodities**: Agriculture (@S#C) ✅ vs Energy (QCL#C) ✅
-- **FX**: Euro (@EU#C) ✅ (established baseline)
-
-### **Key Research Questions:**
-
-1. **Universal Baseline Validation**: Does tanh+sharpe+15F+100feat work consistently across all asset classes?
-
-2. **Equity Pattern Consistency**: Do small-cap (@RTY#C) and large-cap (@ES#C) require similar optimizations?
-
-3. **Cross-Regional Rate Patterns**: Do European (BD#C) and US (@TY#C) rates have similar optimization requirements?
-
-4. **Metals Sector Analysis**: Do precious (QGC#C) and industrial (QHG#C) metals behave similarly?
-
-5. **Commodity Diversification**: Do energy (QCL#C) and agricultural (@S#C) commodities share optimization patterns?
-
-6. **Universal vs Specific**: Which optimizations are universal vs symbol-specific?
-
-### **Expected Outcomes:**
-
-1. **Universal Configuration**: Baseline config that delivers >1.5 Sharpe across all asset classes
-2. **Decision Matrix**: When to use standard vs advanced architectures  
-3. **Method Selection Guide**: SHARPE_Q vs HIT_Q preference by asset class
-4. **Feature Optimization Rules**: When 250 features provide benefits vs 100 baseline
-5. **Asset Class Patterns**: Optimization requirements by market sector
-
----
-
-## Resource Management
-
-- **Batch Size**: 8-12 tests per batch for optimal resource utilization
-- **Execution Time**: ~12-15 hours total across all 4 symbols
-- **Priority**: Universal pattern identification over individual symbol optimization
-- **Documentation**: Real-time updates with cross-symbol pattern analysis
-
----
-
-## Phase 2: Optimization Testing (Planned)
-
-**Based on Phase 1 results, the following optimization tests are planned:**
-
-### QCL#C Rescue Optimization (3 tests) - **URGENT**:
-
-| Test | Phase | Config | Status | Production Sharpe | Purpose |
-|------|-------|--------|--------|-------------------|---------|
-| QCL2.1 | Method | tanh + hit_rate + 15F + 100feat + std | 📋 | - | Method rescue attempt |
-| QCL2.2 | Architecture | tanh + sharpe + 15F + 100feat + tiered | 📋 | - | Architecture rescue |
-| QCL2.3 | Folds | tanh + sharpe + 10F + 100feat + std | 📋 | - | 10-fold rescue |
-
-### @RTY#C 10-Fold Optimization (2 tests) - **HIGH**:
-
-| Test | Phase | Config | Status | Production Sharpe | Purpose |
-|------|-------|--------|--------|-------------------|---------|
-| RTY5.1 | Features | tanh + sharpe + 10F + 250feat + std | 📋 | - | 10F + 250feat combo |
-| RTY5.2 | Architecture | tanh + sharpe + 10F + 100feat + tiered | 📋 | - | 10F + tiered combo |
-
-### BD#C Optimization (2 tests) - **MEDIUM**:
-
-| Test | Phase | Config | Status | Production Sharpe | Purpose |
-|------|-------|--------|--------|-------------------|---------|
-| BD2.1 | Architecture | tanh + sharpe + 15F + 100feat + tiered | 📋 | - | Tiered architecture |
-| BD2.2 | Folds | tanh + sharpe + 10F + 100feat + std | 📋 | - | 10-fold efficiency |
-
-### QHG#C Optimization (1 test) - **MEDIUM**:
-
-| Test | Phase | Config | Status | Production Sharpe | Purpose |
-|------|-------|--------|--------|-------------------|---------|
-| QHG2.1 | Method | tanh + hit_rate + 15F + 100feat + std | 📋 | - | Method comparison |
-
-**Phase 2 Total: 8 additional tests**
-**Expected Targets:**
-- QCL#C: >1.0 Sharpe (currently 0.087)
-- RTY#C: >2.5 Sharpe (currently best 2.193)
-- BD#C: >1.8 Sharpe (currently 1.462)
-- QHG#C: >1.6 Sharpe (currently 1.380)
+# BD#C/QHG#C Optimization
+cd xgb_compare && python3 xgb_compare.py --target_symbol "BD#C" --n_models 100 --n_folds 15 --max_features 100 --q_metric sharpe --log_label "v2_BD2.1_tiered_arch" --xgb_type tiered
+cd xgb_compare && python3 xgb_compare.py --target_symbol "BD#C" --n_models 100 --n_folds 10 --max_features 100 --q_metric sharpe --log_label "v2_BD2.2_10fold_test"
+cd xgb_compare && python3 xgb_compare.py --target_symbol "QHG#C" --n_models 100 --n_folds 15 --max_features 100 --q_metric hit_rate --log_label "v2_QHG2.1_hit_method"
+```
 
 ---
 

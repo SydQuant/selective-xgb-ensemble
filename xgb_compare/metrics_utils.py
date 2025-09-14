@@ -121,8 +121,8 @@ def normalize_predictions(predictions: pd.Series, binary_signal: bool = False) -
     z_scores = (predictions - predictions.mean()) / predictions.std()
     
     if binary_signal:
-        # Binary: +1 for positive, -1 for negative z-scores
-        normalized = np.where(z_scores > 0, 1.0, -1.0)
+        # Binary: +1 for positive, -1 for negative, 0 for zero z-scores (true ternary)
+        normalized = np.where(z_scores > 0, 1.0, np.where(z_scores < 0, -1.0, 0.0))
     else:
         # Continuous: tanh normalization
         normalized = np.tanh(z_scores)
