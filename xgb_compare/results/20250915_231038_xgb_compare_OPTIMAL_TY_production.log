@@ -1,0 +1,28 @@
+2025-09-15 23:10:38,932 - INFO - ================================================================================
+2025-09-15 23:10:38,932 - INFO - XGBoost Comparison Framework
+2025-09-15 23:10:38,932 - INFO - ================================================================================
+2025-09-15 23:10:38,932 - INFO - Configuration:
+2025-09-15 23:10:38,932 - INFO -   Target Symbol: @TY#C
+2025-09-15 23:10:38,932 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-15 23:10:38,932 - INFO -   Models: 200, Type: tiered
+2025-09-15 23:10:38,933 - INFO -   Folds: 10
+2025-09-15 23:10:38,933 - INFO -   Max Features: 250 (Limited)
+2025-09-15 23:10:38,933 - INFO -   Feature Selection: Enabled
+2025-09-15 23:10:38,933 - INFO -   Inner Val Fraction: 0.2
+2025-09-15 23:10:38,933 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-15 23:10:38,933 - INFO -   Signal Type: Tanh Normalized
+2025-09-15 23:10:38,933 - INFO -   Cross-validation: Expanding window
+2025-09-15 23:10:38,933 - INFO -   Production: Cutoff=0.6, Top N=10, Q-Metric=sharpe
+2025-09-15 23:10:38,933 - INFO -   Reselection: Every 1 fold(s)
+2025-09-15 23:10:38,933 - INFO - 
+2025-09-15 23:10:46,271 - INFO - Dropped 4 rows due to NaN in target column @TY#C_target_return
+2025-09-15 23:10:46,500 - INFO - Loaded: X=(2731, 1906), y=(2731,)
+2025-09-15 23:11:22,001 - INFO - Selected 250 features (threshold: 0.7)
+2025-09-15 23:11:22,014 - INFO - Selected: 250 features
+2025-09-15 23:11:22,455 - INFO - GPU detection: CUDA GPU available and working
+2025-09-15 23:11:22,456 - INFO - Processing mode: GPU sequential (GPU: True, Total models: 2000)
+2025-09-15 23:11:22,678 - INFO - GPU detection: CUDA GPU available and working
+2025-09-15 23:11:22,715 - INFO - Using expanding window
+2025-09-15 23:11:22,723 - INFO - Starting analysis: 200 tiered models x 9 folds
+2025-09-15 23:11:22,723 - INFO - Processing Fold 1/9
+2025-09-15 23:11:22,738 - INFO -   Using GPU sequential processing

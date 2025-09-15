@@ -33,3 +33,73 @@
 2025-09-15 20:58:03,848 - INFO - 
 2025-09-15 20:58:03,851 - INFO - Processing Fold 2/18
 2025-09-15 20:58:03,854 - INFO -   Using GPU sequential processing
+2025-09-15 21:11:26,542 - INFO - Fold 2 Summary:
+2025-09-15 21:11:26,542 - INFO -   Best OOS Sharpe: M03 (4.378, p=0.000)
+2025-09-15 21:11:26,542 - INFO -   Best Q-Sharpe:  M03 (2.492, OOS_Sharpe=4.378, OOS_Hit=0.566)
+2025-09-15 21:11:26,542 - INFO -   Mean OOS Sharpe: 1.804, Mean Hit: 0.507
+2025-09-15 21:11:26,542 - INFO - 
+2025-09-15 21:11:26,546 - INFO - Processing Fold 3/18
+2025-09-15 21:11:26,549 - INFO -   Using GPU sequential processing
+2025-09-15 21:27:02,378 - INFO - Fold 3 Summary:
+2025-09-15 21:27:02,378 - INFO -   Best OOS Sharpe: M126 (3.388, p=0.020)
+2025-09-15 21:27:02,378 - INFO -   Best Q-Sharpe:  M28 (2.339, OOS_Sharpe=3.075, OOS_Hit=0.515)
+2025-09-15 21:27:02,378 - INFO -   Mean OOS Sharpe: 1.431, Mean Hit: 0.545
+2025-09-15 21:27:02,378 - INFO - 
+2025-09-15 21:27:02,381 - INFO - Processing Fold 4/18
+2025-09-15 21:27:02,385 - INFO -   Using GPU sequential processing
+2025-09-15 21:42:40,294 - INFO - Fold 4 Summary:
+2025-09-15 21:42:40,296 - INFO -   Best OOS Sharpe: M109 (4.182, p=0.000)
+2025-09-15 21:42:40,297 - INFO -   Best Q-Sharpe:  M56 (2.302, OOS_Sharpe=2.401, OOS_Hit=0.544)
+2025-09-15 21:42:40,297 - INFO -   Mean OOS Sharpe: 2.054, Mean Hit: 0.530
+2025-09-15 21:42:40,297 - INFO - 
+2025-09-15 21:42:40,307 - INFO - Processing Fold 5/18
+2025-09-15 21:42:40,311 - INFO -   Using GPU sequential processing
+2025-09-15 21:59:00,034 - INFO - Fold 5 Summary:
+2025-09-15 21:59:00,041 - INFO -   Best OOS Sharpe: M127 (4.437, p=0.000)
+2025-09-15 21:59:00,042 - INFO -   Best Q-Sharpe:  M142 (2.347, OOS_Sharpe=3.495, OOS_Hit=0.596)
+2025-09-15 21:59:00,042 - INFO -   Mean OOS Sharpe: 2.528, Mean Hit: 0.560
+2025-09-15 21:59:00,042 - INFO - 
+2025-09-15 21:59:00,046 - INFO - Processing Fold 6/18
+2025-09-15 21:59:00,053 - INFO -   Using GPU sequential processing
+2025-09-15 22:15:16,815 - INFO - Fold 6 Summary:
+2025-09-15 22:15:16,815 - INFO -   Best OOS Sharpe: M54 (5.143, p=0.000)
+2025-09-15 22:15:16,815 - INFO -   Best Q-Sharpe:  M56 (2.399, OOS_Sharpe=2.972, OOS_Hit=0.559)
+2025-09-15 22:15:16,815 - INFO -   Mean OOS Sharpe: 2.166, Mean Hit: 0.547
+2025-09-15 22:15:16,815 - INFO - 
+2025-09-15 22:15:16,819 - INFO - Processing Fold 7/18
+2025-09-15 22:15:16,823 - INFO -   Using GPU sequential processing
+2025-09-15 22:29:34,498 - INFO - Fold 7 Summary:
+2025-09-15 22:29:34,498 - INFO -   Best OOS Sharpe: M99 (3.671, p=0.010)
+2025-09-15 22:29:34,498 - INFO -   Best Q-Sharpe:  M56 (2.239, OOS_Sharpe=0.801, OOS_Hit=0.522)
+2025-09-15 22:29:34,498 - INFO -   Mean OOS Sharpe: 0.819, Mean Hit: 0.518
+2025-09-15 22:29:34,498 - INFO - 
+2025-09-15 22:29:34,502 - INFO - Processing Fold 8/18
+2025-09-15 22:29:34,506 - INFO -   Using GPU sequential processing
+2025-09-15 22:42:53,953 - INFO - Fold 8 Summary:
+2025-09-15 22:42:53,953 - INFO -   Best OOS Sharpe: M00 (4.696, p=0.000)
+2025-09-15 22:42:53,953 - INFO -   Best Q-Sharpe:  M04 (2.400, OOS_Sharpe=4.314, OOS_Hit=0.610)
+2025-09-15 22:42:53,953 - INFO -   Mean OOS Sharpe: 3.067, Mean Hit: 0.564
+2025-09-15 22:42:53,953 - INFO - 
+2025-09-15 22:42:53,957 - INFO - Processing Fold 9/18
+2025-09-15 22:42:53,961 - INFO -   Using GPU sequential processing
+2025-09-15 22:55:11,473 - INFO - Fold 9 Summary:
+2025-09-15 22:55:11,473 - INFO -   Best OOS Sharpe: M12 (4.928, p=0.000)
+2025-09-15 22:55:11,473 - INFO -   Best Q-Sharpe:  M04 (2.505, OOS_Sharpe=3.454, OOS_Hit=0.551)
+2025-09-15 22:55:11,473 - INFO -   Mean OOS Sharpe: 3.253, Mean Hit: 0.581
+2025-09-15 22:55:11,473 - INFO - 
+2025-09-15 22:55:11,477 - INFO - Processing Fold 10/18
+2025-09-15 22:55:11,481 - INFO -   Using GPU sequential processing
+2025-09-15 23:05:15,795 - INFO - Fold 10 Summary:
+2025-09-15 23:05:15,795 - INFO -   Best OOS Sharpe: M18 (3.050, p=0.020)
+2025-09-15 23:05:15,795 - INFO -   Best Q-Sharpe:  M38 (2.374, OOS_Sharpe=2.736, OOS_Hit=0.500)
+2025-09-15 23:05:15,795 - INFO -   Mean OOS Sharpe: 1.448, Mean Hit: 0.510
+2025-09-15 23:05:15,795 - INFO - 
+2025-09-15 23:05:15,798 - INFO - Processing Fold 11/18
+2025-09-15 23:05:15,800 - INFO -   Using GPU sequential processing
+2025-09-15 23:13:54,501 - INFO - Fold 11 Summary:
+2025-09-15 23:13:54,501 - INFO -   Best OOS Sharpe: M57 (4.073, p=0.000)
+2025-09-15 23:13:54,501 - INFO -   Best Q-Sharpe:  M17 (2.443, OOS_Sharpe=3.187, OOS_Hit=0.574)
+2025-09-15 23:13:54,501 - INFO -   Mean OOS Sharpe: 1.464, Mean Hit: 0.524
+2025-09-15 23:13:54,501 - INFO - 
+2025-09-15 23:13:54,505 - INFO - Processing Fold 12/18
+2025-09-15 23:13:54,509 - INFO -   Using GPU sequential processing
