@@ -26,3 +26,10 @@
 2025-09-15 23:12:03,732 - INFO - Starting analysis: 150 standard models x 13 folds
 2025-09-15 23:12:03,732 - INFO - Processing Fold 1/13
 2025-09-15 23:12:03,740 - INFO -   Using GPU sequential processing
+2025-09-15 23:22:28,066 - INFO - Fold 1 Summary:
+2025-09-15 23:22:28,067 - INFO -   Best OOS Sharpe: M20 (2.056, p=0.130)
+2025-09-15 23:22:28,067 - INFO -   Best Q-Sharpe:  M20 (2.056, OOS_Sharpe=2.056, OOS_Hit=0.548)
+2025-09-15 23:22:28,067 - INFO -   Mean OOS Sharpe: -0.366, Mean Hit: 0.466
+2025-09-15 23:22:28,110 - INFO - 
+2025-09-15 23:22:28,114 - INFO - Processing Fold 2/13
+2025-09-15 23:22:28,122 - INFO -   Using GPU sequential processing

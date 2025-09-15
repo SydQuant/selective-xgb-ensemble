@@ -96,3 +96,10 @@
 2025-09-15 23:12:26,199 - INFO - 
 2025-09-15 23:12:26,203 - INFO - Processing Fold 11/18
 2025-09-15 23:12:26,215 - INFO -   Using GPU sequential processing
+2025-09-15 23:29:30,794 - INFO - Fold 11 Summary:
+2025-09-15 23:29:30,795 - INFO -   Best OOS Sharpe: M83 (2.771, p=0.030)
+2025-09-15 23:29:30,795 - INFO -   Best Q-Hit_Rate:  M20 (0.551, OOS_Sharpe=0.789, OOS_Hit=0.496)
+2025-09-15 23:29:30,795 - INFO -   Mean OOS Sharpe: 0.080, Mean Hit: 0.483
+2025-09-15 23:29:30,795 - INFO - 
+2025-09-15 23:29:30,800 - INFO - Processing Fold 12/18
+2025-09-15 23:29:30,834 - INFO -   Using GPU sequential processing

@@ -49,6 +49,9 @@ class XGBCompareConfig:
     # Analysis parameters
     n_bootstraps: int = 100
     log_label: str = 'comparison'
+
+    # COVID period handling
+    skip_covid: bool = False  # Skip Mar 2020 - May 2020 from backtest PnL calculation
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert config to dictionary."""
@@ -90,6 +93,8 @@ class XGBCompareConfig:
         logger.info(f"  Cross-validation: {'Rolling ' + str(self.rolling_days) + ' days' if self.rolling_days > 0 else 'Expanding window'}")
         logger.info(f"  Production: Cutoff={self.cutoff_fraction}, Top N={self.top_n_models}, Q-Metric={self.q_metric}")
         logger.info(f"  Reselection: Every {self.reselection_frequency} fold(s)")
+        if self.skip_covid:
+            logger.info(f"  COVID Period: SKIPPED (Mar 2020 - May 2020 excluded from backtest PnL)")
         logger.info("")
 
 def create_argument_parser() -> argparse.ArgumentParser:
@@ -123,7 +128,8 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument('--log_label', type=str, default='comparison', help='Output filename label')
     parser.add_argument('--binary_signal', action='store_true', help='Use binary +1/-1 signals')
     parser.add_argument('--rolling', type=int, default=0, dest='rolling_days', help='Rolling window days (0=expanding)')
-    
+    parser.add_argument('--skip-covid', action='store_true', dest='skip_covid', help='Skip Mar 2020 - May 2020 from backtest PnL calculation')
+
     return parser
 
 def parse_config() -> XGBCompareConfig:
@@ -160,5 +166,6 @@ def parse_config() -> XGBCompareConfig:
         n_bootstraps=args.n_bootstraps,
         log_label=args.log_label,
         binary_signal=args.binary_signal,
-        rolling_days=args.rolling_days
+        rolling_days=args.rolling_days,
+        skip_covid=args.skip_covid
     )

@@ -159,18 +159,58 @@ def calculate_ewma_quality(series: pd.Series, alpha: float = 0.1) -> float:
     ewma_vals = series.ewm(alpha=alpha, adjust=False).mean()
     return ewma_vals.iloc[-1] if len(ewma_vals) > 0 else 0.0
 
-def calculate_model_metrics_from_pnl(pnl_series: pd.Series, 
-                                   signal: pd.Series = None, 
-                                   returns: pd.Series = None) -> Dict[str, float]:
+def filter_covid_period(pnl_series: pd.Series, signal: pd.Series = None, returns: pd.Series = None) -> tuple:
+    """
+    Filter out COVID period (Mar 2020 - May 2020) from PnL calculation.
+
+    Args:
+        pnl_series: PnL series to filter
+        signal: Optional signal series to filter
+        returns: Optional returns series to filter
+
+    Returns:
+        Tuple of filtered (pnl_series, signal, returns)
+    """
+    # Define COVID period
+    covid_start = pd.Timestamp('2020-03-01')
+    covid_end = pd.Timestamp('2020-05-31 23:59:59')
+
+    # Create mask for non-COVID periods
+    if hasattr(pnl_series.index, 'to_pydatetime'):
+        covid_mask = ~((pnl_series.index >= covid_start) & (pnl_series.index <= covid_end))
+    else:
+        # Fallback for different index types
+        covid_mask = pd.Series(True, index=pnl_series.index)
+        try:
+            covid_mask = ~((pnl_series.index >= covid_start) & (pnl_series.index <= covid_end))
+        except:
+            # If date filtering fails, return original series (safer than crashing)
+            return pnl_series, signal, returns
+
+    # Filter all series consistently
+    filtered_pnl = pnl_series[covid_mask]
+    filtered_signal = signal[covid_mask] if signal is not None else None
+    filtered_returns = returns[covid_mask] if returns is not None else None
+
+    return filtered_pnl, filtered_signal, filtered_returns
+
+def calculate_model_metrics_from_pnl(pnl_series: pd.Series,
+                                   signal: pd.Series = None,
+                                   returns: pd.Series = None,
+                                   skip_covid: bool = False) -> Dict[str, float]:
     """
     Calculate comprehensive performance metrics from pre-calculated PnL series.
     This eliminates redundant PnL calculations across the system.
-    
+
     Args:
         pnl_series: Pre-calculated PnL series (signal * returns)
         signal: Optional signal series for hit_rate and adjusted_sharpe calculations
         returns: Optional returns series for hit_rate calculations
+        skip_covid: If True, exclude Mar 2020 - May 2020 from calculations
     """
+    # Apply COVID filtering if requested
+    if skip_covid:
+        pnl_series, signal, returns = filter_covid_period(pnl_series, signal, returns)
     metrics = {
         'ann_ret': pnl_series.mean() * 252,
         'ann_vol': pnl_series.std() * np.sqrt(252),

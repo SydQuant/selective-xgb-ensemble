@@ -193,7 +193,7 @@ class FullTimelineBacktester:
                     # Note: full_timeline lists will be built by combining training + production at the end
                     
                     # Calculate fold-level metrics using pre-calculated PnL (no redundant calculation)
-                    fold_metrics = calculate_model_metrics_from_pnl(fold_pnl, signal, actual_returns)
+                    fold_metrics = calculate_model_metrics_from_pnl(fold_pnl, signal, actual_returns, skip_covid=config.skip_covid if config else False)
                     
                     # No Q-score updates during backtest - use only pre-computed training data
                     # The rolling_quality_tracker was initialized with ALL training fold data
@@ -245,7 +245,7 @@ class FullTimelineBacktester:
             
             # Use simplified metrics calculation from PnL with correct returns
             training_returns_series = pd.Series(training_returns)
-            training_metrics = calculate_model_metrics_from_pnl(training_pnl_series, training_pred_series, training_returns_series)
+            training_metrics = calculate_model_metrics_from_pnl(training_pnl_series, training_pred_series, training_returns_series, skip_covid=config.skip_covid if config else False)
             training_metrics['total_periods'] = len(training_pnl)
             logger.info(f"Training Period Overall: Sharpe={training_metrics.get('sharpe', 0):.3f}, Hit={training_metrics.get('hit_rate', 0)*100:.1f}%")
         
@@ -263,7 +263,7 @@ class FullTimelineBacktester:
             
             # Use simplified metrics calculation from PnL with correct returns
             production_returns_series = pd.Series(production_returns)
-            production_metrics = calculate_model_metrics_from_pnl(production_pnl_series, production_pred_series, production_returns_series)
+            production_metrics = calculate_model_metrics_from_pnl(production_pnl_series, production_pred_series, production_returns_series, skip_covid=config.skip_covid if config else False)
             production_metrics['total_periods'] = len(production_pnl)
             logger.info(f"Production Period Overall: Sharpe={production_metrics.get('sharpe', 0):.3f}, Hit={production_metrics.get('hit_rate', 0)*100:.1f}%")
         
@@ -280,7 +280,7 @@ class FullTimelineBacktester:
             
             # Use simplified metrics calculation from PnL with correct returns
             full_returns_series = pd.Series(full_timeline_returns)
-            full_timeline_metrics = calculate_model_metrics_from_pnl(full_pnl_series, full_pred_series, full_returns_series)
+            full_timeline_metrics = calculate_model_metrics_from_pnl(full_pnl_series, full_pred_series, full_returns_series, skip_covid=config.skip_covid if config else False)
             full_timeline_metrics['total_periods'] = len(full_timeline_pnl)
             logger.info(f"Full Timeline Overall: Sharpe={full_timeline_metrics.get('sharpe', 0):.3f}, Hit={full_timeline_metrics.get('hit_rate', 0)*100:.1f}%")
         
