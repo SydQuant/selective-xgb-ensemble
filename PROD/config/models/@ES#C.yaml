@@ -1,0 +1,24 @@
+binary_signal: true
+ensemble_config:
+  avg_q_score: 0.5407814407814407
+  model_selection_method: hit_rate
+  top_model_q_score: 0.5641025641025641
+  top_n_models: 15
+  voting_method: binary
+max_features: 100
+model_metadata:
+  asset_class: EQUITY
+  build_date: '2025-09-15'
+  evaluation_samples: 546
+  feature_count: 100
+  training_samples: 2181
+n_models_deployed: 15
+n_models_trained: 150
+performance_benchmark:
+  target_sharpe: 2.319
+  test_config: HIT_Q + 15F + std + 100feat + 150M
+q_metric: hit_rate
+selection_method: hit_rate
+signal_transformation: tanh
+symbol: '@ES#C'
+xgb_type: standard

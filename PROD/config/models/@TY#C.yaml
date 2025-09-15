@@ -1,0 +1,28 @@
+# XGBoost Model Configuration for @TY#C (US 10Y Treasury)
+# Based on multi-symbol testing results: 2.067 Sharpe (SHARPE_Q + 10F + tiered + 250feat + 200M)
+
+symbol: "@TY#C"
+n_models: 200
+n_folds: 10
+max_features: 250
+q_metric: "sharpe"
+xgb_type: "tiered"
+binary_signal: true
+signal_transformation: "tanh"
+
+ensemble_config:
+  model_selection_method: "sharpe"
+  top_n_models: 15
+  voting_method: "democratic"
+
+performance_benchmark:
+  training_sharpe: 1.511
+  production_sharpe: 2.067
+  full_timeline_sharpe: 1.762
+  test_config: "SHARPE_Q + 10F + tiered + 250feat + 200M"
+
+model_metadata:
+  asset_class: "RATES"
+  description: "US 10-Year Treasury Note Futures"
+  optimization_date: "2025-09-14"
+  framework_version: "v6"

@@ -1,0 +1,41 @@
+# Global Configuration for XGBoost Production Framework
+
+# Data settings
+data_config:
+  iqfeed_host: "localhost"
+  iqfeed_port: 9100
+  lookback_days: 20
+  interval_minutes: 60
+
+# Signal generation settings
+signal_config:
+  signal_hour: 12  # NY time for signal generation
+  timezone: "America/New_York"
+
+# Directories and paths
+paths:
+  models_dir: "models"
+  config_dir: "config"
+  logs_dir: "logs"
+
+# Email settings (for trade notifications)
+email_config:
+  enabled: true
+  recipients:
+    - "#christian.beulen@sydneyquantitative.com"
+    - "realstevendong@gmail.com"
+  sender: "realstevendong@gmail.com"
+
+# Execution settings
+execution_config:
+  parallel_processing: true
+  max_workers: 4
+  model_load_timeout: 30  # seconds
+  prediction_timeout: 60  # seconds
+
+# Logging settings
+logging_config:
+  level: "INFO"
+  format: "%(message)s"
+  console_output: true
+  file_output: true
