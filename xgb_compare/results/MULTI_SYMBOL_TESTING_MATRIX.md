@@ -109,7 +109,118 @@ cd xgb_compare && python3 xgb_compare.py --target_symbol "QHG#C" --n_models 100 
 
 ---
 
+## Batch 1: Optimal Config Testing ✅ COMPLETED
+
+**Status: 8/8 HIGH priority symbols completed (Started: 2025-09-14 21:03, Completed: 2025-09-15 14:33)**
+
+### METALS Optimization - **HIGHEST PRIORITY**
+| Test | Symbol | Config | Status | Training Sharpe | Production Sharpe | Full Timeline Sharpe | Log Timestamp |
+| ---- | ------ | ------ | ------ | --------------- | ----------------- | -------------------- | ------------- |
+| QPL1.1 | QPL#C | 15F+sharpe+std+100feat+150M | ✅ | 1.744 | 2.047 | 1.878 | 122827 |
+| QSI1.1 | QSI#C | 15F+sharpe+std+100feat+150M | ✅ | 1.465 | 1.592 | 1.523 | 122837 |
+
+### AGS (Agriculture) Optimization - **HIGH PRIORITY**
+| Test | Symbol | Config | Status | Training Sharpe | Production Sharpe | Full Timeline Sharpe | Log Timestamp |
+| ---- | ------ | ------ | ------ | --------------- | ----------------- | -------------------- | ------------- |
+| BO1.1 | @BO#C | 15F+sharpe+std+250feat+150M | ✅ | 0.411 | 0.627 | 0.097 | 122848 |
+| C1.1 | @C#C | 15F+sharpe+std+250feat+150M | ✅ | 1.607 | 0.793 | 1.328 | 122901 |
+| CT1.1 | @CT#C | 15F+sharpe+std+250feat+150M | ✅ | 1.121 | 0.848 | 0.968 | 122913 |
+| KW1.1 | @KW#C | 15F+sharpe+std+250feat+150M | ✅ | 0.660 | 1.981 | 1.155 | 122933 |
+| SM1.1 | @SM#C | 15F+sharpe+std+250feat+150M | ✅ | 1.824 | 1.456 | 1.582 | 122943 |
+| W1.1 | @W#C | 15F+sharpe+std+250feat+150M | ✅ | 0.600 | 1.837 | 0.986 | 122952 |
+
+### Improvement Tests:
+| Symbol | Original | New Config | Result | Status |
+| ------ | -------- | ---------- | ------ | ------ |
+| @BO#C | 0.627 | 10F+hit_rate+tiered | -0.626 | **WORSE** |
+| @BO#C | 0.627 | 20F+hit_rate+deep | -0.068 | **WORSE** |
+| @C#C | 0.793 | 10F+hit_rate+tiered | 0.859 | **MARGINAL** |
+| @CT#C | 0.848 | 20F+hit_rate+tiered | 0.860 | **MARGINAL** |
+
+---
+
+## Batch 2: FX + RATES Testing ✅ COMPLETED
+
+**Status: 6/6 symbols completed (Started: 2025-09-15 14:35, Completed: 2025-09-15 18:31)**
+
+### FX Optimization - **MEDIUM PRIORITY**
+| Test | Symbol | Config | Status | Training Sharpe | Production Sharpe | Full Timeline Sharpe | Log Timestamp |
+| ---- | ------ | ------ | ------ | --------------- | ----------------- | -------------------- | ------------- |
+| AD1.1 | @AD#C | 20F+sharpe+tiered+100feat+150M | ✅ | 2.318 | 1.990 | 2.125 | 143852 |
+| BP1.1 | @BP#C | 20F+sharpe+tiered+100feat+150M | ✅ | 1.410 | 1.359 | 1.326 | 143904 |
+| JY1.1 | @JY#C | 20F+sharpe+tiered+100feat+150M | ⚠️ | 4.564 | 4.830 | 4.319 | 143923 |
+
+### RATES Optimization - **MEDIUM PRIORITY**
+| Test | Symbol | Config | Status | Training Sharpe | Production Sharpe | Full Timeline Sharpe | Log Timestamp |
+| ---- | ------ | ------ | ------ | --------------- | ----------------- | -------------------- | ------------- |
+| FV1.1 | @FV#C | 10F+sharpe+tiered+250feat+150M | ✅ | 1.080 | 1.721 | 1.351 | 143827 |
+| US1.1 | @US#C | 10F+sharpe+tiered+250feat+150M | ✅ | 1.739 | 1.837 | 1.764 | 143838 |
+| BL1.1 | BL#C | 15F+sharpe+tiered+100feat+150M | ✅ | 2.049 | 2.290 | 1.688 | 143934 |
+
+---
+
+## **Results Summary**
+
+**Performance Tiers:**
+- **Excellent (>2.0)**: @ES#C 2.319, BL#C 2.290, @TY#C 2.067, QPL#C 2.047, @AD#C 1.990
+- **Good (1.5-2.0)**: @KW#C 1.981, @W#C 1.837, @US#C 1.837, @EU#C 1.769, @FV#C 1.721, QSI#C 1.592
+- **Moderate (1.0-1.5)**: @SM#C 1.456, @BP#C 1.359
+- **Weak (<1.0)**: @C#C 0.859, @CT#C 0.860, @BO#C 0.627
+
+**Successful Patterns:**
+- **RATES**: 10F + tiered
+- **EQUITY**: 15F + standard
+- **FX**: 20F + tiered
+- **HIT_Q method**: Outperforms sharpe for top symbols
+
+---
+
+## **Optimal Production Configurations**
+
+| Symbol | Asset Class | Prod Sharpe | Config | Models | Folds | Features | Q-Metric | Architecture |
+|--------|-------------|-------------|--------|--------|-------|----------|----------|-------------|
+| @AD#C | FX | 1.990 | 20F+tiered+100feat | 150 | 20 | 100 | sharpe | tiered |
+| @BO#C | AGS | 0.627 | 15F+std+250feat | 150 | 15 | 250 | sharpe | standard |
+| @BP#C | FX | 1.359 | 20F+tiered+100feat | 150 | 20 | 100 | sharpe | tiered |
+| @C#C | AGS | 0.859 | 10F+hit_rate+tiered | 150 | 10 | 250 | hit_rate | tiered |
+| @CT#C | AGS | 0.860 | 20F+hit_rate+tiered | 150 | 20 | 250 | hit_rate | tiered |
+| @ES#C | EQUITY | 2.319 | 15F+std+100feat | 150 | 15 | 100 | hit_rate | standard |
+| @EU#C | FX | 1.769 | 20F+tiered+100feat | 200 | 20 | 100 | sharpe | tiered |
+| @FV#C | RATESUS | 1.721 | 10F+tiered+250feat | 150 | 10 | 250 | sharpe | tiered |
+| @JY#C | FX | 4.830 | 20F+tiered+100feat | 150 | 20 | 100 | sharpe | tiered |
+| @KW#C | AGS | 1.981 | 15F+std+250feat | 150 | 15 | 250 | sharpe | standard |
+| @NQ#C | EQUITY | 2.385 | 15F+std+100feat | 100 | 15 | 100 | sharpe | standard |
+| @RTY#C | EQUITY | 2.193 | 10F+std+100feat | 100 | 10 | 100 | sharpe | standard |
+| @S#C | AGS | 1.985 | 15F+std+250feat | 200 | 15 | 250 | sharpe | standard |
+| @SM#C | AGS | 1.456 | 15F+std+250feat | 150 | 15 | 250 | sharpe | standard |
+| @TY#C | RATESUS | 2.067 | 10F+tiered+250feat | 200 | 10 | 250 | sharpe | tiered |
+| @US#C | RATESUS | 1.837 | 10F+tiered+250feat | 150 | 10 | 250 | sharpe | tiered |
+| @W#C | AGS | 1.837 | 15F+std+250feat | 150 | 15 | 250 | sharpe | standard |
+| BD#C | RATESEU | 2.050 | 15F+tiered+100feat | 100 | 15 | 100 | sharpe | tiered |
+| BL#C | RATESEU | 2.290 | 15F+tiered+100feat | 150 | 15 | 100 | sharpe | tiered |
+| QGC#C | METALS | 2.837 | 15F+std+100feat | 100 | 15 | 100 | sharpe | standard |
+| QHG#C | METALS | 1.320 | 15F+hit_rate+std | 100 | 15 | 100 | hit_rate | standard |
+| QPL#C | METALS | 2.047 | 15F+std+100feat | 150 | 15 | 100 | sharpe | standard |
+| QSI#C | METALS | 1.592 | 15F+std+100feat | 150 | 15 | 100 | sharpe | standard |
+
+**Production Deployment Priority:**
+- **Tier S (Specialist)**: @JY#C 4.830 Sharpe - **RE-TESTING with high precision data**
+- **Tier 1** (>2.0 Sharpe): 8 symbols for core portfolio
+- **Tier 2** (1.5-2.0 Sharpe): 6 symbols for full portfolio
+- **Tier 3** (1.0-1.5 Sharpe): 3 symbols for extended portfolio
+
+## **Database Precision Investigation**
+
+**🚨 CRITICAL DISCOVERY**: @JY#C "corruption" was actually **database precision loss**
+
+**Database Fix Applied:**
+- **Old database**: 70.7% zero returns (@JY#C corrupted)
+- **New high-precision database**: 0.8% zero returns (@JY#C normal)
+- **Root cause**: Precision truncation (0.010297 → 0.0103)
+- **Status**: @JY#C re-testing with clean data (hit rates normalized 25% → 55%)
+
+---
+
 *Created: 2025-09-13*
-*Updated: 2025-09-14*
-*Purpose: Identify universal optimization patterns across diverse symbol set*
-*Strategy: Phase 1 complete - Phase 2 optimization planned*
+*Updated: 2025-09-15*
+*Status: 21 symbols tested, database precision fixed, @JY#C re-evaluation in progress*
