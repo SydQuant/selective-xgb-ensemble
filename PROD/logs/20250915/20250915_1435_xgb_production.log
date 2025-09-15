@@ -1,0 +1,74 @@
+XGBoost Production Runner initialized - Log: /Users/steven/Projects/SQ/bond_ls_xgb_grope_full_v6/PROD/logs/20250915/20250915_1435_xgb_production.log
+Validating production setup...
+Loaded 10 models for @ES#C
+Models validated for @ES#C: 10 models loaded
+Setup validated for 1 symbols
+Fetching market data for 1 symbols...
+Processing features for @ES#C...
+Feature selection error for @ES#C: name 'Path' is not defined
+Generated 65 features for @ES#C
+Latest feature timestamp: 2025-09-15 12:26:49.089240
+Got 65 features for @ES#C, latest: 2025-09-15 12:26:49.089240
+Latest price for @ES#C: 4651.284672805101
+Generating XGBoost ensemble signals...
+Generating signals for 1 symbols...
+Error with model 0 for @ES#C: Feature shape mismatch, expected: 50, got 65
+Error with model 1 for @ES#C: Feature shape mismatch, expected: 50, got 65
+Error with model 2 for @ES#C: Feature shape mismatch, expected: 50, got 65
+Error with model 3 for @ES#C: Feature shape mismatch, expected: 50, got 65
+Error with model 4 for @ES#C: Feature shape mismatch, expected: 50, got 65
+Error with model 5 for @ES#C: Feature shape mismatch, expected: 50, got 65
+Error with model 6 for @ES#C: Feature shape mismatch, expected: 50, got 65
+Error with model 7 for @ES#C: Feature shape mismatch, expected: 50, got 65
+Error with model 8 for @ES#C: Feature shape mismatch, expected: 50, got 65
+Error with model 9 for @ES#C: Feature shape mismatch, expected: 50, got 65
+No valid predictions generated for @ES#C
+Failed to generate signal for @ES#C
+XGBoost Production Runner initialized - Log: /Users/steven/Projects/SQ/bond_ls_xgb_grope_full_v6/PROD/logs/20250915/20250915_1435_xgb_production.log
+Validating production setup...
+Loaded 10 models for @ES#C
+Models validated for @ES#C: 10 models loaded
+Setup validated for 1 symbols
+Fetching market data for 1 symbols...
+Processing features for @ES#C...
+Loaded 50 feature names for @ES#C
+Missing 50 features for @ES#C
+Using fallback feature selection for @ES#C
+Reduced to 50 highest variance features
+Generated 50 features for @ES#C
+Latest feature timestamp: 2025-09-15 12:26:49.089240
+Got 50 features for @ES#C, latest: 2025-09-15 12:26:49.089240
+Latest price for @ES#C: 4651.284672805101
+Generating XGBoost ensemble signals...
+Generating signals for 1 symbols...
+@ES#C: Signal=1, Raw=0.0233, Consensus=1.000
+@ES#C: Signal=1, Score=0.0233, Consensus=1.000
+Processing signals into trades...
+Generated 1 total trade instructions, 1 active trades
+@ES#C: +11 @ 4651.2847 (Signal: +1, Score: 0.0233)
+============================================================
+Starting XGBoost Daily Signal Generation - Hour: 12
+============================================================
+Validating production setup...
+Models validated for @ES#C: 10 models loaded
+Setup validated for 1 symbols
+Fetching market data for 1 symbols...
+Processing features for @ES#C...
+Loaded 50 feature names for @ES#C
+Missing 50 features for @ES#C
+Using fallback feature selection for @ES#C
+Reduced to 50 highest variance features
+Generated 50 features for @ES#C
+Latest feature timestamp: 2025-09-15 12:26:49.089240
+Got 50 features for @ES#C, latest: 2025-09-15 12:26:49.089240
+Latest price for @ES#C: 4651.284672805101
+Generating XGBoost ensemble signals...
+Generating signals for 1 symbols...
+@ES#C: Signal=1, Raw=0.0233, Consensus=1.000
+@ES#C: Signal=1, Score=0.0233, Consensus=1.000
+Processing signals into trades...
+Generated 1 total trade instructions, 1 active trades
+@ES#C: +11 @ 4651.2847 (Signal: +1, Score: 0.0233)
+DRY RUN - Would save the following trades:
+  @ES#C: +11 @ 4651.2847
+Daily signal generation completed successfully

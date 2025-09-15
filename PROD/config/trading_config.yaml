@@ -1,0 +1,144 @@
+instrument_config:
+  '@ES#C':
+    basket: EQUITY
+    bloomberg: ESM5 Index
+    description: E-MINI S&P 500
+    fraction: 3
+    max_held: 11
+    max_traded: 22
+    multiplier: 50
+    n_features: 100
+    n_hours: 12
+    sthresh: -0.01
+    stop_loss: 0.003
+    thresh: 0.01
+  '@TY#C':
+    basket: RATESUS
+    bloomberg: TYM5 Comdty
+    description: 10 YR US TREASURY NOTE
+    fraction: 3
+    max_held: 36
+    max_traded: 72
+    multiplier: 1000
+    n_features: 250
+    n_hours: 24
+    sthresh: -0.01
+    stop_loss: 0.003
+    thresh: 0.01
+  '@EU#C':
+    basket: FX
+    bloomberg: ECM5 Curncy
+    description: EURO FX
+    fraction: 4
+    max_held: 10
+    max_traded: 20
+    multiplier: 125000
+    n_features: 100
+    n_hours: 24
+    sthresh: -0.01
+    stop_loss: 0.003
+    thresh: 0.01
+  '@S#C':
+    basket: AGS
+    bloomberg: S N5 Comdty
+    description: SOYBEANS
+    fraction: 7
+    max_held: 14
+    max_traded: 28
+    multiplier: 50
+    n_features: 250
+    n_hours: 24
+    sthresh: -0.01
+    stop_loss: 0.003
+    thresh: 0.01
+  '@RTY#C':
+    basket: EQUITY
+    bloomberg: RTYM5 Index
+    description: E-MINI RUSSELL 2000
+    fraction: 3
+    max_held: 31
+    max_traded: 62
+    multiplier: 50
+    n_features: 100
+    n_hours: 24
+    sthresh: -0.01
+    stop_loss: 0.003
+    thresh: 0.01
+  '@NQ#C':
+    basket: EQUITY
+    bloomberg: NQM5 Index
+    description: E-MINI NASDAQ 100
+    fraction: 3
+    max_held: 8
+    max_traded: 16
+    multiplier: 20
+    n_features: 100
+    n_hours: 24
+    sthresh: -0.01
+    stop_loss: 0.003
+    thresh: 0.01
+  'QGC#C':
+    basket: METALS
+    bloomberg: GCM5 Comdty
+    description: GOLD
+    fraction: 4
+    max_held: 4
+    max_traded: 8
+    multiplier: 100
+    n_features: 100
+    n_hours: 24
+    sthresh: -0.01
+    stop_loss: 0.003
+    thresh: 0.01
+  'BD#C':
+    basket: RATESEU
+    bloomberg: RXM5 Comdty
+    description: EURO BUND
+    fraction: 2
+    max_held: 30
+    max_traded: 60
+    multiplier: 1000
+    n_features: 100
+    n_hours: 24
+    sthresh: -0.01
+    stop_loss: 0.003
+    thresh: 0.01
+  'QHG#C':
+    basket: METALS
+    bloomberg: HGN5 Comdty
+    description: COPPER
+    fraction: 4
+    max_held: 11
+    max_traded: 22
+    multiplier: 25000
+    n_features: 100
+    n_hours: 6
+    sthresh: -0.01
+    stop_loss: 0.003
+    thresh: 0.01
+
+portfolio_config:
+  total_aum: 50000000
+  allocations:
+    AGS: 2500000
+    Energy: 5000000
+    EQUITY: 10000000
+    FX: 5000000
+    METALS: 5000000
+    RATESEU: 8000000
+    RATESUS: 12000000
+
+current_positions:
+  '@ES#C': 0
+  '@TY#C': 0
+  '@EU#C': 0
+  '@S#C': 0
+  '@RTY#C': 0
+  '@NQ#C': 0
+  'QGC#C': 0
+  'BD#C': 0
+  'QHG#C': 0
+
+s3:
+  trades_bucket: "sydney-quant-signals-v2/trades"
+  logs_bucket: "sydney-quant-signals-v2/logs"
