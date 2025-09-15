@@ -12,16 +12,16 @@
 | @ES#C  | EQUITY      | 150    | 15    | 100      | hit_rate | standard     | 1.194           | 51.3%        | 1.975             | 54.1%          | 1.527                | 52.5%             | ✅ 204934   |
 | @EU#C  | FX          | 200    | 20    | 100      | sharpe   | tiered       | -               | -            | 1.769             | -              | -                    | -                 | ⏳          |
 | @FV#C  | RATESUS     | 150    | 10    | 250      | sharpe   | tiered       | 1.257           | 52.8%        | 1.919             | 53.8%          | 1.531                | 53.2%             | ✅ 205006   |
-| @JY#C  | FX          | 150    | 20    | 100      | sharpe   | tiered       | -               | -            | 4.830             | -              | -                    | -                 | ⏳          |
+| @JY#C  | FX          | 150    | 20    | 100      | sharpe   | tiered       | 1.246           | 51.1%        | 2.560             | 55.0%          | 1.889                | 52.7%             | ✅ 204652   |
 | @KW#C  | AGS         | 150    | 15    | 250      | sharpe   | standard     | 0.438           | 50.8%        | 1.446             | 54.7%          | 0.947                | 52.4%             | ✅ 210458   |
 | @NQ#C  | EQUITY      | 100    | 15    | 100      | sharpe   | standard     | 1.470           | 52.7%        | 1.851             | 53.3%          | 1.640                | 53.0%             | ✅ 210545   |
-| @RTY#C | EQUITY      | 100    | 10    | 100      | sharpe   | standard     | -               | -            | 2.193             | -              | -                    | -                 | 📋          |
-| @S#C   | AGS         | 200    | 15    | 250      | sharpe   | standard     | -               | -            | 1.985             | -              | -                    | -                 | 📋          |
-| @SM#C  | AGS         | 150    | 15    | 250      | sharpe   | standard     | -               | -            | 1.456             | -              | -                    | -                 | 📋          |
-| @TY#C  | RATESUS     | 200    | 10    | 250      | sharpe   | tiered       | -               | -            | 2.067             | -              | -                    | -                 | 📋          |
-| @US#C  | RATESUS     | 150    | 10    | 250      | sharpe   | tiered       | -               | -            | 1.837             | -              | -                    | -                 | 📋          |
-| @W#C   | AGS         | 150    | 15    | 250      | sharpe   | standard     | -               | -            | 1.837             | -              | -                    | -                 | 📋          |
-| BL#C   | RATESEU     | 150    | 15    | 100      | sharpe   | tiered       | -               | -            | 2.290             | -              | -                    | -                 | 📋          |
+| @RTY#C | EQUITY      | 100    | 10    | 100      | sharpe   | standard     | 1.111           | 51.5%        | 1.480             | 54.1%          | 1.238                | 52.5%             | ✅ 230950   |
+| @S#C   | AGS         | 200    | 15    | 250      | sharpe   | standard     | 1.260           | 51.4%        | 1.803             | 54.2%          | 1.439                | 52.6%             | ✅ 231006   |
+| @SM#C  | AGS         | 150    | 15    | 250      | sharpe   | standard     | 1.859           | 53.6%        | 1.327             | 51.0%          | 1.657                | 52.5%             | ✅ 231021   |
+| @TY#C  | RATESUS     | 200    | 10    | 250      | sharpe   | tiered       | 1.559           | 54.4%        | 2.239             | 53.2%          | 1.840                | 53.9%             | ✅ 231038   |
+| @US#C  | RATESUS     | 150    | 10    | 250      | sharpe   | tiered       | 1.575           | 52.6%        | 1.820             | 53.8%          | 1.670                | 53.0%             | ✅ 231101   |
+| @W#C   | AGS         | 150    | 15    | 250      | sharpe   | standard     | -0.188          | 49.6%        | 1.799             | 53.1%          | 0.855                | 51.0%             | ✅ 231126   |
+| BL#C   | RATESEU     | 150    | 15    | 100      | sharpe   | tiered       | 1.150           | 50.8%        | 2.092             | 52.2%          | 1.607                | 51.4%             | ✅ 231228   |
 | QGC#C  | METALS      | 100    | 15    | 100      | sharpe   | standard     | 0.616           | 51.3%        | 2.661             | 55.9%          | 1.642                | 53.2%             | ✅ 212037   |
 | QHG#C  | METALS      | 100    | 15    | 100      | hit_rate | standard     | 1.569           | 55.3%        | 1.947             | 53.3%          | 1.718                | 54.5%             | ✅ 212155   |
 | QSI#C  | METALS      | 150    | 15    | 100      | sharpe   | standard     | 1.305           | 52.8%        | 1.759             | 53.4%          | 1.512                | 53.1%             | ✅ 212112   |
@@ -29,11 +29,22 @@
 | QPL#C  | METALS      | 150    | 15    | 100      | sharpe   | standard     | 1.561           | 53.7%        | 1.986             | 53.6%          | 1.747                | 53.7%             | ✅ 212246   |
 
 **Legend:**
-
 - ✅ **Current Test Completed**: Full results available
 - ⏳ **Current Test Running**: Partial/old results shown, new test in progress
 - 📋 **Previous Test Results**: From earlier testing phases
 
+## **COVID Rescue Tests** ✅
+
+**--skip-covid Flag Implementation**: Excludes Mar 2020 - May 2020 from backtest PnL calculations
+
+| Test    | Symbol | Config                         | Status | Training Sharpe | Training Hit | Production Sharpe | Production Hit | Full Timeline Sharpe | Full Timeline Hit | Log Timestamp |
+| ------- | ------ | ------------------------------ | ------ | --------------- | ------------ | ----------------- | -------------- | -------------------- | ----------------- | ------------- |
+| COVID1  | QCL#C  | 100M+15F+std+100feat+sharpe+skip-covid | ✅ | -0.278 | 50.4% | 0.319 | 49.7% | -0.208 | 50.1% | 233842 |
+| COVID2  | @BO#C  | 100M+15F+std+250feat+sharpe+skip-covid | ✅ | 0.091 | 46.7% | -0.356 | 47.9% | 0.065 | 47.2% | 233917 |
+
+**Key Insights**:
+- **QCL#C**: **Significant improvement** with --skip-covid (Production Sharpe: 0.319 vs previous 0.087)
+- **@BO#C**: **Modest improvement** with --skip-covid (Full Timeline Sharpe: 0.065 vs previous 0.126, but Production worse)
 
 ---
 
