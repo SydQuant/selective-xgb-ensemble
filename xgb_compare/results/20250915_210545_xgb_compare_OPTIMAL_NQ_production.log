@@ -1,0 +1,17 @@
+2025-09-15 21:05:45,126 - INFO - ================================================================================
+2025-09-15 21:05:45,126 - INFO - XGBoost Comparison Framework
+2025-09-15 21:05:45,126 - INFO - ================================================================================
+2025-09-15 21:05:45,126 - INFO - Configuration:
+2025-09-15 21:05:45,126 - INFO -   Target Symbol: @NQ#C
+2025-09-15 21:05:45,126 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-15 21:05:45,126 - INFO -   Models: 100, Type: standard
+2025-09-15 21:05:45,127 - INFO -   Folds: 15
+2025-09-15 21:05:45,127 - INFO -   Max Features: 100 (Limited)
+2025-09-15 21:05:45,127 - INFO -   Feature Selection: Enabled
+2025-09-15 21:05:45,127 - INFO -   Inner Val Fraction: 0.2
+2025-09-15 21:05:45,127 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-15 21:05:45,127 - INFO -   Signal Type: Tanh Normalized
+2025-09-15 21:05:45,127 - INFO -   Cross-validation: Expanding window
+2025-09-15 21:05:45,127 - INFO -   Production: Cutoff=0.6, Top N=5, Q-Metric=sharpe
+2025-09-15 21:05:45,127 - INFO -   Reselection: Every 1 fold(s)
+2025-09-15 21:05:45,127 - INFO - 
