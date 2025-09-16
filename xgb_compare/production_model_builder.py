@@ -182,7 +182,7 @@ class ProductionModelBuilder:
 
                     # Calculate metrics for selection
                     from metrics_utils import normalize_predictions, calculate_model_metrics
-                    normalized_preds = normalize_predictions(pd.Series(predictions, index=X_eval.index), config.binary_signal)
+                    normalized_preds = normalize_predictions(pd.Series(predictions, index=X_eval.index))
                     metrics = calculate_model_metrics(normalized_preds, y_eval, shifted=False)
 
                     # Use Q-metric from config

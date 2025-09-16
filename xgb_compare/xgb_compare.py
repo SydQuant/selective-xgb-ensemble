@@ -26,7 +26,7 @@ from model.xgb_drivers import generate_xgb_specs, generate_deep_xgb_specs, strat
 from cv.wfo import wfo_splits, wfo_splits_rolling
 
 def export_production_models(all_fold_results, xgb_specs, selected_features, backtest_results, config, logger, col_slices=None):
-    """Export ONLY the selected models from final fold as single consolidated file per symbol."""
+    """Export ONLY the selected models from second-to-last fold as single consolidated file per symbol."""
     import pickle
     from pathlib import Path
 
@@ -43,7 +43,7 @@ def export_production_models(all_fold_results, xgb_specs, selected_features, bac
         # Debug backtest results structure
         logger.info(f"Backtest results keys: {list(backtest_results.keys())}")
 
-        # Get the final fold's selected model indices from backtest results
+        # Get the production fold's selected model indices from backtest results
         model_selection_history = backtest_results.get('model_selection_history', [])
         logger.info(f"Model selection history length: {len(model_selection_history)}")
 
@@ -65,16 +65,29 @@ def export_production_models(all_fold_results, xgb_specs, selected_features, bac
         logger.info(f"All fold results type: {type(all_fold_results)}")
         logger.info(f"All fold results keys/length: {list(all_fold_results.keys()) if isinstance(all_fold_results, dict) else len(all_fold_results)}")
 
-        # Get the final fold (handle both list and dict cases)
-        if isinstance(all_fold_results, dict):
-            # If dict, get the highest fold number
-            final_fold_idx = max(all_fold_results.keys())
-            final_fold = all_fold_results[final_fold_idx]
-            logger.info(f"Using fold {final_fold_idx} as final fold")
-        else:
-            # If list, get last item
-            final_fold = all_fold_results[-1]
-            logger.info(f"Using last fold from list")
+        # Get the second-to-last fold (final fold is used for evaluation only)
+        # Extract fold indices and sort numerically for consistency
+        fold_indices = []
+        for key in all_fold_results.keys():
+            if key.startswith('fold_'):
+                try:
+                    fold_idx = int(key.split('_')[1]) - 1  # Convert to 0-based index
+                    fold_indices.append(fold_idx)
+                except (IndexError, ValueError):
+                    continue
+
+        fold_indices.sort()  # Sort numerically: [0, 1, 2, ..., n-1]
+        logger.info(f"Available fold indices: {fold_indices}")
+
+        if len(fold_indices) < 2:
+            logger.error(f"Need at least 2 folds for production export, got {len(fold_indices)}")
+            return False
+
+        # Use second-to-last fold index for production models
+        production_fold_idx = fold_indices[-2]  # Second to last index
+        production_fold_key = f'fold_{production_fold_idx + 1}'  # Convert back to 1-based key
+        final_fold = all_fold_results[production_fold_key]
+        logger.info(f"Using fold index {production_fold_idx} (key: {production_fold_key}) as production fold")
 
         logger.info(f"Final fold keys: {list(final_fold.keys())}")
 
@@ -110,7 +123,6 @@ def export_production_models(all_fold_results, xgb_specs, selected_features, bac
             'model_feature_slices': model_feature_slices,  # Store model-specific feature slices
             'selected_features': selected_features,
             'selected_model_indices': selected_model_indices,
-            'binary_signal': config.binary_signal,
             'metadata': {
                 'n_models': config.n_models,
                 'n_folds': config.n_folds,
@@ -251,9 +263,9 @@ def train_single_model(model_idx, spec, X_train, y_train, X_inner_train, y_inner
     model = fit_xgb_on_slice(X_train, y_train, spec, force_cpu=not use_gpu)
     
     # Generate normalized predictions  
-    pred_inner_train = normalize_predictions(pd.Series(model.predict(X_inner_train.values), index=X_inner_train.index), config.binary_signal)
-    pred_inner_val = normalize_predictions(pd.Series(model.predict(X_inner_val.values), index=X_inner_val.index), config.binary_signal)
-    pred_test = normalize_predictions(pd.Series(model.predict(X_test.values), index=X_test.index), config.binary_signal)
+    pred_inner_train = normalize_predictions(pd.Series(model.predict(X_inner_train.values), index=X_inner_train.index))
+    pred_inner_val = normalize_predictions(pd.Series(model.predict(X_inner_val.values), index=X_inner_val.index))
+    pred_test = normalize_predictions(pd.Series(model.predict(X_test.values), index=X_test.index))
     
     # Calculate performance metrics
     is_metrics = calculate_model_metrics(pred_inner_train, y_inner_train, shifted=False)
@@ -283,7 +295,7 @@ def train_single_model(model_idx, spec, X_train, y_train, X_inner_train, y_inner
 def _train_single_model_mp(args):
     """Train single model in multiprocessing worker."""
     model_idx, spec, X_train_vals, y_train_vals, X_inner_train_vals, y_inner_train_vals, \
-    X_inner_val_vals, y_inner_val_vals, X_test_vals, y_test_vals, binary_signal, \
+    X_inner_val_vals, y_inner_val_vals, X_test_vals, y_test_vals, \
     train_idx, inner_train_idx, inner_val_idx, test_idx = args
     
     import pandas as pd
@@ -296,9 +308,9 @@ def _train_single_model_mp(args):
     
     # Train and predict
     model = fit_xgb_on_slice(X_train_df, y_train_series, spec, force_cpu=True)
-    pred_inner_train = normalize_predictions(pd.Series(model.predict(X_inner_train_vals), index=inner_train_idx), binary_signal)
-    pred_inner_val = normalize_predictions(pd.Series(model.predict(X_inner_val_vals), index=inner_val_idx), binary_signal)
-    pred_test = normalize_predictions(pd.Series(model.predict(X_test_vals), index=test_idx), binary_signal)
+    pred_inner_train = normalize_predictions(pd.Series(model.predict(X_inner_train_vals), index=inner_train_idx))
+    pred_inner_val = normalize_predictions(pd.Series(model.predict(X_inner_val_vals), index=inner_val_idx))
+    pred_test = normalize_predictions(pd.Series(model.predict(X_test_vals), index=test_idx))
     
     # Calculate all metrics
     is_metrics = calculate_model_metrics(pred_inner_train, pd.Series(y_inner_train_vals, index=inner_train_idx), shifted=False)
@@ -320,7 +332,7 @@ def train_models_multiprocessing(xgb_specs, X_train, y_train, X_inner_train, y_i
     
     # Prepare arguments
     args_list = [(i, spec, X_train.values, y_train.values, X_inner_train.values, y_inner_train.values,
-                  X_inner_val.values, y_inner_val.values, X_test.values, y_test.values, config.binary_signal,
+                  X_inner_val.values, y_inner_val.values, X_test.values, y_test.values,
                   X_train.index.tolist(), X_inner_train.index.tolist(), X_inner_val.index.tolist(), X_test.index.tolist())
                  for i, spec in enumerate(xgb_specs)]
     

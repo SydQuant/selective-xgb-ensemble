@@ -245,7 +245,7 @@ def create_detailed_production_analysis(quality_tracker, backtest_results, confi
     model_names_str = ', '.join(model_names_list)
     
     # Get signal type and Q-metric from config
-    signal_type = "Binary (+1/-1)" if getattr(config, 'binary_signal', False) else "Tanh Normalized"
+    signal_type = "Binary (+1/-1)"
     q_metric = getattr(config, 'q_metric', 'sharpe').upper()
     
     # Create comprehensive summary with all periods

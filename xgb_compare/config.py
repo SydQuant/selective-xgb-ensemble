@@ -4,7 +4,7 @@ Configuration management for XGBoost comparison framework.
 """
 
 import argparse
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, Any
 
 @dataclass
@@ -17,9 +17,9 @@ class XGBCompareConfig:
     end_date: str = '2025-08-01'
     
     # Model training
-    n_folds: int = 10
-    n_models: int = 50
-    max_features: int = -1  # -1 for auto selection
+    n_folds: int = 15
+    n_models: int = 100
+    max_features: int = 100
     xgb_type: str = 'standard'
     inner_val_frac: float = 0.2
     no_feature_selection: bool = False
@@ -40,8 +40,6 @@ class XGBCompareConfig:
     q_use_zscore: bool = True  # Use z-score normalization for combined metrics
     q_metric_weights: dict = None  # Custom metric weights dict (overrides q_sharpe_weight)
     
-    # Signal processing
-    binary_signal: bool = False  # Use +1/-1 signals instead of tanh
     
     # Cross-validation parameters
     rolling_days: int = 0  # If > 0, use rolling window of this many days instead of expanding
@@ -54,8 +52,8 @@ class XGBCompareConfig:
     skip_covid: bool = False  # Skip Mar 2020 - May 2020 from backtest PnL calculation
 
     # Production model export
-    export_production_models: bool = False  # Export final fold models for production deployment
-    export_signal_distribution: bool = False  # Export daily signals, returns, and PnL to CSV
+    export_production_models: bool = True  # Export second-to-last fold models for production deployment
+    export_signal_distribution: bool = True  # Export daily signals, returns, and PnL to CSV
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert config to dictionary."""
@@ -93,7 +91,7 @@ class XGBCompareConfig:
         logger.info(f"  Feature Selection: {'Disabled' if self.no_feature_selection else 'Enabled'}")
         logger.info(f"  Inner Val Fraction: {self.inner_val_frac}")
         logger.info(f"  EWMA Alpha: {self.ewma_alpha}, Quality Halflife: {self.quality_halflife} days")
-        logger.info(f"  Signal Type: {'Binary (+1/-1)' if self.binary_signal else 'Tanh Normalized'}")
+        logger.info(f"  Signal Type: Binary (+1/-1)")
         logger.info(f"  Cross-validation: {'Rolling ' + str(self.rolling_days) + ' days' if self.rolling_days > 0 else 'Expanding window'}")
         logger.info(f"  Production: Cutoff={self.cutoff_fraction}, Top N={self.top_n_models}, Q-Metric={self.q_metric}")
         logger.info(f"  Reselection: Every {self.reselection_frequency} fold(s)")
@@ -110,9 +108,9 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument('--target_symbol', type=str, default='@ES#C', help='Target symbol')
     parser.add_argument('--start_date', type=str, default='2015-01-01', help='Start date (YYYY-MM-DD)')
     parser.add_argument('--end_date', type=str, default='2025-08-01', help='End date (YYYY-MM-DD)')
-    parser.add_argument('--n_folds', type=int, default=10, help='Cross-validation folds')
-    parser.add_argument('--n_models', type=int, default=50, help='XGBoost models per fold')
-    parser.add_argument('--max_features', type=int, default=-1, help='Max features (-1=auto)')
+    parser.add_argument('--n_folds', type=int, default=15, help='Cross-validation folds')
+    parser.add_argument('--n_models', type=int, default=100, help='XGBoost models per fold')
+    parser.add_argument('--max_features', type=int, default=100, help='Max features (-1=auto)')
     parser.add_argument('--xgb_type', type=str, default='standard', choices=['standard', 'deep', 'tiered'], help='XGBoost type')
     parser.add_argument('--inner_val_frac', type=float, default=0.2, help='Inner validation fraction')
     parser.add_argument('--no_feature_selection', action='store_true', help='Skip feature selection')
@@ -130,11 +128,10 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument('--q_use_zscore', action='store_true', default=True, help='Use z-score normalization')
     parser.add_argument('--n_bootstraps', type=int, default=100, help='Bootstrap iterations for p-values')
     parser.add_argument('--log_label', type=str, default='comparison', help='Output filename label')
-    parser.add_argument('--binary_signal', action='store_true', help='Use binary +1/-1 signals')
     parser.add_argument('--rolling', type=int, default=0, dest='rolling_days', help='Rolling window days (0=expanding)')
     parser.add_argument('--skip-covid', action='store_true', dest='skip_covid', help='Skip Mar 2020 - May 2020 from backtest PnL calculation')
-    parser.add_argument('--export-production-models', action='store_true', dest='export_production_models', help='Export final fold models for production deployment')
-    parser.add_argument('--export-signal-distribution', action='store_true', dest='export_signal_distribution', help='Export daily signals, returns, and PnL to CSV')
+    parser.add_argument('--export-production-models', action='store_true', dest='export_production_models', default=True, help='Export second-to-last fold models for production deployment')
+    parser.add_argument('--export-signal-distribution', action='store_true', dest='export_signal_distribution', default=True, help='Export daily signals, returns, and PnL to CSV')
 
     return parser
 
@@ -149,6 +146,11 @@ def parse_config() -> XGBCompareConfig:
         # Use model_selection_pct: 0.05 = top 5%, 0.10 = top 10%, etc.
         # Use round() for standard rounding (2.5 → 3, 2.4 → 2)
         top_n_models = max(1, round(args.model_selection_pct * args.n_models))
+
+    # Auto-enable skip_covid for BO and CL symbols
+    skip_covid = args.skip_covid
+    if not skip_covid and ('BO' in args.target_symbol or 'CL' in args.target_symbol):
+        skip_covid = True
     
     return XGBCompareConfig(
         target_symbol=args.target_symbol,
@@ -171,9 +173,8 @@ def parse_config() -> XGBCompareConfig:
         q_use_zscore=args.q_use_zscore,
         n_bootstraps=args.n_bootstraps,
         log_label=args.log_label,
-        binary_signal=args.binary_signal,
         rolling_days=args.rolling_days,
-        skip_covid=args.skip_covid,
+        skip_covid=skip_covid,
         export_production_models=args.export_production_models,
         export_signal_distribution=args.export_signal_distribution
     )
