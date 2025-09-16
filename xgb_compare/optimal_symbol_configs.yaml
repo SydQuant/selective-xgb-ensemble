@@ -1,0 +1,304 @@
+# Optimal Production Configurations for All Tested Symbols
+# Extracted from MULTI_SYMBOL_TESTING_MATRIX.md comprehensive testing
+
+# Top Tier Performers (>1.9 Production Sharpe)
+QGC#C:
+  n_models: 100
+  n_folds: 15
+  max_features: 100
+  q_metric: "sharpe"
+  xgb_type: "standard"
+  binary_signal: true
+  production_sharpe: 2.661
+  test_config: "100M+15F+std+100feat+sharpe"
+  asset_class: "METALS"
+
+QPL#C:
+  n_models: 150
+  n_folds: 15
+  max_features: 100
+  q_metric: "sharpe"
+  xgb_type: "standard"
+  binary_signal: true
+  production_sharpe: 1.986
+  test_config: "150M+15F+std+100feat+sharpe"
+  asset_class: "METALS"
+
+"@ES#C":
+  n_models: 150
+  n_folds: 15
+  max_features: 100
+  q_metric: "hit_rate"
+  xgb_type: "standard"
+  binary_signal: true
+  production_sharpe: 1.975
+  test_config: "150M+15F+std+100feat+hit_rate"
+  asset_class: "EQUITY"
+
+QHG#C:
+  n_models: 100
+  n_folds: 15
+  max_features: 100
+  q_metric: "hit_rate"
+  xgb_type: "standard"
+  binary_signal: true
+  production_sharpe: 1.947
+  test_config: "100M+15F+std+100feat+hit_rate"
+  asset_class: "METALS"
+
+"@FV#C":
+  n_models: 150
+  n_folds: 10
+  max_features: 250
+  q_metric: "sharpe"
+  xgb_type: "tiered"
+  binary_signal: true
+  production_sharpe: 1.919
+  test_config: "150M+10F+tiered+250feat+sharpe"
+  asset_class: "RATESUS"
+
+# Good Performers (1.5-1.9 Production Sharpe)
+"@NQ#C":
+  n_models: 100
+  n_folds: 15
+  max_features: 100
+  q_metric: "sharpe"
+  xgb_type: "standard"
+  binary_signal: true
+  production_sharpe: 1.851
+  test_config: "100M+15F+std+100feat+sharpe"
+  asset_class: "EQUITY"
+
+QSI#C:
+  n_models: 150
+  n_folds: 15
+  max_features: 100
+  q_metric: "sharpe"
+  xgb_type: "standard"
+  binary_signal: true
+  production_sharpe: 1.759
+  test_config: "150M+15F+std+100feat+sharpe"
+  asset_class: "METALS"
+
+BD#C:
+  n_models: 100
+  n_folds: 15
+  max_features: 100
+  q_metric: "sharpe"
+  xgb_type: "tiered"
+  binary_signal: true
+  production_sharpe: 1.737
+  test_config: "100M+15F+tiered+100feat+sharpe"
+  asset_class: "RATESEU"
+
+# Previous benchmark performers (from OLD RECORDS)
+"@TY#C":
+  n_models: 200
+  n_folds: 10
+  max_features: 250
+  q_metric: "sharpe"
+  xgb_type: "tiered"
+  binary_signal: true
+  production_sharpe: 2.067
+  test_config: "SHARPE_Q + 10F + tiered + 250feat + 200M"
+  asset_class: "RATESUS"
+
+"@RTY#C":
+  n_models: 100
+  n_folds: 10
+  max_features: 100
+  q_metric: "sharpe"
+  xgb_type: "standard"
+  binary_signal: true
+  production_sharpe: 2.193
+  test_config: "10F+sharpe+std"
+  asset_class: "EQUITY"
+
+"@EU#C":
+  n_models: 200
+  n_folds: 20
+  max_features: 100
+  q_metric: "sharpe"
+  xgb_type: "tiered"
+  binary_signal: true
+  production_sharpe: 1.769
+  test_config: "SHARPE_Q + 20F + tiered + 100feat + 200M"
+  asset_class: "FX"
+
+"@S#C":
+  n_models: 200
+  n_folds: 15
+  max_features: 250
+  q_metric: "sharpe"
+  xgb_type: "standard"
+  binary_signal: true
+  production_sharpe: 1.985
+  test_config: "SHARPE_Q + 15F + std + 250feat + 200M"
+  asset_class: "AGS"
+
+BL#C:
+  n_models: 150
+  n_folds: 15
+  max_features: 100
+  q_metric: "sharpe"
+  xgb_type: "tiered"
+  binary_signal: true
+  production_sharpe: 2.290
+  test_config: "15F+sharpe+tiered+100feat+150M"
+  asset_class: "RATESEU"
+
+"@US#C":
+  n_models: 150
+  n_folds: 10
+  max_features: 250
+  q_metric: "sharpe"
+  xgb_type: "tiered"
+  binary_signal: true
+  production_sharpe: 1.837
+  test_config: "10F+sharpe+tiered+250feat+150M"
+  asset_class: "RATESUS"
+
+"@AD#C":
+  n_models: 150
+  n_folds: 20
+  max_features: 100
+  q_metric: "sharpe"
+  xgb_type: "tiered"
+  binary_signal: true
+  production_sharpe: 1.990
+  test_config: "20F+sharpe+tiered+100feat+150M"
+  asset_class: "FX"
+
+# Moderate/Acceptable Performers (1.0-1.5 Production Sharpe)
+"@KW#C":
+  n_models: 150
+  n_folds: 15
+  max_features: 250
+  q_metric: "sharpe"
+  xgb_type: "standard"
+  binary_signal: true
+  production_sharpe: 1.446
+  test_config: "150M+15F+std+250feat+sharpe"
+  asset_class: "AGS"
+
+"@BP#C":
+  n_models: 150
+  n_folds: 20
+  max_features: 100
+  q_metric: "sharpe"
+  xgb_type: "tiered"
+  binary_signal: true
+  production_sharpe: 1.359
+  test_config: "20F+sharpe+tiered+100feat+150M"
+  asset_class: "FX"
+
+"@SM#C":
+  n_models: 150
+  n_folds: 15
+  max_features: 250
+  q_metric: "sharpe"
+  xgb_type: "standard"
+  binary_signal: true
+  production_sharpe: 1.456
+  test_config: "15F+sharpe+std+250feat+150M"
+  asset_class: "AGS"
+
+"@C#C":
+  n_models: 150
+  n_folds: 10
+  max_features: 250
+  q_metric: "hit_rate"
+  xgb_type: "tiered"
+  binary_signal: true
+  production_sharpe: 1.196
+  test_config: "150M+10F+tiered+250feat+hit_rate"
+  asset_class: "AGS"
+
+"@W#C":
+  n_models: 150
+  n_folds: 15
+  max_features: 250
+  q_metric: "sharpe"
+  xgb_type: "standard"
+  binary_signal: true
+  production_sharpe: 1.837
+  test_config: "15F+sharpe+std+250feat+150M"
+  asset_class: "AGS"
+
+# Specialist/High-Risk Alpha (needs evaluation with corrected database)
+"@JY#C":
+  n_models: 150
+  n_folds: 20
+  max_features: 100
+  q_metric: "sharpe"
+  xgb_type: "tiered"
+  binary_signal: true
+  production_sharpe: 4.830
+  test_config: "150M+20F+tiered+100feat+sharpe"
+  asset_class: "FX"
+  note: "Re-testing with corrected database - original may be invalid due to precision loss"
+
+# Poor Performers (exclude from production)
+"@BO#C":
+  n_models: 150
+  n_folds: 15
+  max_features: 250
+  q_metric: "sharpe"
+  xgb_type: "standard"
+  binary_signal: true
+  production_sharpe: -0.360
+  test_config: "150M+15F+std+250feat+sharpe"
+  asset_class: "AGS"
+  note: "Poor performance - exclude from production"
+
+"@CT#C":
+  n_models: 150
+  n_folds: 20
+  max_features: 250
+  q_metric: "hit_rate"
+  xgb_type: "tiered"
+  binary_signal: true
+  production_sharpe: 0.860
+  test_config: "150M+20F+tiered+250feat+hit_rate"
+  asset_class: "AGS"
+  note: "Marginal improvement - consider exclusion"
+
+# Production Deployment Tiers
+production_tiers:
+  tier_1_core: ["QGC#C", "QPL#C", "@ES#C", "QHG#C", "@FV#C", "@NQ#C", "@TY#C", "@RTY#C"]
+  tier_2_full: ["QSI#C", "BD#C", "BL#C", "@US#C", "@AD#C", "@EU#C", "@W#C", "@S#C"]
+  tier_3_extended: ["@KW#C", "@BP#C", "@SM#C", "@C#C"]
+  specialist_alpha: ["@JY#C"]
+  excluded: ["@BO#C", "@CT#C"]
+
+# Asset class optimal patterns
+asset_class_patterns:
+  EQUITY:
+    optimal_folds: 15
+    optimal_architecture: "standard"
+    optimal_q_metric: "hit_rate"  # @ES#C uses hit_rate successfully
+
+  RATESUS:
+    optimal_folds: 10
+    optimal_architecture: "tiered"
+    optimal_q_metric: "sharpe"
+
+  RATESEU:
+    optimal_folds: 15
+    optimal_architecture: "tiered"
+    optimal_q_metric: "sharpe"
+
+  FX:
+    optimal_folds: 20
+    optimal_architecture: "tiered"
+    optimal_q_metric: "sharpe"
+
+  METALS:
+    optimal_folds: 15
+    optimal_architecture: "standard"
+    optimal_q_metric: "sharpe"  # Exception: QHG#C uses hit_rate
+
+  AGS:
+    optimal_folds: 15
+    optimal_architecture: "standard"
+    optimal_q_metric: "sharpe"  # Exception: @C#C uses hit_rate
