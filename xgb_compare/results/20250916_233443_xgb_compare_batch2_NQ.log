@@ -1,0 +1,92 @@
+2025-09-16 23:34:43,107 - INFO - ================================================================================
+2025-09-16 23:34:43,107 - INFO - XGBoost Comparison Framework
+2025-09-16 23:34:43,107 - INFO - ================================================================================
+2025-09-16 23:34:43,107 - INFO - Configuration:
+2025-09-16 23:34:43,108 - INFO -   Target Symbol: @NQ#C
+2025-09-16 23:34:43,108 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-16 23:34:43,108 - INFO -   Models: 100, Type: standard
+2025-09-16 23:34:43,108 - INFO -   Folds: 15
+2025-09-16 23:34:43,108 - INFO -   Max Features: 100 (Limited)
+2025-09-16 23:34:43,108 - INFO -   Feature Selection: Enabled
+2025-09-16 23:34:43,108 - INFO -   Inner Val Fraction: 0.2
+2025-09-16 23:34:43,108 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-16 23:34:43,108 - INFO -   Signal Type: Binary (+1/-1)
+2025-09-16 23:34:43,108 - INFO -   Cross-validation: Expanding window
+2025-09-16 23:34:43,108 - INFO -   Production: Cutoff=0.6, Top N=5, Q-Metric=sharpe
+2025-09-16 23:34:43,108 - INFO -   Reselection: Every 1 fold(s)
+2025-09-16 23:34:43,108 - INFO - 
+2025-09-16 23:34:55,290 - INFO - Dropped 8 rows due to NaN in target column @NQ#C_target_return
+2025-09-16 23:34:55,479 - INFO - Loaded: X=(2727, 1906), y=(2727,)
+2025-09-16 23:36:52,902 - INFO - Selected 100 features (threshold: 0.7)
+2025-09-16 23:36:53,519 - INFO - Selected: 100 features
+2025-09-16 23:36:54,423 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-16 23:36:54,424 - INFO - Processing mode: CPU multiprocessing (GPU: False, Total models: 1500)
+2025-09-16 23:36:54,455 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-16 23:36:54,476 - INFO - Using expanding window
+2025-09-16 23:36:54,480 - INFO - Starting analysis: 100 standard models x 13 folds
+2025-09-16 23:36:54,481 - INFO - Processing Fold 1/13
+2025-09-16 23:36:54,527 - INFO -   Using multiprocessing with 9 workers
+2025-09-16 23:40:26,433 - INFO - Fold 1 Summary:
+2025-09-16 23:40:26,445 - INFO -   Best OOS Sharpe: M77 (3.605, p=0.000)
+2025-09-16 23:40:26,445 - INFO -   Best Q-Sharpe:  M77 (3.605, OOS_Sharpe=3.605, OOS_Hit=0.597)
+2025-09-16 23:40:26,445 - INFO -   Mean OOS Sharpe: 1.135, Mean Hit: 0.525
+2025-09-16 23:40:26,445 - INFO - 
+2025-09-16 23:40:26,467 - INFO - Stored 0 trained models for production export
+2025-09-16 23:40:26,467 - INFO - Processing Fold 2/13
+2025-09-16 23:40:26,513 - INFO -   Using multiprocessing with 9 workers
+2025-09-16 23:44:07,478 - INFO - Fold 2 Summary:
+2025-09-16 23:44:07,529 - INFO -   Best OOS Sharpe: M95 (3.749, p=0.000)
+2025-09-16 23:44:07,529 - INFO -   Best Q-Sharpe:  M77 (3.318, OOS_Sharpe=0.737, OOS_Hit=0.514)
+2025-09-16 23:44:07,530 - INFO -   Mean OOS Sharpe: 1.587, Mean Hit: 0.569
+2025-09-16 23:44:07,530 - INFO - 
+2025-09-16 23:44:07,676 - INFO - Stored 0 trained models for production export
+2025-09-16 23:44:07,676 - INFO - Processing Fold 3/13
+2025-09-16 23:44:08,023 - INFO -   Using multiprocessing with 9 workers
+2025-09-16 23:47:42,704 - INFO - Fold 3 Summary:
+2025-09-16 23:47:42,735 - INFO -   Best OOS Sharpe: M98 (5.094, p=0.000)
+2025-09-16 23:47:42,737 - INFO -   Best Q-Sharpe:  M77 (3.157, OOS_Sharpe=1.704, OOS_Hit=0.552)
+2025-09-16 23:47:42,738 - INFO -   Mean OOS Sharpe: 1.016, Mean Hit: 0.533
+2025-09-16 23:47:42,738 - INFO - 
+2025-09-16 23:47:42,844 - INFO - Stored 0 trained models for production export
+2025-09-16 23:47:42,846 - INFO - Processing Fold 4/13
+2025-09-16 23:47:43,043 - INFO -   Using multiprocessing with 9 workers
+2025-09-16 23:51:30,055 - INFO - Fold 4 Summary:
+2025-09-16 23:51:30,063 - INFO -   Best OOS Sharpe: M41 (2.306, p=0.020)
+2025-09-16 23:51:30,064 - INFO -   Best Q-Sharpe:  M77 (2.921, OOS_Sharpe=0.796, OOS_Hit=0.552)
+2025-09-16 23:51:30,064 - INFO -   Mean OOS Sharpe: 0.621, Mean Hit: 0.518
+2025-09-16 23:51:30,064 - INFO - 
+2025-09-16 23:51:30,104 - INFO - Stored 0 trained models for production export
+2025-09-16 23:51:30,105 - INFO - Processing Fold 5/13
+2025-09-16 23:51:30,140 - INFO -   Using multiprocessing with 9 workers
+2025-09-16 23:55:44,151 - INFO - Fold 5 Summary:
+2025-09-16 23:55:44,210 - INFO -   Best OOS Sharpe: M80 (3.625, p=0.000)
+2025-09-16 23:55:44,211 - INFO -   Best Q-Sharpe:  M77 (2.886, OOS_Sharpe=2.574, OOS_Hit=0.541)
+2025-09-16 23:55:44,212 - INFO -   Mean OOS Sharpe: 1.249, Mean Hit: 0.523
+2025-09-16 23:55:44,212 - INFO - 
+2025-09-16 23:55:44,515 - INFO - Stored 0 trained models for production export
+2025-09-16 23:55:44,523 - INFO - Processing Fold 6/13
+2025-09-16 23:55:44,781 - INFO -   Using multiprocessing with 9 workers
+2025-09-17 00:00:01,305 - INFO - Fold 6 Summary:
+2025-09-17 00:00:01,334 - INFO -   Best OOS Sharpe: M01 (4.150, p=0.000)
+2025-09-17 00:00:01,334 - INFO -   Best Q-Sharpe:  M77 (2.685, OOS_Sharpe=0.877, OOS_Hit=0.530)
+2025-09-17 00:00:01,334 - INFO -   Mean OOS Sharpe: 1.481, Mean Hit: 0.533
+2025-09-17 00:00:01,334 - INFO - 
+2025-09-17 00:00:01,550 - INFO - Stored 0 trained models for production export
+2025-09-17 00:00:01,552 - INFO - Processing Fold 7/13
+2025-09-17 00:00:01,778 - INFO -   Using multiprocessing with 9 workers
+2025-09-17 00:04:57,370 - INFO - Fold 7 Summary:
+2025-09-17 00:04:57,392 - INFO -   Best OOS Sharpe: M38 (3.490, p=0.000)
+2025-09-17 00:04:57,397 - INFO -   Best Q-Sharpe:  M77 (2.618, OOS_Sharpe=2.013, OOS_Hit=0.591)
+2025-09-17 00:04:57,398 - INFO -   Mean OOS Sharpe: 1.579, Mean Hit: 0.571
+2025-09-17 00:04:57,398 - INFO - 
+2025-09-17 00:04:57,577 - INFO - Stored 0 trained models for production export
+2025-09-17 00:04:57,579 - INFO - Processing Fold 8/13
+2025-09-17 00:04:57,888 - INFO -   Using multiprocessing with 9 workers
+2025-09-17 00:10:58,360 - INFO - Fold 8 Summary:
+2025-09-17 00:10:58,405 - INFO -   Best OOS Sharpe: M91 (3.354, p=0.000)
+2025-09-17 00:10:58,407 - INFO -   Best Q-Sharpe:  M77 (2.443, OOS_Sharpe=0.865, OOS_Hit=0.508)
+2025-09-17 00:10:58,407 - INFO -   Mean OOS Sharpe: 1.026, Mean Hit: 0.520
+2025-09-17 00:10:58,407 - INFO - 
+2025-09-17 00:10:58,525 - INFO - Stored 0 trained models for production export
+2025-09-17 00:10:58,529 - INFO - Processing Fold 9/13
+2025-09-17 00:10:58,673 - INFO -   Using multiprocessing with 9 workers
