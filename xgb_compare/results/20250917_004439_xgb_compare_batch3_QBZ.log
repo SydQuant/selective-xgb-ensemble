@@ -1,0 +1,33 @@
+2025-09-17 00:44:39,402 - INFO - ================================================================================
+2025-09-17 00:44:39,402 - INFO - XGBoost Comparison Framework
+2025-09-17 00:44:39,402 - INFO - ================================================================================
+2025-09-17 00:44:39,402 - INFO - Configuration:
+2025-09-17 00:44:39,402 - INFO -   Target Symbol: QBZ#C
+2025-09-17 00:44:39,402 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-17 00:44:39,402 - INFO -   Models: 100, Type: standard
+2025-09-17 00:44:39,402 - INFO -   Folds: 15
+2025-09-17 00:44:39,402 - INFO -   Max Features: 100 (Limited)
+2025-09-17 00:44:39,402 - INFO -   Feature Selection: Enabled
+2025-09-17 00:44:39,402 - INFO -   Inner Val Fraction: 0.2
+2025-09-17 00:44:39,402 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-17 00:44:39,402 - INFO -   Signal Type: Binary (+1/-1)
+2025-09-17 00:44:39,402 - INFO -   Cross-validation: Expanding window
+2025-09-17 00:44:39,402 - INFO -   Production: Cutoff=0.6, Top N=5, Q-Metric=sharpe
+2025-09-17 00:44:39,402 - INFO -   Reselection: Every 1 fold(s)
+2025-09-17 00:44:39,402 - INFO - 
+2025-09-17 00:44:52,349 - INFO - Dropped 7 rows due to NaN in target column QBZ#C_target_return
+2025-09-17 00:44:52,573 - INFO - Loaded: X=(2728, 1906), y=(2728,)
+2025-09-17 00:46:18,760 - INFO - Selected 100 features (threshold: 0.7)
+2025-09-17 00:46:19,090 - INFO - Selected: 100 features
+2025-09-17 00:46:19,799 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-17 00:46:19,840 - INFO - Processing mode: CPU multiprocessing (GPU: False, Total models: 1500)
+2025-09-17 00:46:19,910 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-17 00:46:19,913 - INFO - Using expanding window
+2025-09-17 00:46:19,913 - INFO - Starting analysis: 100 standard models x 13 folds
+2025-09-17 00:46:19,914 - INFO - Processing Fold 1/13
+2025-09-17 00:46:19,936 - INFO -   Using multiprocessing with 9 workers
+2025-09-17 00:49:11,351 - INFO - Fold 1 Summary:
+2025-09-17 00:49:11,352 - INFO -   Best OOS Sharpe: M69 (1.595, p=0.140)
+2025-09-17 00:49:11,352 - INFO -   Best Q-Sharpe:  M69 (1.595, OOS_Sharpe=1.595, OOS_Hit=0.497)
+2025-09-17 00:49:11,352 - INFO -   Mean OOS Sharpe: 1.246, Mean Hit: 0.488
+2025-09-17 00:49:11,353 - INFO - 
