@@ -1,102 +1,95 @@
 === XGBoost Weekly Backtest Analysis ===
-Running 180-day backtest for 24 symbols...
+Auto-detected 21 symbols with models
+Running 180-day backtest for 21 symbols...
 Running backtest for @AD#C...
 Dropped 1 rows due to NaN in target column @AD#C_target_return
 Loaded consolidated package for @AD#C: 8 models
-  @AD#C: Total PnL=-1.99%, Trades=146
-Running backtest for @BO#C...
-Dropped 5 rows due to NaN in target column @BO#C_target_return
-  @BO#C: No data available
+  @AD#C: Total PnL=22.40%, Trades=136
 Running backtest for @BP#C...
 Dropped 1 rows due to NaN in target column @BP#C_target_return
 Loaded consolidated package for @BP#C: 8 models
-  @BP#C: Total PnL=4.91%, Trades=146
+  @BP#C: Total PnL=3.58%, Trades=134
 Running backtest for @C#C...
 Dropped 5 rows due to NaN in target column @C#C_target_return
 Loaded consolidated package for @C#C: 8 models
-  @C#C: Total PnL=-10.04%, Trades=142
+  @C#C: Total PnL=23.83%, Trades=130
 Running backtest for @CT#C...
 Dropped 5 rows due to NaN in target column @CT#C_target_return
 Loaded consolidated package for @CT#C: 8 models
-  @CT#C: Total PnL=-4.65%, Trades=142
+  @CT#C: Total PnL=-11.78%, Trades=127
 Running backtest for @ES#C...
 Dropped 2 rows due to NaN in target column @ES#C_target_return
 Loaded consolidated package for @ES#C: 8 models
-  @ES#C: Total PnL=9.87%, Trades=145
-Running backtest for @EU#C...
-Dropped 1 rows due to NaN in target column @EU#C_target_return
-  @EU#C: No data available
+  @ES#C: Total PnL=24.73%, Trades=135
 Running backtest for @FV#C...
 Dropped 1 rows due to NaN in target column @FV#C_target_return
 Loaded consolidated package for @FV#C: 8 models
-  @FV#C: Total PnL=-0.15%, Trades=146
+  @FV#C: Total PnL=3.66%, Trades=132
 Running backtest for @JY#C...
 Dropped 1 rows due to NaN in target column @JY#C_target_return
 Loaded consolidated package for @JY#C: 8 models
-  @JY#C: Total PnL=4.93%, Trades=146
+  @JY#C: Total PnL=9.24%, Trades=138
+Running backtest for @KW#C...
+Dropped 5 rows due to NaN in target column @KW#C_target_return
+Loaded consolidated package for @KW#C: 8 models
+  @KW#C: Total PnL=7.60%, Trades=126
 Running backtest for @NQ#C...
 Dropped 2 rows due to NaN in target column @NQ#C_target_return
 Loaded consolidated package for @NQ#C: 5 models
-  @NQ#C: Total PnL=3.49%, Trades=145
+  @NQ#C: Total PnL=31.05%, Trades=145
 Running backtest for @RTY#C...
 Dropped 2 rows due to NaN in target column @RTY#C_target_return
 Loaded consolidated package for @RTY#C: 5 models
-  @RTY#C: Total PnL=-26.56%, Trades=145
+  @RTY#C: Total PnL=6.81%, Trades=145
 Running backtest for @S#C...
 Dropped 5 rows due to NaN in target column @S#C_target_return
 Loaded consolidated package for @S#C: 10 models
-  @S#C: Total PnL=2.18%, Trades=142
+  @S#C: Total PnL=3.57%, Trades=122
 Running backtest for @SM#C...
 Dropped 5 rows due to NaN in target column @SM#C_target_return
 Loaded consolidated package for @SM#C: 8 models
-  @SM#C: Total PnL=-4.52%, Trades=142
+  @SM#C: Total PnL=-4.11%, Trades=127
 Running backtest for @TY#C...
 Dropped 1 rows due to NaN in target column @TY#C_target_return
 Loaded consolidated package for @TY#C: 10 models
-  @TY#C: Total PnL=-6.90%, Trades=146
+  @TY#C: Total PnL=7.25%, Trades=134
 Running backtest for @US#C...
 Dropped 1 rows due to NaN in target column @US#C_target_return
 Loaded consolidated package for @US#C: 8 models
-  @US#C: Total PnL=18.72%, Trades=146
+  @US#C: Total PnL=9.16%, Trades=134
 Running backtest for @W#C...
 Dropped 5 rows due to NaN in target column @W#C_target_return
 Loaded consolidated package for @W#C: 8 models
-  @W#C: Total PnL=-13.41%, Trades=142
+  @W#C: Total PnL=19.02%, Trades=126
 Running backtest for BD#C...
 Dropped 6 rows due to NaN in target column BD#C_target_return
 Loaded consolidated package for BD#C: 5 models
-  BD#C: Total PnL=-1.58%, Trades=141
+  BD#C: Total PnL=-0.28%, Trades=141
 Running backtest for BL#C...
 Dropped 6 rows due to NaN in target column BL#C_target_return
 Loaded consolidated package for BL#C: 8 models
-  BL#C: Total PnL=1.61%, Trades=141
-Running backtest for QCL#C...
-Dropped 1 rows due to NaN in target column QCL#C_target_return
-  QCL#C: No data available
+  BL#C: Total PnL=1.80%, Trades=133
 Running backtest for QGC#C...
 Dropped 1 rows due to NaN in target column QGC#C_target_return
 Loaded consolidated package for QGC#C: 5 models
-  QGC#C: Total PnL=-23.31%, Trades=146
+  QGC#C: Total PnL=40.48%, Trades=146
 Running backtest for QHG#C...
 Dropped 1 rows due to NaN in target column QHG#C_target_return
 Loaded consolidated package for QHG#C: 5 models
-  QHG#C: Total PnL=-7.51%, Trades=146
-Running backtest for QNG#C...
-Dropped 1 rows due to NaN in target column QNG#C_target_return
-  QNG#C: No data available
+  QHG#C: Total PnL=27.64%, Trades=146
 Running backtest for QPL#C...
 Dropped 1 rows due to NaN in target column QPL#C_target_return
 Loaded consolidated package for QPL#C: 8 models
-  QPL#C: Total PnL=17.92%, Trades=146
+  QPL#C: Total PnL=26.55%, Trades=135
 Running backtest for QSI#C...
 Dropped 1 rows due to NaN in target column QSI#C_target_return
 Loaded consolidated package for QSI#C: 8 models
-  QSI#C: Total PnL=7.31%, Trades=146
+  QSI#C: Total PnL=22.50%, Trades=131
 Creating performance plot...
-Plot saved: /Users/steven/Projects/SQ/bond_ls_xgb_grope_full_v6/PROD/weekly_analysis/backtest_180d_20250916_1702.png
+Plot saved: /Users/steven/Projects/SQ/bond_ls_xgb_grope_full_v6/PROD/weekly_analysis/backtest_180d_20250916_1718.png
 
 === Summary ===
-Symbols with data: 20/24
-Total PnL: -29.67%
-Total Trades: 2887
+Symbols with data: 21/21
+Total PnL: 274.70%
+Total Trades: 2823
 Weekly backtest analysis completed
