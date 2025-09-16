@@ -55,7 +55,7 @@ def run_backtest(symbol: str, days: int = 30) -> pd.DataFrame:
     )
 
     # Get backtest date range
-    end_date = datetime(2025, 6, 30)  # Use known good data end date
+    end_date = datetime(2025, 7, 30)  # Use known good data end date
 
     start_date = end_date - timedelta(days=days + 30)  # 30-day buffer for feature calculation
 
