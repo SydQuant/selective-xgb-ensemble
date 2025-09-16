@@ -1,0 +1,100 @@
+2025-09-16 11:54:45,412 - INFO - ================================================================================
+2025-09-16 11:54:45,412 - INFO - XGBoost Comparison Framework
+2025-09-16 11:54:45,412 - INFO - ================================================================================
+2025-09-16 11:54:45,412 - INFO - Configuration:
+2025-09-16 11:54:45,412 - INFO -   Target Symbol: BD#C
+2025-09-16 11:54:45,412 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-16 11:54:45,412 - INFO -   Models: 100, Type: tiered
+2025-09-16 11:54:45,412 - INFO -   Folds: 15
+2025-09-16 11:54:45,413 - INFO -   Max Features: 100 (Limited)
+2025-09-16 11:54:45,413 - INFO -   Feature Selection: Enabled
+2025-09-16 11:54:45,413 - INFO -   Inner Val Fraction: 0.2
+2025-09-16 11:54:45,413 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-16 11:54:45,413 - INFO -   Signal Type: Tanh Normalized
+2025-09-16 11:54:45,413 - INFO -   Cross-validation: Expanding window
+2025-09-16 11:54:45,413 - INFO -   Production: Cutoff=0.6, Top N=5, Q-Metric=sharpe
+2025-09-16 11:54:45,413 - INFO -   Reselection: Every 1 fold(s)
+2025-09-16 11:54:45,413 - INFO - 
+2025-09-16 11:54:50,713 - INFO - Dropped 40 rows due to NaN in target column BD#C_target_return
+2025-09-16 11:54:50,923 - INFO - Loaded: X=(2695, 1906), y=(2695,)
+2025-09-16 11:55:15,394 - INFO - Selected 100 features (threshold: 0.7)
+2025-09-16 11:55:15,406 - INFO - Selected: 100 features
+2025-09-16 11:55:15,737 - INFO - GPU detection: CUDA GPU available and working
+2025-09-16 11:55:15,737 - INFO - Processing mode: GPU sequential (GPU: True, Total models: 1500)
+2025-09-16 11:55:15,762 - INFO - GPU detection: CUDA GPU available and working
+2025-09-16 11:55:15,769 - INFO - Using expanding window
+2025-09-16 11:55:15,770 - INFO - Starting analysis: 100 tiered models x 13 folds
+2025-09-16 11:55:15,770 - INFO - Processing Fold 1/13
+2025-09-16 11:55:15,773 - INFO -   Using GPU sequential processing
+2025-09-16 11:59:46,603 - INFO - Fold 1 Summary:
+2025-09-16 11:59:46,603 - INFO -   Best OOS Sharpe: M50 (5.238, p=0.000)
+2025-09-16 11:59:46,603 - INFO -   Best Q-Sharpe:  M50 (5.238, OOS_Sharpe=5.238, OOS_Hit=0.603)
+2025-09-16 11:59:46,603 - INFO -   Mean OOS Sharpe: 3.473, Mean Hit: 0.573
+2025-09-16 11:59:46,603 - INFO - 
+2025-09-16 11:59:46,608 - INFO - Stored 100 trained models for production export
+2025-09-16 11:59:46,608 - INFO - Processing Fold 2/13
+2025-09-16 11:59:46,611 - INFO -   Using GPU sequential processing
+2025-09-16 12:04:50,009 - INFO - Fold 2 Summary:
+2025-09-16 12:04:50,009 - INFO -   Best OOS Sharpe: M78 (1.036, p=0.380)
+2025-09-16 12:04:50,009 - INFO -   Best Q-Sharpe:  M50 (4.702, OOS_Sharpe=-0.119, OOS_Hit=0.503)
+2025-09-16 12:04:50,009 - INFO -   Mean OOS Sharpe: -0.599, Mean Hit: 0.486
+2025-09-16 12:04:50,009 - INFO - 
+2025-09-16 12:04:50,013 - INFO - Stored 100 trained models for production export
+2025-09-16 12:04:50,013 - INFO - Processing Fold 3/13
+2025-09-16 12:04:50,017 - INFO -   Using GPU sequential processing
+2025-09-16 12:10:14,810 - INFO - Fold 3 Summary:
+2025-09-16 12:10:14,810 - INFO -   Best OOS Sharpe: M99 (3.407, p=0.000)
+2025-09-16 12:10:14,810 - INFO -   Best Q-Sharpe:  M50 (4.465, OOS_Sharpe=2.334, OOS_Hit=0.564)
+2025-09-16 12:10:14,810 - INFO -   Mean OOS Sharpe: 1.858, Mean Hit: 0.561
+2025-09-16 12:10:14,810 - INFO - 
+2025-09-16 12:10:14,828 - INFO - Stored 100 trained models for production export
+2025-09-16 12:10:14,828 - INFO - Processing Fold 4/13
+2025-09-16 12:10:14,838 - INFO -   Using GPU sequential processing
+2025-09-16 12:15:57,262 - INFO - Fold 4 Summary:
+2025-09-16 12:15:57,263 - INFO -   Best OOS Sharpe: M90 (2.506, p=0.020)
+2025-09-16 12:15:57,263 - INFO -   Best Q-Sharpe:  M50 (3.994, OOS_Sharpe=-0.247, OOS_Hit=0.475)
+2025-09-16 12:15:57,263 - INFO -   Mean OOS Sharpe: 0.633, Mean Hit: 0.499
+2025-09-16 12:15:57,263 - INFO - 
+2025-09-16 12:15:57,267 - INFO - Stored 100 trained models for production export
+2025-09-16 12:15:57,267 - INFO - Processing Fold 5/13
+2025-09-16 12:15:57,271 - INFO -   Using GPU sequential processing
+2025-09-16 12:21:51,237 - INFO - Fold 5 Summary:
+2025-09-16 12:21:51,238 - INFO -   Best OOS Sharpe: M27 (3.626, p=0.000)
+2025-09-16 12:21:51,238 - INFO -   Best Q-Sharpe:  M50 (3.682, OOS_Sharpe=0.878, OOS_Hit=0.497)
+2025-09-16 12:21:51,238 - INFO -   Mean OOS Sharpe: 0.772, Mean Hit: 0.495
+2025-09-16 12:21:51,238 - INFO - 
+2025-09-16 12:21:51,245 - INFO - Stored 100 trained models for production export
+2025-09-16 12:21:51,245 - INFO - Processing Fold 6/13
+2025-09-16 12:21:51,249 - INFO -   Using GPU sequential processing
+2025-09-16 12:27:54,321 - INFO - Fold 6 Summary:
+2025-09-16 12:27:54,322 - INFO -   Best OOS Sharpe: M46 (3.731, p=0.000)
+2025-09-16 12:27:54,322 - INFO -   Best Q-Sharpe:  M10 (3.505, OOS_Sharpe=2.328, OOS_Hit=0.570)
+2025-09-16 12:27:54,322 - INFO -   Mean OOS Sharpe: 2.256, Mean Hit: 0.550
+2025-09-16 12:27:54,322 - INFO - 
+2025-09-16 12:27:54,326 - INFO - Stored 100 trained models for production export
+2025-09-16 12:27:54,326 - INFO - Processing Fold 7/13
+2025-09-16 12:27:54,331 - INFO -   Using GPU sequential processing
+2025-09-16 12:34:05,552 - INFO - Fold 7 Summary:
+2025-09-16 12:34:05,553 - INFO -   Best OOS Sharpe: M33 (3.659, p=0.000)
+2025-09-16 12:34:05,553 - INFO -   Best Q-Sharpe:  M50 (3.381, OOS_Sharpe=2.528, OOS_Hit=0.536)
+2025-09-16 12:34:05,553 - INFO -   Mean OOS Sharpe: 1.850, Mean Hit: 0.519
+2025-09-16 12:34:05,553 - INFO - 
+2025-09-16 12:34:05,557 - INFO - Stored 100 trained models for production export
+2025-09-16 12:34:05,558 - INFO - Processing Fold 8/13
+2025-09-16 12:34:05,561 - INFO -   Using GPU sequential processing
+2025-09-16 12:40:24,460 - INFO - Fold 8 Summary:
+2025-09-16 12:40:24,460 - INFO -   Best OOS Sharpe: M81 (2.658, p=0.040)
+2025-09-16 12:40:24,460 - INFO -   Best Q-Sharpe:  M22 (3.108, OOS_Sharpe=0.870, OOS_Hit=0.547)
+2025-09-16 12:40:24,460 - INFO -   Mean OOS Sharpe: 0.780, Mean Hit: 0.522
+2025-09-16 12:40:24,460 - INFO - 
+2025-09-16 12:40:24,474 - INFO - Stored 100 trained models for production export
+2025-09-16 12:40:24,474 - INFO - Processing Fold 9/13
+2025-09-16 12:40:24,484 - INFO -   Using GPU sequential processing
+2025-09-16 12:46:48,752 - INFO - Fold 9 Summary:
+2025-09-16 12:46:48,753 - INFO -   Best OOS Sharpe: M89 (3.279, p=0.000)
+2025-09-16 12:46:48,753 - INFO -   Best Q-Sharpe:  M22 (2.946, OOS_Sharpe=1.492, OOS_Hit=0.520)
+2025-09-16 12:46:48,753 - INFO -   Mean OOS Sharpe: 1.428, Mean Hit: 0.521
+2025-09-16 12:46:48,753 - INFO - 
+2025-09-16 12:46:48,760 - INFO - Stored 100 trained models for production export
+2025-09-16 12:46:48,760 - INFO - Processing Fold 10/13
+2025-09-16 12:46:48,764 - INFO -   Using GPU sequential processing
