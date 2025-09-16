@@ -1,0 +1,28 @@
+2025-09-17 00:53:43,349 - INFO - ================================================================================
+2025-09-17 00:53:43,349 - INFO - XGBoost Comparison Framework
+2025-09-17 00:53:43,349 - INFO - ================================================================================
+2025-09-17 00:53:43,349 - INFO - Configuration:
+2025-09-17 00:53:43,349 - INFO -   Target Symbol: BD#C
+2025-09-17 00:53:43,349 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-17 00:53:43,349 - INFO -   Models: 100, Type: standard
+2025-09-17 00:53:43,349 - INFO -   Folds: 15
+2025-09-17 00:53:43,349 - INFO -   Max Features: 100 (Limited)
+2025-09-17 00:53:43,350 - INFO -   Feature Selection: Enabled
+2025-09-17 00:53:43,350 - INFO -   Inner Val Fraction: 0.2
+2025-09-17 00:53:43,350 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-17 00:53:43,350 - INFO -   Signal Type: Binary (+1/-1)
+2025-09-17 00:53:43,350 - INFO -   Cross-validation: Expanding window
+2025-09-17 00:53:43,350 - INFO -   Production: Cutoff=0.6, Top N=5, Q-Metric=sharpe
+2025-09-17 00:53:43,350 - INFO -   Reselection: Every 1 fold(s)
+2025-09-17 00:53:43,350 - INFO - 
+2025-09-17 00:53:57,470 - INFO - Dropped 40 rows due to NaN in target column BD#C_target_return
+2025-09-17 00:53:57,694 - INFO - Loaded: X=(2695, 1906), y=(2695,)
+2025-09-17 00:55:54,281 - INFO - Selected 100 features (threshold: 0.7)
+2025-09-17 00:55:54,543 - INFO - Selected: 100 features
+2025-09-17 00:55:55,269 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-17 00:55:55,272 - INFO - Processing mode: CPU multiprocessing (GPU: False, Total models: 1500)
+2025-09-17 00:55:55,425 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-17 00:55:55,429 - INFO - Using expanding window
+2025-09-17 00:55:55,430 - INFO - Starting analysis: 100 standard models x 13 folds
+2025-09-17 00:55:55,430 - INFO - Processing Fold 1/13
+2025-09-17 00:55:55,439 - INFO -   Using multiprocessing with 9 workers
