@@ -6,6 +6,14 @@ Production-ready framework for deploying XGBoost ensemble models for financial s
 
 This framework bridges the research XGBoost framework (`xgb_compare/`) with production deployment, maintaining the same feature engineering and signal logic while providing robust daily execution capabilities.
 
+
+
+##  **📊 RETRAINING CALENDAR:**
+
+1. **February 2026: Retrain 20-fold symbols (@AD#C, @JY#C, @BP#C, @EU#C, @CT#C)**
+2. **April 2026: Retrain 15-fold symbols (@ES#C, BL#C, @NQ#C, QGC#C, QHG#C, QPL#C, QSI#C, BD#C, @KW#C, @SM#C)**
+3. **August 2026: Retrain 10-fold symbols (@TY#C, @US#C, @FV#C, @C#C, @RTY#C)**
+
 ## Architecture
 
 ```
@@ -24,13 +32,13 @@ PROD/
 
 ## Key Differences from v2.1 Production
 
-| Component | v2.1 Production | XGBoost Production |
-|-----------|----------------|-------------------|
+| Component         | v2.1 Production                      | XGBoost Production                   |
+| ----------------- | ------------------------------------ | ------------------------------------ |
 | Signal Generation | L1 feature weights + majority voting | XGBoost ensemble + democratic voting |
-| Model Selection | Manual feature selection | Automated optimal configs per symbol |
-| Configuration | Feature weights CSV files | YAML model configurations |
-| Data Access | IQFeed (same) | IQFeed (same) |
-| Trade Processing | Same GMS format | Same GMS format |
+| Model Selection   | Manual feature selection             | Automated optimal configs per symbol |
+| Configuration     | Feature weights CSV files            | YAML model configurations            |
+| Data Access       | IQFeed (same)                        | IQFeed (same)                        |
+| Trade Processing  | Same GMS format                      | Same GMS format                      |
 
 ## Setup and Deployment
 
@@ -48,6 +56,7 @@ python production_model_builder.py --symbol "@ES#C"
 ```
 
 This creates:
+
 - `PROD/models/{symbol}/model_*.pkl` - Individual XGBoost models
 - `PROD/config/models/{symbol}.yaml` - Symbol configuration
 - Model metadata and feature specifications
@@ -55,6 +64,7 @@ This creates:
 ### 2. Configure Trading Parameters
 
 Update `PROD/config/trading_config.yaml` with:
+
 - Current positions
 - Bloomberg ticker mappings (already configured from v2.1)
 - Portfolio allocations
@@ -74,12 +84,12 @@ python daily_signal_runner.py --signal-hour 12 --dry-run
 
 Based on multi-symbol testing results (`MULTI_SYMBOL_TESTING_MATRIX.md`):
 
-| Symbol | Config | Sharpe | Models | Folds | Features | Architecture |
-|--------|--------|--------|--------|-------|----------|-------------|
-| @ES#C | HIT_Q + 15F + std + 100feat + 150M | 2.319 | 150 | 15 | 100 | standard |
-| @TY#C | SHARPE_Q + 10F + tiered + 250feat + 200M | 2.067 | 200 | 10 | 250 | tiered |
-| @EU#C | SHARPE_Q + 20F + tiered + 100feat + 200M | 1.769 | 200 | 20 | 100 | tiered |
-| @S#C | SHARPE_Q + 15F + std + 250feat + 200M | 1.985 | 200 | 15 | 250 | standard |
+| Symbol | Config                                   | Sharpe | Models | Folds | Features | Architecture |
+| ------ | ---------------------------------------- | ------ | ------ | ----- | -------- | ------------ |
+| @ES#C  | HIT_Q + 15F + std + 100feat + 150M       | 2.319  | 150    | 15    | 100      | standard     |
+| @TY#C  | SHARPE_Q + 10F + tiered + 250feat + 200M | 2.067  | 200    | 10    | 250      | tiered       |
+| @EU#C  | SHARPE_Q + 20F + tiered + 100feat + 200M | 1.769  | 200    | 20    | 100      | tiered       |
+| @S#C   | SHARPE_Q + 15F + std + 250feat + 200M    | 1.985  | 200    | 15    | 250      | standard     |
 
 ## Critical Production Considerations
 
@@ -91,6 +101,7 @@ Based on multi-symbol testing results (`MULTI_SYMBOL_TESTING_MATRIX.md`):
 - **Needed**: Final models trained on ALL data for deployment
 
 The `production_model_builder.py` script addresses this by:
+
 - Training models on ALL available data (no holdout)
 - Using exact feature selection from research
 - Saving deployment-ready model artifacts
@@ -98,6 +109,7 @@ The `production_model_builder.py` script addresses this by:
 ### 2. Feature Engineering
 
 Production feature engineering **must match exactly** what was used in research:
+
 - Same feature calculation logic (`data_utils_simple.py`)
 - Same feature selection methodology
 - **Critical**: NO target column in production features
@@ -142,11 +154,13 @@ trade = process_trade(symbol, signal, current_pos, price)
 ## Monitoring and Diagnostics
 
 ### Log Files
+
 - Daily logs: `logs/YYYYMMDD/YYYYMMDD_HHMM_xgb_production.log`
 - Model metadata: `models/{symbol}/model_metadata.yaml`
 - Signal summaries: `logs/YYYYMMDD/YYYYMMDD_signals_summary_12hr.xlsx`
 
 ### Key Metrics to Monitor
+
 - Model consensus strength
 - Feature availability
 - Price data freshness
@@ -158,16 +172,17 @@ trade = process_trade(symbol, signal, current_pos, price)
 ### Common Issues
 
 1. **No features generated**
+
    - Check IQFeed connection
    - Verify symbol data availability
    - Review feature engineering logs
-
 2. **Model loading failures**
+
    - Ensure all models built correctly
    - Check file permissions
    - Verify YAML configurations
-
 3. **No trades generated**
+
    - All signals may be zero/neutral
    - Check position limits
    - Review price data
@@ -189,12 +204,14 @@ Consolidated weekly analysis tool that provides:
 3. **Plotting**: Comprehensive performance visualization
 
 **Usage:**
+
 ```bash
 cd PROD
 python weekly_runner.py
 ```
 
 **Output:**
+
 - `weekly_analysis/signal_comparison_h12_YYYYMMDD.csv` - Signal accuracy analysis
 - `weekly_analysis/performance_analysis_h12_Xw_YYYYMMDD.png` - Performance plots
 - Console summary of portfolio metrics
