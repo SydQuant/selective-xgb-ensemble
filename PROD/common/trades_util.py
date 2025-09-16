@@ -111,3 +111,57 @@ class TradeProcessor:
         except Exception as e:
             logger.error(f"S3 upload failed: {e}")
             return False
+
+
+def send_sl_tp_email(sl_trades, tp_trades, trade_file: Path, recipients: List[str]) -> bool:
+    """Send email notification for trade file."""
+    try:
+        import smtplib
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+        from email.mime.application import MIMEApplication
+
+        # Email configuration (could be moved to config)
+        smtp_server = "smtp.gmail.com"
+        smtp_port = 587
+        sender_email = "your-email@gmail.com"  # Configure as needed
+        sender_password = "your-password"      # Use app password or environment variable
+
+        # Create message
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = ", ".join(recipients)
+        msg['Subject'] = f"XGBoost Trade File - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+
+        # Create email body
+        body = f"""
+XGBoost Production Trade File Generated
+
+File: {trade_file.name}
+Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+Please find the attached trade file.
+        """
+
+        msg.attach(MIMEText(body, 'plain'))
+
+        # Attach trade file if it exists
+        if trade_file.exists():
+            with open(trade_file, 'rb') as f:
+                attachment = MIMEApplication(f.read(), _subtype='xlsx')
+                attachment.add_header('Content-Disposition', 'attachment', filename=trade_file.name)
+                msg.attach(attachment)
+
+        # Send email
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.send_message(msg)
+        server.quit()
+
+        logger.info(f"Email sent to {recipients}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to send email: {e}")
+        return False

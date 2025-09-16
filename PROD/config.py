@@ -36,8 +36,11 @@ TRADING_SYMBOLS = [
 ]
 
 FEATURE_SYMBOLS = [
-    "@ES#C", "@TY#C", "@EU#C", "@NQ#C", "@RTY#C",
-    "@S#C", "QGC#C", "BD#C", "QHG#C", "@AD#C", "@BP#C", "@JY#C"
+    "@ES#C", "@TY#C", "@EU#C", "@NQ#C", "@RTY#C", "@S#C",
+    "@AD#C", "@BP#C", "@JY#C", "@BO#C", "@C#C", "@CT#C",
+    "@FV#C", "@KW#C", "@SM#C", "@US#C", "@W#C",
+    "QGC#C", "BD#C", "QHG#C", "BL#C", "QBZ#C", "QCL#C",
+    "QNG#C", "QPL#C", "QRB#C", "QSI#C"
 ]
 
 # Default signal hour

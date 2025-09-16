@@ -13,11 +13,11 @@ import matplotlib.pyplot as plt
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from config import TRADING_SYMBOLS, instrument_config
-from common.data_engine_simple import DataEngine
-from common.signal_engine_simple import SignalEngine
+from config import TRADING_SYMBOLS
+from common.data_engine import DataEngine
+from common.signal_engine import SignalEngine
 
-def get_live_signals(logs_dir: Path, days: int = 7) -> List[Dict]:
+def get_live_signals(logs_dir: Path, days: int = 7):
     """Extract signals from recent trade files."""
     signals = []
 
@@ -45,78 +45,138 @@ def get_live_signals(logs_dir: Path, days: int = 7) -> List[Dict]:
 
     return signals
 
-def generate_backtest_signals(symbol: str, days: int = 7) -> List[Dict]:
-    """Generate backtest signals for comparison."""
-    try:
-        data_engine = DataEngine()
-        signal_engine = SignalEngine(
-            Path(__file__).parent / "models",
-            Path(__file__).parent / "config"
-        )
+def generate_backtest_signals(symbol: str, days: int = 7):
+    """Generate backtest signals using database data."""
+    data_engine = DataEngine()
+    signal_engine = SignalEngine(Path(__file__).parent / "models", Path(__file__).parent / "config")
 
-        signals = []
-        for i in range(days):
-            try:
-                # Simulate backtest for each day
-                features_df, _ = data_engine.get_prediction_data(symbol, TRADING_SYMBOLS[:3], 12)
-                if features_df is not None:
-                    result = signal_engine.generate_signal(features_df, symbol)
-                    if result:
-                        signal, _ = result
-                        date = datetime.now() - timedelta(days=i)
-                        signals.append({
-                            'date': date.date(),
-                            'symbol': symbol,
-                            'signal': signal
-                        })
-            except Exception:
-                continue
+    # Database mock
+    class DatabaseClient:
+        def __init__(self):
+            sys.path.append(str(Path(__file__).parent.parent))
+            from data.loaders import get_arcticdb_connection
+            self.lib = get_arcticdb_connection()
 
-        return signals
+        def get_live_data_multi(self, symbols, days=20, interval_min=60):
+            result = {}
+            for sym in symbols:
+                data = self.lib.read(sym).data
+                result[sym] = data.tail(days * 24) if len(data) > days * 24 else data
+            return result
 
-    except Exception:
-        return []
+    data_engine.iqfeed_client = DatabaseClient()
 
-def create_performance_plot(symbols: List[str], weeks: int = 12):
-    """Create simple performance plot with proper date formatting."""
-    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
-    fig.suptitle(f'XGBoost Production Performance ({weeks} weeks)')
+    signals = []
+    for i in range(min(days, 3)):  # Limit to 3 days for speed
+        features_df, _ = data_engine.get_prediction_data(symbol, [symbol, "@TY#C", "QGC#C"], 12)
+        if features_df is not None:
+            result = signal_engine.generate_signal(features_df, symbol)
+            if result:
+                signal, _ = result
+                date = datetime.now() - timedelta(days=i)
+                signals.append({'date': date.date(), 'symbol': symbol, 'signal': signal})
 
-    # Generate sample performance data
-    dates = pd.date_range(datetime.now() - timedelta(weeks=weeks), datetime.now(), freq='D')
+    return signals
 
-    for i, symbol in enumerate(symbols[:4]):
-        ax = axes[i//2, i%2]
+def create_performance_plot(symbols, weeks: int = 12):
+    """Create performance plot using PROD signal generation and simple backtest."""
+    # Initialize PROD components
+    data_engine = DataEngine()
+    signal_engine = SignalEngine(Path(__file__).parent / "models", Path(__file__).parent / "config")
 
-        # Simulate equity curve
-        returns = np.random.normal(0.001, 0.02, len(dates))
-        equity = pd.Series(returns, index=dates).cumsum() * 100
+    # Database mock for data engine
+    class DatabaseClient:
+        def __init__(self):
+            sys.path.append(str(Path(__file__).parent.parent))
+            from data.loaders import get_arcticdb_connection
+            self.lib = get_arcticdb_connection()
 
-        ax.plot(equity.index, equity.values, label=f'{symbol} Equity')
-        ax.set_title(f'{symbol} Performance')
-        ax.set_ylabel('Cumulative Return (%)')
-        ax.grid(True, alpha=0.3)
-        ax.legend()
+        def get_live_data_multi(self, symbols, days=20, interval_min=60):
+            result = {}
+            for sym in symbols:
+                data = self.lib.read(sym).data
+                result[sym] = data.tail(days * 24) if len(data) > days * 24 else data
+            return result
 
-        # Fix overlapping dates
-        ax.tick_params(axis='x', rotation=45)
-        if weeks > 12:
-            # For longer periods, use monthly ticks
-            import matplotlib.dates as mdates
-            ax.xaxis.set_major_locator(mdates.MonthLocator())
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %y'))
+    data_engine.iqfeed_client = DatabaseClient()
+
+    n_symbols = len(symbols)
+    cols = 4
+    rows = (n_symbols + cols - 1) // cols
+
+    fig, axes = plt.subplots(rows, cols, figsize=(20, 5 * rows))
+    fig.suptitle(f'XGBoost Production Backtest ({weeks} weeks)', fontsize=16)
+
+    if rows == 1:
+        axes = [axes] if cols == 1 else axes
+    else:
+        axes = axes.flatten()
+
+    for i, symbol in enumerate(symbols):
+        ax = axes[i]
+
+        # Get database data
+        lib = data_engine.iqfeed_client.lib
+        data = lib.read(symbol).data
+        signal_hour_data = data[data.index.hour == 12]
+
+        # Get period data
+        end_date = signal_hour_data.index[-1]
+        start_date = end_date - timedelta(weeks=weeks)
+        period_data = signal_hour_data[signal_hour_data.index >= start_date]
+
+        # Simple backtest: generate signals and calculate PnL
+        daily_pnl = []
+
+        for j in range(1, len(period_data)):  # Start from day 1 (need previous day for return)
+            current_date = period_data.index[j]
+
+            # Generate signal using PROD components
+            features_df, price = data_engine.get_prediction_data(symbol, [symbol] + TRADING_SYMBOLS[:3], 12)
+
+            if features_df is not None:
+                result = signal_engine.generate_signal(features_df, symbol)
+                if result:
+                    signal, raw_score = result
+
+                    # Calculate target return (current day's return)
+                    prev_price = period_data.iloc[j-1]['close']
+                    curr_price = period_data.iloc[j]['close']
+                    target_return = (curr_price - prev_price) / prev_price
+
+                    # Simple backtest: signal × target return
+                    pnl = signal * target_return
+                    daily_pnl.append(pnl)
+
+        # Plot cumulative PnL
+        if daily_pnl:
+            cumulative_pnl = pd.Series(daily_pnl).cumsum() * 100
+            backtest_dates = period_data.index[1:len(daily_pnl)+1]
+
+            ax.plot(backtest_dates, cumulative_pnl.values, linewidth=1.5)
+            ax.axhline(y=0, color='red', linestyle='-', alpha=0.5)
+            ax.set_title(f'{symbol}', fontsize=10)
+            ax.set_ylabel('PnL (%)', fontsize=8)
+
+            print(f"  {symbol}: {cumulative_pnl.iloc[-1]:.2f}% PnL, {len(daily_pnl)} signals")
         else:
-            # For shorter periods, use weekly ticks
-            import matplotlib.dates as mdates
-            ax.xaxis.set_major_locator(mdates.WeekdayLocator())
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d'))
+            ax.text(0.5, 0.5, f'{symbol}\nNo Signals', ha='center', va='center', transform=ax.transAxes)
+            ax.axhline(y=0, color='red', linestyle='-', alpha=0.5)
+
+        ax.grid(True, alpha=0.3)
+        ax.tick_params(axis='x', rotation=45, labelsize=8)
+        ax.tick_params(axis='y', labelsize=8)
+
+    # Hide empty subplots
+    for i in range(n_symbols, len(axes)):
+        axes[i].set_visible(False)
 
     plt.tight_layout()
 
     output_dir = Path(__file__).parent / "weekly_analysis"
     output_dir.mkdir(exist_ok=True)
 
-    plot_file = output_dir / f"performance_{weeks}w_{datetime.now().strftime('%Y%m%d')}.png"
+    plot_file = output_dir / f"production_backtest_{weeks}w_{datetime.now().strftime('%Y%m%d')}.png"
     plt.savefig(plot_file, dpi=150, bbox_inches='tight')
     plt.close()
 
@@ -135,7 +195,7 @@ def main():
     print(f"   Found {len(live_signals)} live signals")
 
     backtest_signals = []
-    for symbol in TRADING_SYMBOLS[:3]:  # Limit for speed
+    for symbol in TRADING_SYMBOLS:  # Limit for speed
         bt_signals = generate_backtest_signals(symbol)
         backtest_signals.extend(bt_signals)
 

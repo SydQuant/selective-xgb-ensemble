@@ -99,8 +99,6 @@ class SignalEngine:
 
         try:
             models = package.get('models', {})
-            model_feature_slices = package.get('model_feature_slices', {})
-            binary_signal = package.get('binary_signal', False)
 
             if not models:
                 return None
@@ -110,74 +108,46 @@ class SignalEngine:
 
             for model_key, model in models.items():
                 try:
-                    # Dynamically determine model's expected feature count
-                    if hasattr(model, 'feature_names_in_'):
-                        expected_features = model.feature_names_in_
-                        if expected_features is not None:
-                            model_data = latest_features[expected_features]
-                        else:
-                            # Fallback: determine from model's n_features_in_
-                            n_features = getattr(model, 'n_features_in_', len(latest_features.columns))
-                            selected_features_list = package.get('selected_features', list(latest_features.columns))
-                            model_features = selected_features_list[:n_features]
-                            available_features = [f for f in model_features if f in latest_features.columns]
-                            model_data = latest_features[available_features] if available_features else latest_features
-                    else:
-                        # Fallback for older models: try to infer from model structure
-                        try:
-                            # Test with all features first
-                            test_pred = model.predict(latest_features.values)
-                            model_data = latest_features
-                        except:
-                            # If that fails, use model-specific feature slice if available
-                            if model_key in model_feature_slices:
-                                model_features = model_feature_slices[model_key]
-                                available_features = [f for f in model_features if f in latest_features.columns]
-                                model_data = latest_features[available_features] if available_features else latest_features
-                            else:
-                                # Last resort: use first N features where N = model's expected input
-                                n_features = getattr(model, 'n_features_in_', len(latest_features.columns))
-                                model_data = latest_features.iloc[:, :n_features]
+                    # Use exact features from production package (latest format only)
+                    expected_features = package['selected_features']
 
+                    # Ensure exact feature match
+                    if len(expected_features) != latest_features.shape[1]:
+                        logger.error(f"Feature count mismatch for {symbol}: expected {len(expected_features)}, got {latest_features.shape[1]}")
+                        continue
+
+                    if not all(feature in latest_features.columns for feature in expected_features):
+                        logger.error(f"Feature name mismatch for {symbol}")
+                        continue
+
+                    # Use exact feature order
+                    model_data = latest_features[expected_features]
                     pred = model.predict(model_data.values)[0]
                     predictions.append(pred)
 
                 except Exception as e:
-                    logger.warning(f"Model {model_key} prediction failed: {e}")
+                    logger.error(f"Model {model_key} prediction failed: {e}")
                     continue
 
             if not predictions:
                 return None
 
-            # Normalize predictions exactly like research stack: z-score then tanh/binary
-            pred_series = pd.Series(predictions)
+            # SIMPLIFIED BINARY VOTING: Always use binary regardless of config
+            # Convert each prediction to +1/-1 based on sign, then sum and take sign
+            binary_votes = []
+            for pred in predictions:
+                if pred > 0:
+                    binary_votes.append(1)
+                elif pred < 0:
+                    binary_votes.append(-1)
+                else:
+                    binary_votes.append(0)
 
-            # Z-score normalization first
-            if pred_series.std() == 0:
-                z_scores = pd.Series(np.zeros_like(predictions))
-            else:
-                z_scores = (pred_series - pred_series.mean()) / pred_series.std()
+            # Sum all votes and take sign for final signal
+            vote_sum = sum(binary_votes)
+            signal = int(np.sign(vote_sum)) if vote_sum != 0 else 0
 
-            if binary_signal:
-                # Binary: +1 for positive, -1 for negative z-scores
-                normalized_preds = np.where(z_scores > 0, 1.0, np.where(z_scores < 0, -1.0, 0.0))
-                # Binary combination: simple sum of votes (research stack logic)
-                combined_signal = normalized_preds.sum()
-            else:
-                # Continuous: tanh of z-scores
-                normalized_preds = np.tanh(z_scores)
-                # Tanh combination: equal-weighted averaging (research stack logic)
-                combined_signal = normalized_preds.mean()
-
-            # Handle NaN values in combined_signal
-            if np.isnan(combined_signal):
-                signal = 1  # Default to buy signal if NaN
-            else:
-                signal = int(np.sign(combined_signal))
-                if signal == 0:
-                    signal = 1
-
-            raw_score = float(pred_series.mean())
+            raw_score = float(np.mean(predictions))
             return signal, raw_score
 
         except Exception as e:

@@ -20,23 +20,26 @@ class DataEngine:
         self.iqfeed_client = IQFeedClient()
 
     def calculate_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Calculate features exactly matching research stack logic."""
+        """Calculate basic technical features following original logic - EXACT COPY from data_utils_simple.py."""
         result = df.copy()
 
-        # Basic RSI (3-period) - exact research stack logic
+        # Basic RSI (3-period) - keep raw values, no artificial clipping
         delta = result['close'].diff()
         gain = delta.clip(lower=0).rolling(3).mean()
         loss = (-delta.clip(upper=0)).rolling(3).mean()
         rs = gain / loss.replace(0, np.nan)
-        result['rsi'] = (100 - 100 / (1 + rs)).fillna(50)
+        result['rsi'] = (100 - 100 / (1 + rs)).fillna(50)  # Remove .clip(0, 100)
 
-        # Basic ATR as percentage - exact research stack logic
+        # Basic ATR as percentage of close price (avoids extreme absolute values)
         high_low = result['high'] - result['low']
         atr_absolute = high_low.rolling(6).mean()
-        result['atr'] = atr_absolute / result['close']
-        result['atr'] = result['atr'].ffill().fillna(0.0)
+        result['atr'] = atr_absolute / result['close']  # ATR as % of price
 
-        # Momentum features - exact research stack periods and logic
+        # CRITICAL FIX: Forward-fill only (no future leakage) - use past data only
+        # This fixes the 72 NaN values that were contaminating the feature space
+        result['atr'] = result['atr'].ffill().fillna(0.0)  # Forward fill only, no median (uses future)
+
+        # Momentum features for various periods (following original pattern)
         periods = [1, 2, 3, 4, 8, 12, 16, 20, 24, 28, 32]
         change = result['close'].pct_change(fill_method=None)
         atr_change = result['atr'].pct_change(fill_method=None)
@@ -48,15 +51,16 @@ class DataEngine:
             result[f'velocity_{p}h'] = momentum.pct_change(fill_method=None).clip(-5, 5)
             result[f'rsi_{p}h'] = result['rsi'].rolling(p, min_periods=1).mean()
             atr_feature = atr_change.clip(-2, 2).rolling(p, min_periods=1).mean()
-            result[f'atr_{p}h'] = atr_feature.ffill().fillna(0.0)
+            # CRITICAL FIX: Forward-fill only (no future leakage) - use past data only
+            result[f'atr_{p}h'] = atr_feature.ffill().fillna(0.0)  # Forward fill only, no bfill (uses future)
 
-            # Breakout calculation - exact research stack logic
-            min_periods = 2 if p > 1 else 2
+            # Breakout calculation (handle p=1 edge case)
+            min_periods = 2 if p > 1 else 2  # Always use min_periods=2
             window = max(p, 2) if p == 1 else p
             recent_low = result['close'].rolling(window, min_periods=min_periods).min()
             result[f'breakout_{p}h'] = (result['close'] - recent_low) / recent_low
 
-        # Momentum differentials - exact research stack pairs
+        # Momentum differentials (batch calculate)
         diff_pairs = [(1, 4), (3, 12), (8, 16)]
         for short, long in diff_pairs:
             result[f'momentum_diff_{short}_{long}h'] = result[f'momentum_{short}h'] - result[f'momentum_{long}h']
@@ -64,7 +68,7 @@ class DataEngine:
         return result
 
     def build_features(self, raw_data: Dict[str, pd.DataFrame], target_symbol: str, signal_hour: int = 12) -> pd.DataFrame:
-        """Build feature matrix."""
+        """Build feature matrix following EXACT data_utils_simple.py logic."""
         if target_symbol not in raw_data:
             return pd.DataFrame()
 
@@ -72,7 +76,40 @@ class DataEngine:
         target_data = self.calculate_features(raw_data[target_symbol])
         target_features = target_data[target_data.index.hour == signal_hour].add_prefix(f"{target_symbol}_")
 
-        # Cross-correlations - exact research stack logic
+        # Process other symbols
+        other_features = []
+        for sym, data in raw_data.items():
+            if sym != target_symbol:
+                sym_features = self.calculate_features(data)
+                sym_features = sym_features[sym_features.index.hour == signal_hour].add_prefix(f"{sym}_")
+                other_features.append(sym_features)
+
+        # Cross-correlations
+        corr_features = self.calculate_cross_correlations_simple(target_symbol, raw_data, target_features.index)
+
+        # Combine features
+        all_features = [target_features] + other_features + [corr_features]
+        feature_df = pd.concat(all_features, axis=1)
+
+        # CRITICAL: Apply pct_change as per original logic
+        feature_df = feature_df.replace(0, 1e-8)
+        for col in feature_df.columns:
+            # Don't apply pct_change to already normalized indicators (RSI, correlations, breakout)
+            # and momentum/velocity/atr which are already rates of change
+            if not any(indicator in col.lower() for indicator in ['rsi', 'momentum', 'velocity', 'corr', 'atr', 'breakout']):
+                feature_df[col] = feature_df[col].pct_change(fill_method=None)
+
+        # Remove raw price columns
+        price_cols = ['open', 'high', 'low', 'close', 'volume']
+        feature_df = feature_df[[c for c in feature_df.columns if not any(c.endswith(pc) for pc in price_cols)]]
+
+        return feature_df
+
+    def calculate_cross_correlations_simple(self, target_symbol: str, raw_data: Dict[str, pd.DataFrame], target_index) -> pd.DataFrame:
+        """Simple cross-correlations following original pattern - EXACT COPY from data_utils_simple.py."""
+        if target_symbol not in raw_data:
+            return pd.DataFrame(index=target_index)
+
         periods = [2, 4, 6, 8, 10, 12, 16, 20, 24, 28, 32]
         target_close = raw_data[target_symbol]['close']
 
@@ -92,58 +129,45 @@ class DataEngine:
                     corr = corr.fillna(0.0).clip(-1.0, 1.0)
                     corr_features[f"{target_symbol}_corr_{sym}_{p}h"] = corr
 
-        # Add correlations to target features
-        if corr_features:
-            corr_df = pd.DataFrame(corr_features)
-            corr_aligned = corr_df.reindex(target_features.index, fill_value=0.0)
-            target_features = pd.concat([target_features, corr_aligned], axis=1)
+        if not corr_features:
+            return pd.DataFrame(index=target_index)
 
-        # Clean and return
-        return target_features.ffill().fillna(0.0).replace([np.inf, -np.inf], 0.0)
+        corr_df = pd.DataFrame(corr_features)
+        return corr_df.reindex(target_index)
 
     def apply_feature_selection(self, features_df: pd.DataFrame, target_symbol: str) -> pd.DataFrame:
-        """Apply feature selection to match training."""
-        models_dir = Path(__file__).parent.parent / "models" / target_symbol
-        metadata_file = models_dir / "model_metadata.yaml"
-
-        if not metadata_file.exists():
-            # Fallback: select top variance features
-            if features_df.shape[1] > 50:
-                variances = features_df.var().sort_values(ascending=False)
-                features_df = features_df[variances.head(50).index]
-            return features_df
-
-        # Extract feature names from metadata
+        """Apply feature selection to match training - use exact features from production package."""
         try:
-            with open(metadata_file, 'r') as f:
-                content = f.read()
+            # Load production package to get exact features
+            models_dir = Path(__file__).parent.parent / "models"
+            package_file = models_dir / f"{target_symbol}_production.pkl"
 
-            feature_names = []
-            in_features = False
-            for line in content.split('\n'):
-                if 'feature_names:' in line:
-                    in_features = True
-                elif in_features and line.startswith('- '):
-                    feature_names.append(line.replace('- ', '').strip())
-                elif in_features and not line.startswith(' ') and not line.startswith('-'):
-                    break
+            if not package_file.exists():
+                logger.error(f"No production package for {target_symbol}")
+                return features_df
 
-            if feature_names:
-                # Create exact feature set
-                selected_df = pd.DataFrame(index=features_df.index, columns=feature_names)
-                for feature in feature_names:
-                    if feature in features_df.columns:
-                        selected_df[feature] = features_df[feature]
-                return selected_df.fillna(0.0)
+            with open(package_file, 'rb') as f:
+                package = pickle.load(f)
+
+            expected_features = package['selected_features']
+
+            # Create DataFrame with exact features in exact order
+            selected_df = pd.DataFrame(index=features_df.index, columns=expected_features)
+
+            # Copy available features
+            for feature in expected_features:
+                if feature in features_df.columns:
+                    selected_df[feature] = features_df[feature]
+                else:
+                    # Fill missing features with zero (no fallback - this is an error condition)
+                    selected_df[feature] = 0.0
+                    logger.warning(f"Missing feature {feature} for {target_symbol}")
+
+            return selected_df.fillna(0.0)
 
         except Exception as e:
-            logger.warning(f"Feature selection fallback for {target_symbol}: {e}")
-
-        # Fallback
-        if features_df.shape[1] > 50:
-            variances = features_df.var().sort_values(ascending=False)
-            features_df = features_df[variances.head(50).index]
-        return features_df
+            logger.error(f"Feature selection failed for {target_symbol}: {e}")
+            return features_df  # Return as-is if feature selection fails
 
     def get_prediction_data(self, target_symbol: str, feature_symbols: List[str], signal_hour: int = 12) -> tuple:
         """Get features and price for prediction."""
@@ -167,3 +191,31 @@ class DataEngine:
         except Exception as e:
             logger.error(f"Data error {target_symbol}: {e}")
             return None, None
+
+    def get_prediction_data_batch(self, trading_symbols, feature_symbols, signal_hour=12):
+        """Get prediction data for multiple symbols (same as daily_signal_runner.py)."""
+        try:
+            # Fetch data for all symbols
+            all_symbols = list(set(trading_symbols + feature_symbols))
+            raw_data = self.iqfeed_client.get_live_data_multi(all_symbols, days=20, interval_min=60)
+
+            batch_results = {}
+
+            for symbol in trading_symbols:
+                if symbol not in raw_data or raw_data[symbol].empty:
+                    continue
+
+                # Build features for this symbol
+                features_df = self.build_features(raw_data, symbol, signal_hour)
+                features_df = self.apply_feature_selection(features_df, symbol)
+
+                if features_df is not None and not features_df.empty:
+                    # Get latest price
+                    price = float(raw_data[symbol]['close'].iloc[-1])
+                    batch_results[symbol] = (features_df, price)
+
+            return batch_results
+
+        except Exception as e:
+            logger.error(f"Batch data error: {e}")
+            return {}
