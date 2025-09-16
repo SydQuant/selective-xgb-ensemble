@@ -25,7 +25,7 @@ from model.feature_selection import apply_feature_selection
 from model.xgb_drivers import generate_xgb_specs, generate_deep_xgb_specs, stratified_xgb_bank, fit_xgb_on_slice
 from cv.wfo import wfo_splits, wfo_splits_rolling
 
-def export_production_models(all_fold_results, xgb_specs, selected_features, backtest_results, config, logger, col_slices=None):
+def export_production_models(all_fold_results, xgb_specs, selected_features, backtest_results, config, logger, timestamp, col_slices=None):
     """Export ONLY the selected models from second-to-last fold as single consolidated file per symbol."""
     import pickle
     from pathlib import Path
@@ -134,8 +134,8 @@ def export_production_models(all_fold_results, xgb_specs, selected_features, bac
             }
         }
 
-        # Save consolidated file
-        production_file = models_dir / f"{config.target_symbol}_production.pkl"
+        # Save consolidated file with timestamp
+        production_file = models_dir / f"{config.target_symbol}_{timestamp}.pkl"
         with open(production_file, 'wb') as f:
             pickle.dump(production_package, f)
 
@@ -152,7 +152,7 @@ def export_production_models(all_fold_results, xgb_specs, selected_features, bac
         logger.error(f"Traceback: {traceback.format_exc()}")
         return False
 
-def export_signal_distribution(backtest_results, config, logger):
+def export_signal_distribution(backtest_results, config, logger, timestamp):
     """Export daily signals, returns, and PnL distribution to CSV."""
     import pandas as pd
     from pathlib import Path
@@ -203,9 +203,9 @@ def export_signal_distribution(backtest_results, config, logger):
         signal_df['abs_return'] = signal_df['target_return'].abs()
         signal_df['hit'] = ((signal_df['signal_direction'] > 0) & (signal_df['target_return'] > 0)) | ((signal_df['signal_direction'] < 0) & (signal_df['target_return'] < 0))
 
-        # Export to CSV
+        # Export to CSV with same timestamp as log
         results_dir = Path(__file__).parent / 'results'
-        csv_file = results_dir / f"{config.log_label}_signal_distribution.csv"
+        csv_file = results_dir / f"{timestamp}_signal_distribution_{config.log_label}.csv"
 
         signal_df.to_csv(csv_file, index=False)
 
@@ -551,11 +551,11 @@ def main():
 
     # Export production models if requested
     if config.export_production_models:
-        export_production_models(all_fold_results, xgb_specs, selected_features, backtest_results, config, logger, col_slices)
+        export_production_models(all_fold_results, xgb_specs, selected_features, backtest_results, config, logger, timestamp, col_slices)
 
     # Export signal distribution if requested
     if config.export_signal_distribution:
-        export_signal_distribution(backtest_results, config, logger)
+        export_signal_distribution(backtest_results, config, logger, timestamp)
 
 if __name__ == "__main__":
     main()

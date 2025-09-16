@@ -145,13 +145,8 @@ class FullTimelineBacktester:
                         logger.warning(f"Fold {fold_idx}: Prediction length mismatch, truncating to {min_length}")
                         predictions_list = [pred.iloc[:min_length] for pred in predictions_list]
                     
-                    # Use appropriate combination method based on signal type
-                    if config.binary_signal:
-                        # New binary logic: vote-based combination
-                        combined_prediction = combine_binary_signals(predictions_list)
-                    else:
-                        # Tanh logic: equal-weighted averaging
-                        combined_prediction = sum(predictions_list) / len(predictions_list)
+                    # Always use binary logic: vote-based combination
+                    combined_prediction = combine_binary_signals(predictions_list)
                     
                     # CORRECTED LOGIC: Direct calculation (signal and returns already properly aligned)
                     # signal[Monday] predicts Monday→Tuesday return, y[Monday] is actual Monday→Tuesday return
