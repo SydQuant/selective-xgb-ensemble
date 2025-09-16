@@ -114,20 +114,28 @@ def bootstrap_pvalue(actual_metric: float, returns: pd.Series, predictions: pd.S
     return better_count / len(bootstrap_metrics)
 
 def normalize_predictions(predictions: pd.Series, binary_signal: bool = False) -> pd.Series:
-    """Normalize predictions: z-score + tanh or binary +1/-1 signals."""
-    if predictions.std() == 0:
-        return pd.Series(np.zeros_like(predictions), index=predictions.index)
-    
-    z_scores = (predictions - predictions.mean()) / predictions.std()
-    
-    if binary_signal:
-        # Binary: +1 for positive, -1 for negative, 0 for zero z-scores (true ternary)
-        normalized = np.where(z_scores > 0, 1.0, np.where(z_scores < 0, -1.0, 0.0))
-    else:
-        # Continuous: tanh normalization
-        normalized = np.tanh(z_scores)
-    
+    """Normalize predictions: Simple sign-based approach aligned with PROD signal_engine.py."""
+
+    # NEW SIMPLIFIED LOGIC: Convert each prediction to +1/-1 based on sign (no z-score, no tanh)
+    # This matches PROD/common/signal_engine.py line 135-148 logic
+    normalized = np.where(predictions > 0, 1.0, np.where(predictions < 0, -1.0, 0.0))
     return pd.Series(normalized, index=predictions.index)
+
+    # COMMENTED OUT: Original z-score + tanh/binary logic (preserve for reference)
+    # """Normalize predictions: z-score + tanh or binary +1/-1 signals."""
+    # if predictions.std() == 0:
+    #     return pd.Series(np.zeros_like(predictions), index=predictions.index)
+    #
+    # z_scores = (predictions - predictions.mean()) / predictions.std()
+    #
+    # if binary_signal:
+    #     # Binary: +1 for positive, -1 for negative, 0 for zero z-scores (true ternary)
+    #     normalized = np.where(z_scores > 0, 1.0, np.where(z_scores < 0, -1.0, 0.0))
+    # else:
+    #     # Continuous: tanh normalization
+    #     normalized = np.tanh(z_scores)
+    #
+    # return pd.Series(normalized, index=predictions.index)
 
 def combine_binary_signals(binary_predictions_list: list) -> pd.Series:
     """
