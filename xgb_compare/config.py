@@ -52,6 +52,10 @@ class XGBCompareConfig:
 
     # COVID period handling
     skip_covid: bool = False  # Skip Mar 2020 - May 2020 from backtest PnL calculation
+
+    # Production model export
+    export_production_models: bool = False  # Export final fold models for production deployment
+    export_signal_distribution: bool = False  # Export daily signals, returns, and PnL to CSV
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert config to dictionary."""
@@ -129,6 +133,8 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument('--binary_signal', action='store_true', help='Use binary +1/-1 signals')
     parser.add_argument('--rolling', type=int, default=0, dest='rolling_days', help='Rolling window days (0=expanding)')
     parser.add_argument('--skip-covid', action='store_true', dest='skip_covid', help='Skip Mar 2020 - May 2020 from backtest PnL calculation')
+    parser.add_argument('--export-production-models', action='store_true', dest='export_production_models', help='Export final fold models for production deployment')
+    parser.add_argument('--export-signal-distribution', action='store_true', dest='export_signal_distribution', help='Export daily signals, returns, and PnL to CSV')
 
     return parser
 
@@ -167,5 +173,7 @@ def parse_config() -> XGBCompareConfig:
         log_label=args.log_label,
         binary_signal=args.binary_signal,
         rolling_days=args.rolling_days,
-        skip_covid=args.skip_covid
+        skip_covid=args.skip_covid,
+        export_production_models=args.export_production_models,
+        export_signal_distribution=args.export_signal_distribution
     )

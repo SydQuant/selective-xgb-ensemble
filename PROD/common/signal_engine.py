@@ -22,62 +22,128 @@ class SignalEngine:
         self.loaded_models = {}
         self.symbol_configs = {}
 
-    def load_symbol_config(self, symbol: str) -> Optional[Dict]:
-        """Load symbol configuration."""
-        if symbol in self.symbol_configs:
-            return self.symbol_configs[symbol]
-
-        config_file = self.config_dir / "models" / f"{symbol}.yaml"
-        if not config_file.exists():
-            return None
-
-        try:
-            with open(config_file, 'r') as f:
-                config = yaml.safe_load(f)
-            self.symbol_configs[symbol] = config
-            return config
-        except Exception:
-            return None
-
-    def load_models(self, symbol: str) -> Optional[List]:
-        """Load XGBoost models for symbol."""
+    def load_symbol_package(self, symbol: str) -> Optional[Dict]:
+        """Load consolidated symbol package (models + config + features)."""
         if symbol in self.loaded_models:
             return self.loaded_models[symbol]
 
-        symbol_models_dir = self.models_dir / symbol
-        if not symbol_models_dir.exists():
-            return None
+        # Try consolidated format first
+        consolidated_file = self.models_dir / f"{symbol}_production.pkl"
 
-        models = []
-        for model_file in sorted(symbol_models_dir.glob("model_*.pkl")):
+        if consolidated_file.exists():
             try:
-                with open(model_file, 'rb') as f:
-                    models.append(pickle.load(f))
-            except Exception:
-                continue
+                with open(consolidated_file, 'rb') as f:
+                    package = pickle.load(f)
 
-        if models:
-            self.loaded_models[symbol] = models
-            return models
+                self.loaded_models[symbol] = package
+                self.symbol_configs[symbol] = package.get('metadata', {})
+                logger.info(f"Loaded consolidated package for {symbol}: {len(package.get('models', {}))} models")
+                return package
+            except Exception as e:
+                logger.error(f"Failed to load consolidated package for {symbol}: {e}")
+
+        # Fallback to old format (separate files)
+        config_file = self.config_dir / "models" / f"{symbol}.yaml"
+        symbol_models_dir = self.models_dir / symbol
+
+        if config_file.exists() and symbol_models_dir.exists():
+            try:
+                # Load config
+                with open(config_file, 'r') as f:
+                    config = yaml.safe_load(f)
+
+                # Load individual model files
+                models = {}
+                for model_file in sorted(symbol_models_dir.glob("model_*.pkl")):
+                    model_name = model_file.stem
+                    with open(model_file, 'rb') as f:
+                        models[model_name] = pickle.load(f)
+
+                # Create package format
+                package = {
+                    'symbol': symbol,
+                    'models': models,
+                    'selected_features': config.get('selected_features', []),
+                    'binary_signal': config.get('binary_signal', False),
+                    'metadata': config
+                }
+
+                self.loaded_models[symbol] = package
+                self.symbol_configs[symbol] = config
+                logger.info(f"Loaded legacy package for {symbol}: {len(models)} models")
+                return package
+
+            except Exception as e:
+                logger.error(f"Failed to load legacy package for {symbol}: {e}")
+
+        return None
+
+    def load_symbol_config(self, symbol: str) -> Optional[Dict]:
+        """Load symbol configuration (legacy compatibility)."""
+        package = self.load_symbol_package(symbol)
+        return package.get('metadata', {}) if package else None
+
+    def load_models(self, symbol: str) -> Optional[List]:
+        """Load XGBoost models for symbol (legacy compatibility)."""
+        package = self.load_symbol_package(symbol)
+        if package and 'models' in package:
+            return list(package['models'].values())
         return None
 
     def generate_signal(self, features_df: pd.DataFrame, symbol: str) -> Optional[Tuple[int, float]]:
-        """Generate signal using XGBoost ensemble."""
-        models = self.load_models(symbol)
-        config = self.load_symbol_config(symbol)
+        """Generate signal using XGBoost ensemble with model-specific feature slices."""
+        package = self.load_symbol_package(symbol)
 
-        if not models or not config:
+        if not package:
             return None
 
         try:
+            models = package.get('models', {})
+            model_feature_slices = package.get('model_feature_slices', {})
+            binary_signal = package.get('binary_signal', False)
+
+            if not models:
+                return None
+
             latest_features = features_df.iloc[-1:].copy()
             predictions = []
 
-            for model in models:
+            for model_key, model in models.items():
                 try:
-                    pred = model.predict(latest_features.values)[0]
+                    # Dynamically determine model's expected feature count
+                    if hasattr(model, 'feature_names_in_'):
+                        expected_features = model.feature_names_in_
+                        if expected_features is not None:
+                            model_data = latest_features[expected_features]
+                        else:
+                            # Fallback: determine from model's n_features_in_
+                            n_features = getattr(model, 'n_features_in_', len(latest_features.columns))
+                            selected_features_list = package.get('selected_features', list(latest_features.columns))
+                            model_features = selected_features_list[:n_features]
+                            available_features = [f for f in model_features if f in latest_features.columns]
+                            model_data = latest_features[available_features] if available_features else latest_features
+                    else:
+                        # Fallback for older models: try to infer from model structure
+                        try:
+                            # Test with all features first
+                            test_pred = model.predict(latest_features.values)
+                            model_data = latest_features
+                        except:
+                            # If that fails, use model-specific feature slice if available
+                            if model_key in model_feature_slices:
+                                model_features = model_feature_slices[model_key]
+                                available_features = [f for f in model_features if f in latest_features.columns]
+                                model_data = latest_features[available_features] if available_features else latest_features
+                            else:
+                                # Last resort: use first N features where N = model's expected input
+                                n_features = getattr(model, 'n_features_in_', len(latest_features.columns))
+                                model_data = latest_features.iloc[:, :n_features]
+
+                    pred = model.predict(model_data.values)[0]
                     predictions.append(pred)
-                except Exception:
+
+                except Exception as e:
+                    logger.warning(f"Model {model_key} prediction failed: {e}")
                     continue
 
             if not predictions:
@@ -92,8 +158,6 @@ class SignalEngine:
             else:
                 z_scores = (pred_series - pred_series.mean()) / pred_series.std()
 
-            binary_signal = config.get('binary_signal', True)
-
             if binary_signal:
                 # Binary: +1 for positive, -1 for negative z-scores
                 normalized_preds = np.where(z_scores > 0, 1.0, np.where(z_scores < 0, -1.0, 0.0))
@@ -105,9 +169,13 @@ class SignalEngine:
                 # Tanh combination: equal-weighted averaging (research stack logic)
                 combined_signal = normalized_preds.mean()
 
-            signal = int(np.sign(combined_signal))
-            if signal == 0:
-                signal = 1
+            # Handle NaN values in combined_signal
+            if np.isnan(combined_signal):
+                signal = 1  # Default to buy signal if NaN
+            else:
+                signal = int(np.sign(combined_signal))
+                if signal == 0:
+                    signal = 1
 
             raw_score = float(pred_series.mean())
             return signal, raw_score

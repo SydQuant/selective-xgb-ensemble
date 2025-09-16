@@ -1,91 +1,144 @@
 #!/usr/bin/env python3
 """
-Build Production Models for Essential Symbols
-Builds top-performing models for production deployment.
+Build Production Models for Specific Symbols
+Builds production-ready models using optimal configurations from testing results.
 """
 
 import sys
+import os
 from pathlib import Path
 
-# Add parent directory to path
-sys.path.append(str(Path(__file__).parent.parent / "xgb_compare"))
+# Add xgb_compare directory to path
+xgb_compare_dir = str(Path(__file__).parent.parent / "xgb_compare")
+sys.path.insert(0, xgb_compare_dir)
 
-def build_tier1_models():
-    """Build models for Tier 1 symbols (>2.0 Sharpe)."""
-    tier1_symbols = [
-        "QGC#C",    # 2.837 - Gold
-        "@NQ#C",    # 2.385 - NASDAQ
-        "@ES#C",    # 2.319 - S&P500
-        "BL#C",     # 2.290 - EU Bund
-        "@RTY#C",   # 2.193 - Russell
-        "@TY#C",    # 2.067 - US 10Y
-        "BD#C",     # 2.050 - EU Bund
-        "QPL#C"     # 2.047 - Platinum
-    ]
+def get_optimal_config(symbol: str) -> dict:
+    """Get optimal configuration for a symbol from test results."""
 
-    print("Building Tier 1 Production Models (>2.0 Sharpe)")
-    print("=" * 55)
+    # Optimal configurations from comprehensive testing
+    optimal_configs = {
+        "@AD#C": {"models": 150, "folds": 20, "features": 100, "q_metric": "sharpe", "xgb_type": "tiered", "production_sharpe": 2.402},
+        "@BO#C": {"models": 150, "folds": 15, "features": 250, "q_metric": "sharpe", "xgb_type": "standard", "production_sharpe": -0.360},
+        "@BP#C": {"models": 150, "folds": 20, "features": 100, "q_metric": "sharpe", "xgb_type": "tiered", "production_sharpe": 1.891},
+        "@C#C": {"models": 150, "folds": 10, "features": 250, "q_metric": "hit_rate", "xgb_type": "tiered", "production_sharpe": 1.196},
+        "@CT#C": {"models": 150, "folds": 20, "features": 250, "q_metric": "hit_rate", "xgb_type": "tiered", "production_sharpe": 0.847},
+        "@ES#C": {"models": 150, "folds": 15, "features": 100, "q_metric": "hit_rate", "xgb_type": "standard", "production_sharpe": 1.975},
+        "@EU#C": {"models": 200, "folds": 20, "features": 100, "q_metric": "sharpe", "xgb_type": "tiered", "production_sharpe": 1.537},
+        "@FV#C": {"models": 150, "folds": 10, "features": 250, "q_metric": "sharpe", "xgb_type": "tiered", "production_sharpe": 1.919},
+        "@JY#C": {"models": 150, "folds": 20, "features": 100, "q_metric": "sharpe", "xgb_type": "tiered", "production_sharpe": 2.560},
+        "@KW#C": {"models": 150, "folds": 15, "features": 250, "q_metric": "sharpe", "xgb_type": "standard", "production_sharpe": 1.446},
+        "@NQ#C": {"models": 100, "folds": 15, "features": 100, "q_metric": "sharpe", "xgb_type": "standard", "production_sharpe": 1.851},
+        "@RTY#C": {"models": 100, "folds": 10, "features": 100, "q_metric": "sharpe", "xgb_type": "standard", "production_sharpe": 1.480},
+        "@S#C": {"models": 200, "folds": 15, "features": 250, "q_metric": "sharpe", "xgb_type": "standard", "production_sharpe": 1.803},
+        "@SM#C": {"models": 150, "folds": 15, "features": 250, "q_metric": "sharpe", "xgb_type": "standard", "production_sharpe": 1.327},
+        "@TY#C": {"models": 200, "folds": 10, "features": 250, "q_metric": "sharpe", "xgb_type": "tiered", "production_sharpe": 2.239},
+        "@US#C": {"models": 150, "folds": 10, "features": 250, "q_metric": "sharpe", "xgb_type": "tiered", "production_sharpe": 1.820},
+        "@W#C": {"models": 150, "folds": 15, "features": 250, "q_metric": "sharpe", "xgb_type": "standard", "production_sharpe": 1.799},
+        "BD#C": {"models": 100, "folds": 15, "features": 100, "q_metric": "sharpe", "xgb_type": "tiered", "production_sharpe": 1.737},
+        "BL#C": {"models": 150, "folds": 15, "features": 100, "q_metric": "sharpe", "xgb_type": "tiered", "production_sharpe": 2.092},
+        "QGC#C": {"models": 100, "folds": 15, "features": 100, "q_metric": "sharpe", "xgb_type": "standard", "production_sharpe": 2.661},
+        "QHG#C": {"models": 100, "folds": 15, "features": 100, "q_metric": "hit_rate", "xgb_type": "standard", "production_sharpe": 1.947},
+        "QPL#C": {"models": 150, "folds": 15, "features": 100, "q_metric": "sharpe", "xgb_type": "standard", "production_sharpe": 1.986},
+        "QSI#C": {"models": 150, "folds": 15, "features": 100, "q_metric": "sharpe", "xgb_type": "standard", "production_sharpe": 1.759}
+    }
 
-    for i, symbol in enumerate(tier1_symbols, 1):
-        print(f"\n{i}/8: Building {symbol}...")
+    if symbol not in optimal_configs:
+        raise ValueError(f"No optimal configuration found for {symbol}. Available symbols: {list(optimal_configs.keys())}")
 
-        # Import here to avoid path issues
-        from production_model_builder import ProductionModelBuilder
+    return optimal_configs[symbol]
 
-        builder = ProductionModelBuilder()
-        success = builder.build_production_models(symbol)
+def build_production_model(symbol: str, test_mode: bool = False):
+    """Build production model for a specific symbol using optimal configuration."""
 
-        if success:
-            print(f"✅ {symbol} completed")
+    print(f"\n{'='*60}")
+    print(f"Building Production Model: {symbol}")
+    print(f"{'='*60}")
+
+    try:
+        # Get optimal configuration
+        optimal_config = get_optimal_config(symbol)
+        print(f"Optimal Config: {optimal_config['models']}M, {optimal_config['folds']}F, {optimal_config['features']}feat, {optimal_config['q_metric']}, {optimal_config['xgb_type']}")
+        print(f"Benchmark Production Sharpe: {optimal_config['production_sharpe']}")
+
+        # For test mode, use smaller parameters
+        if test_mode:
+            print("\nTEST MODE: Using reduced parameters")
+            n_models = min(5, optimal_config['models'])
+            n_folds = min(2, optimal_config['folds'])
+            max_features = min(50, optimal_config['features'])
         else:
-            print(f"❌ {symbol} failed")
+            n_models = optimal_config['models']
+            n_folds = optimal_config['folds']
+            max_features = optimal_config['features']
 
-def build_tier2_models():
-    """Build models for Tier 2 symbols (1.5-2.0 Sharpe)."""
-    tier2_symbols = [
-        "@AD#C",    # 1.990 - Australian Dollar
-        "@S#C",     # 1.985 - Soybeans
-        "@KW#C",    # 1.981 - Wheat
-        "@W#C",     # 1.837 - Wheat
-        "@US#C",    # 1.837 - US 30Y
-        "@EU#C",    # 1.769 - Euro
-        "@FV#C"     # 1.721 - US 5Y
-    ]
+        print(f"Building with: {n_models} models, {n_folds} folds, {max_features} features")
 
-    print("\nBuilding Tier 2 Production Models (1.5-2.0 Sharpe)")
-    print("=" * 55)
+        # Use xgb_compare to build the models (simpler approach)
+        os.chdir(xgb_compare_dir)
 
-    for i, symbol in enumerate(tier2_symbols, 1):
-        print(f"\n{i}/7: Building {symbol}...")
+        import subprocess
+        cmd = [
+            sys.executable, "xgb_compare.py",
+            "--target_symbol", symbol,
+            "--n_models", str(n_models),
+            "--n_folds", str(n_folds),
+            "--max_features", str(max_features),
+            "--q_metric", optimal_config['q_metric'],
+            "--xgb_type", optimal_config['xgb_type'],
+            "--export-production-models",  # Add export flag
+            "--log_label", f"PROD_{'test_' if test_mode else ''}{symbol.replace('#', '').replace('@', '')}"
+        ]
 
-        from production_model_builder import ProductionModelBuilder
+        print(f"Running: {' '.join(cmd)}")
+        result = subprocess.run(cmd, capture_output=True, text=True)
 
-        builder = ProductionModelBuilder()
-        success = builder.build_production_models(symbol)
-
-        if success:
-            print(f"✅ {symbol} completed")
+        if result.returncode == 0:
+            print(f"SUCCESS: {symbol} production model built successfully")
+            return True
         else:
-            print(f"❌ {symbol} failed")
+            print(f"FAILED: {symbol} failed: {result.stderr}")
+            return False
+
+    except Exception as e:
+        print(f"ERROR: {symbol} error: {e}")
+        return False
 
 def main():
-    """Main execution - build essential production models."""
+    """Main execution - build production models for specified symbols."""
     import argparse
 
-    parser = argparse.ArgumentParser(description='Build production models')
-    parser.add_argument('--tier', choices=['1', '2', 'all'], default='1',
-                       help='Which tier to build (1=excellent, 2=good, all=both)')
+    parser = argparse.ArgumentParser(description='Build production models for specific symbols')
+    parser.add_argument('--symbols', nargs='+', required=True,
+                       help='Symbols to build models for (e.g., @AD#C @ES#C QGC#C)')
+    parser.add_argument('--test', action='store_true',
+                       help='Test mode: use smaller parameters for quick validation')
 
     args = parser.parse_args()
 
-    if args.tier in ['1', 'all']:
-        build_tier1_models()
+    print("Production Model Builder")
+    print("=" * 60)
+    print(f"Symbols to build: {args.symbols}")
+    if args.test:
+        print("TEST MODE: Using reduced parameters")
 
-    if args.tier in ['2', 'all']:
-        build_tier2_models()
+    # Build models for each symbol
+    results = {}
+    for symbol in args.symbols:
+        success = build_production_model(symbol, test_mode=args.test)
+        results[symbol] = success
 
-    print("\nProduction model building completed!")
-    print("Models saved to PROD/models/ with top performers only")
+    # Summary
+    print(f"\n{'='*60}")
+    print("PRODUCTION MODEL BUILD SUMMARY")
+    print(f"{'='*60}")
+
+    for symbol, success in results.items():
+        status = "SUCCESS" if success else "FAILED"
+        print(f"{symbol}: {status}")
+
+    successful = sum(results.values())
+    total = len(results)
+    print(f"\nOverall: {successful}/{total} models built successfully")
 
 if __name__ == "__main__":
     main()
