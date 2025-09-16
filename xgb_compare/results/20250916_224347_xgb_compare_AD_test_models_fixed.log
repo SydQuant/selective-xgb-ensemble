@@ -1,0 +1,19 @@
+2025-09-16 22:43:47,784 - INFO - ================================================================================
+2025-09-16 22:43:47,784 - INFO - XGBoost Comparison Framework
+2025-09-16 22:43:47,784 - INFO - ================================================================================
+2025-09-16 22:43:47,784 - INFO - Configuration:
+2025-09-16 22:43:47,784 - INFO -   Target Symbol: @AD#C
+2025-09-16 22:43:47,784 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-16 22:43:47,784 - INFO -   Models: 5, Type: standard
+2025-09-16 22:43:47,784 - INFO -   Folds: 3
+2025-09-16 22:43:47,784 - INFO -   Max Features: 100 (Limited)
+2025-09-16 22:43:47,784 - INFO -   Feature Selection: Enabled
+2025-09-16 22:43:47,784 - INFO -   Inner Val Fraction: 0.2
+2025-09-16 22:43:47,784 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-16 22:43:47,784 - INFO -   Signal Type: Binary (+1/-1)
+2025-09-16 22:43:47,784 - INFO -   Cross-validation: Expanding window
+2025-09-16 22:43:47,784 - INFO -   Production: Cutoff=0.6, Top N=1, Q-Metric=sharpe
+2025-09-16 22:43:47,784 - INFO -   Reselection: Every 1 fold(s)
+2025-09-16 22:43:47,784 - INFO - 
+2025-09-16 22:43:53,338 - INFO - Dropped 3 rows due to NaN in target column @AD#C_target_return
+2025-09-16 22:43:53,452 - INFO - Loaded: X=(2732, 1906), y=(2732,)
