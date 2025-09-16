@@ -1,0 +1,180 @@
+2025-09-12 21:30:06,525 - INFO - ================================================================================
+2025-09-12 21:30:06,525 - INFO - XGBoost Comparison Framework
+2025-09-12 21:30:06,525 - INFO - ================================================================================
+2025-09-12 21:30:06,525 - INFO - Configuration:
+2025-09-12 21:30:06,525 - INFO -   Target Symbol: @TY#C
+2025-09-12 21:30:06,525 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-12 21:30:06,525 - INFO -   Models: 100, Type: tiered
+2025-09-12 21:30:06,541 - INFO -   Folds: 10
+2025-09-12 21:30:06,541 - INFO -   Max Features: 100 (Limited)
+2025-09-12 21:30:06,542 - INFO -   Feature Selection: Enabled
+2025-09-12 21:30:06,542 - INFO -   Inner Val Fraction: 0.2
+2025-09-12 21:30:06,542 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-12 21:30:06,542 - INFO -   Signal Type: Tanh Normalized
+2025-09-12 21:30:06,542 - INFO -   Cross-validation: Expanding window
+2025-09-12 21:30:06,542 - INFO -   Production: Cutoff=0.6, Top N=5, Q-Metric=sharpe
+2025-09-12 21:30:06,542 - INFO -   Reselection: Every 1 fold(s)
+2025-09-12 21:30:06,542 - INFO - 
+2025-09-12 21:30:14,897 - INFO - Dropped 4 rows due to NaN in target column @TY#C_target_return
+2025-09-12 21:30:15,437 - INFO - Loaded: X=(2731, 1906), y=(2731,)
+2025-09-12 21:31:16,875 - INFO - Selected 100 features (threshold: 0.7)
+2025-09-12 21:31:16,925 - INFO - Selected: 100 features
+2025-09-12 21:31:18,924 - INFO - GPU detection: CUDA GPU available and working
+2025-09-12 21:31:18,924 - INFO - Processing mode: GPU sequential (GPU: True, Total models: 1000)
+2025-09-12 21:31:19,810 - INFO - GPU detection: CUDA GPU available and working
+2025-09-12 21:31:19,816 - INFO - Using expanding window
+2025-09-12 21:31:19,816 - INFO - Starting analysis: 100 tiered models x 9 folds
+2025-09-12 21:31:19,816 - INFO - Processing Fold 1/9
+2025-09-12 21:31:19,822 - INFO -   Using GPU sequential processing
+2025-09-12 21:41:08,848 - INFO - Fold 1 Summary:
+2025-09-12 21:41:08,849 - INFO -   Best OOS Sharpe: M23 (2.575, p=0.000)
+2025-09-12 21:41:08,849 - INFO -   Best Q-Sharpe:  M23 (2.575, OOS_Sharpe=2.575, OOS_Hit=0.560)
+2025-09-12 21:41:08,849 - INFO -   Mean OOS Sharpe: 1.024, Mean Hit: 0.521
+2025-09-12 21:41:08,849 - INFO - 
+2025-09-12 21:41:08,852 - INFO - Processing Fold 2/9
+2025-09-12 21:41:08,918 - INFO -   Using GPU sequential processing
+2025-09-12 21:52:45,376 - INFO - Fold 2 Summary:
+2025-09-12 21:52:45,376 - INFO -   Best OOS Sharpe: M85 (2.779, p=0.000)
+2025-09-12 21:52:45,376 - INFO -   Best Q-Sharpe:  M23 (2.425, OOS_Sharpe=1.068, OOS_Hit=0.571)
+2025-09-12 21:52:45,376 - INFO -   Mean OOS Sharpe: 1.742, Mean Hit: 0.553
+2025-09-12 21:52:45,376 - INFO - 
+2025-09-12 21:52:45,379 - INFO - Processing Fold 3/9
+2025-09-12 21:52:45,382 - INFO -   Using GPU sequential processing
+2025-09-12 22:05:07,888 - INFO - Fold 3 Summary:
+2025-09-12 22:05:07,889 - INFO -   Best OOS Sharpe: M45 (1.447, p=0.170)
+2025-09-12 22:05:07,889 - INFO -   Best Q-Sharpe:  M23 (2.233, OOS_Sharpe=0.509, OOS_Hit=0.531)
+2025-09-12 22:05:07,889 - INFO -   Mean OOS Sharpe: 0.059, Mean Hit: 0.501
+2025-09-12 22:05:07,889 - INFO - 
+2025-09-12 22:05:07,891 - INFO - Processing Fold 4/9
+2025-09-12 22:05:07,928 - INFO -   Using GPU sequential processing
+2025-09-12 22:18:26,118 - INFO - Fold 4 Summary:
+2025-09-12 22:18:26,118 - INFO -   Best OOS Sharpe: M16 (4.027, p=0.000)
+2025-09-12 22:18:26,118 - INFO -   Best Q-Sharpe:  M23 (2.330, OOS_Sharpe=3.200, OOS_Hit=0.553)
+2025-09-12 22:18:26,118 - INFO -   Mean OOS Sharpe: 2.085, Mean Hit: 0.555
+2025-09-12 22:18:26,118 - INFO - 
+2025-09-12 22:18:26,121 - INFO - Processing Fold 5/9
+2025-09-12 22:18:26,124 - INFO -   Using GPU sequential processing
+2025-09-12 22:32:36,768 - INFO - Fold 5 Summary:
+2025-09-12 22:32:36,768 - INFO -   Best OOS Sharpe: M90 (1.557, p=0.080)
+2025-09-12 22:32:36,768 - INFO -   Best Q-Sharpe:  M23 (2.146, OOS_Sharpe=0.491, OOS_Hit=0.520)
+2025-09-12 22:32:36,768 - INFO -   Mean OOS Sharpe: -0.118, Mean Hit: 0.480
+2025-09-12 22:32:36,768 - INFO - 
+2025-09-12 22:32:36,771 - INFO - Processing Fold 6/9
+2025-09-12 22:32:36,774 - INFO -   Using GPU sequential processing
+2025-09-12 22:45:26,484 - INFO - Fold 6 Summary:
+2025-09-12 22:45:26,485 - INFO -   Best OOS Sharpe: M99 (2.989, p=0.000)
+2025-09-12 22:45:26,485 - INFO -   Best Q-Sharpe:  M23 (2.187, OOS_Sharpe=2.560, OOS_Hit=0.557)
+2025-09-12 22:45:26,485 - INFO -   Mean OOS Sharpe: 1.667, Mean Hit: 0.533
+2025-09-12 22:45:26,485 - INFO - 
+2025-09-12 22:45:26,487 - INFO - Processing Fold 7/9
+2025-09-12 22:45:26,492 - INFO -   Using GPU sequential processing
+2025-09-12 22:58:04,239 - INFO - Fold 7 Summary:
+2025-09-12 22:58:04,240 - INFO -   Best OOS Sharpe: M62 (1.962, p=0.040)
+2025-09-12 22:58:04,240 - INFO -   Best Q-Sharpe:  M23 (2.037, OOS_Sharpe=0.680, OOS_Hit=0.505)
+2025-09-12 22:58:04,240 - INFO -   Mean OOS Sharpe: 0.537, Mean Hit: 0.510
+2025-09-12 22:58:04,240 - INFO - 
+2025-09-12 22:58:04,242 - INFO - Processing Fold 8/9
+2025-09-12 22:58:04,247 - INFO -   Using GPU sequential processing
+2025-09-12 23:09:34,322 - INFO - Fold 8 Summary:
+2025-09-12 23:09:34,322 - INFO -   Best OOS Sharpe: M48 (3.629, p=0.000)
+2025-09-12 23:09:34,322 - INFO -   Best Q-Sharpe:  M23 (2.042, OOS_Sharpe=2.091, OOS_Hit=0.542)
+2025-09-12 23:09:34,322 - INFO -   Mean OOS Sharpe: 1.654, Mean Hit: 0.526
+2025-09-12 23:09:34,322 - INFO - 
+2025-09-12 23:09:34,328 - INFO - Processing Fold 9/9
+2025-09-12 23:09:34,333 - INFO -   Using GPU sequential processing
+2025-09-12 23:19:07,018 - INFO - Fold 9 Summary:
+2025-09-12 23:19:07,018 - INFO -   Best OOS Sharpe: M54 (3.175, p=0.010)
+2025-09-12 23:19:07,018 - INFO -   Best Q-Sharpe:  M23 (2.149, OOS_Sharpe=3.114, OOS_Hit=0.580)
+2025-09-12 23:19:07,018 - INFO -   Mean OOS Sharpe: 1.961, Mean Hit: 0.548
+2025-09-12 23:19:07,018 - INFO - 
+2025-09-12 23:19:07,022 - INFO - Starting full timeline backtesting...
+2025-09-12 23:19:07,022 - INFO - Running full timeline backtest with 9 folds (0-based indexing)
+2025-09-12 23:19:07,022 - INFO - Fold 0 skipped (no prior Q-score history for meaningful selection)
+2025-09-12 23:19:07,022 - INFO - Effective backtest period: Folds 1-8 (8 folds)
+2025-09-12 23:19:07,022 - INFO - Training period: Folds 1-5
+2025-09-12 23:19:07,022 - INFO - Production period: Folds 6-8
+2025-09-12 23:19:07,022 - INFO - Using consistent OOS methodology for all folds
+2025-09-12 23:19:07,022 - INFO - Fold 0: Skipped (no prior Q-score history for meaningful selection)
+2025-09-12 23:19:07,022 - INFO - 
+--- Processing fold 1/8 ---
+2025-09-12 23:19:07,056 - INFO - Fold 1: Q-scores from fold 0: ['M00:0.582', 'M01:1.401', 'M02:0.447', 'M03:0.925', 'M04:0.564']...
+2025-09-12 23:19:07,056 - INFO - Fold 1: Selected models [23, 90, 63, 52, 97] based on fold 0 Q-scores, avg Q-score: 2.375
+2025-09-12 23:19:07,058 - INFO - Fold 1 (Training): Sharpe=1.397, Hit=54.9%
+2025-09-12 23:19:07,058 - INFO - 
+--- Processing fold 2/8 ---
+2025-09-12 23:19:07,086 - INFO - Fold 2: Q-scores from fold 1: ['M00:0.781', 'M01:1.451', 'M02:0.658', 'M03:0.961', 'M04:0.764']...
+2025-09-12 23:19:07,086 - INFO - Fold 2: Selected models [23, 63, 52, 90, 88] based on fold 1 Q-scores, avg Q-score: 2.261
+2025-09-12 23:19:07,088 - INFO - Fold 2 (Training): Sharpe=0.318, Hit=50.2%
+2025-09-12 23:19:07,088 - INFO - 
+--- Processing fold 3/8 ---
+2025-09-12 23:19:07,123 - INFO - Fold 3: Q-scores from fold 2: ['M00:0.578', 'M01:1.276', 'M02:0.499', 'M03:0.893', 'M04:0.767']...
+2025-09-12 23:19:07,123 - INFO - Fold 3: Selected models [23, 63, 52, 90, 97] based on fold 2 Q-scores, avg Q-score: 2.075
+2025-09-12 23:19:07,125 - INFO - Fold 3 (Training): Sharpe=3.161, Hit=54.2%
+2025-09-12 23:19:07,125 - INFO - 
+--- Processing fold 4/8 ---
+2025-09-12 23:19:07,150 - INFO - Fold 4: Q-scores from fold 3: ['M00:0.743', 'M01:1.351', 'M02:0.542', 'M03:0.999', 'M04:0.941']...
+2025-09-12 23:19:07,151 - INFO - Fold 4: Selected models [23, 63, 52, 97, 24] based on fold 3 Q-scores, avg Q-score: 2.114
+2025-09-12 23:19:07,152 - INFO - Fold 4 (Training): Sharpe=0.350, Hit=52.7%
+2025-09-12 23:19:07,152 - INFO - 
+--- Processing fold 5/8 ---
+2025-09-12 23:19:07,186 - INFO - Fold 5: Q-scores from fold 4: ['M00:0.601', 'M01:1.172', 'M02:0.557', 'M03:0.871', 'M04:0.822']...
+2025-09-12 23:19:07,186 - INFO - Fold 5: Selected models [23, 63, 52, 97, 90] based on fold 4 Q-scores, avg Q-score: 1.972
+2025-09-12 23:19:07,187 - INFO - Fold 5 (Training): Sharpe=2.456, Hit=56.0%
+2025-09-12 23:19:07,187 - INFO - 
+--- Processing fold 6/8 ---
+2025-09-12 23:19:07,230 - INFO - Fold 6: Q-scores from fold 5: ['M00:0.680', 'M01:1.188', 'M02:0.559', 'M03:0.911', 'M04:0.873']...
+2025-09-12 23:19:07,230 - INFO - Fold 6: Selected models [23, 63, 52, 97, 90] based on fold 5 Q-scores, avg Q-score: 1.994
+2025-09-12 23:19:07,232 - INFO - Fold 6 (Production): Sharpe=0.567, Hit=50.2%
+2025-09-12 23:19:07,232 - INFO - 
+--- Processing fold 7/8 ---
+2025-09-12 23:19:07,284 - INFO - Fold 7: Q-scores from fold 6: ['M00:0.749', 'M01:1.134', 'M02:0.606', 'M03:0.785', 'M04:0.815']...
+2025-09-12 23:19:07,284 - INFO - Fold 7: Selected models [23, 63, 52, 97, 32] based on fold 6 Q-scores, avg Q-score: 1.847
+2025-09-12 23:19:07,285 - INFO - Fold 7 (Production): Sharpe=1.709, Hit=50.9%
+2025-09-12 23:19:07,285 - INFO - 
+--- Processing fold 8/8 ---
+2025-09-12 23:19:07,331 - INFO - Fold 8: Q-scores from fold 7: ['M00:0.847', 'M01:1.193', 'M02:0.688', 'M03:0.869', 'M04:0.924']...
+2025-09-12 23:19:07,332 - INFO - Fold 8: Selected models [23, 52, 63, 97, 90] based on fold 7 Q-scores, avg Q-score: 1.816
+2025-09-12 23:19:07,334 - INFO - Fold 8 (Production): Sharpe=2.804, Hit=55.8%
+2025-09-12 23:19:07,335 - INFO - Training Period Overall: Sharpe=1.703, Hit=53.6%
+2025-09-12 23:19:07,336 - INFO - Production Period Overall: Sharpe=1.423, Hit=52.3%
+2025-09-12 23:19:07,338 - INFO - Full Timeline Overall: Sharpe=1.508, Hit=53.1%
+2025-09-12 23:19:07,338 - INFO - Training: Sharpe=1.703 | Hit=53.6% | Return=3.77%
+2025-09-12 23:19:07,338 - INFO - Production: Sharpe=1.423 | Hit=52.3% | Return=5.35%
+2025-09-12 23:19:07,338 - INFO - Full Timeline: Sharpe=1.508 | Hit=53.1% | Return=4.36%
+2025-09-12 23:19:07,338 - INFO - Generating visualizations...
+2025-09-12 23:19:07,338 - INFO - Creating clean visualizations for 100 models...
+2025-09-12 23:19:10,157 - INFO - Clean fold-by-fold analysis saved to: 20250912_213006_fold_@TY#C_100models_10folds_v2_S3.3_TY_tiered_10F.png
+2025-09-12 23:19:12,783 - INFO - Detailed production analysis saved to: 20250912_213006_backtest_@TY#C_100models_10folds_v2_S3.3_TY_tiered_10F.png
+2025-09-12 23:19:12,783 - INFO - ================================================================================
+2025-09-12 23:19:12,783 - INFO - BACKTEST SUMMARY
+2025-09-12 23:19:12,783 - INFO - ================================================================================
+2025-09-12 23:19:12,783 - INFO - Config: Cutoff=70%, Top N=5, Q-Metric=sharpe, Reselection=1 fold(s)
+2025-09-12 23:19:12,783 - INFO - Model Selection History:
+2025-09-12 23:19:12,783 - INFO -   Fold 1: M23, M90, M63, M52, M97 (Avg Q-sharpe: 2.375)
+2025-09-12 23:19:12,783 - INFO -   Fold 2: M23, M63, M52, M90, M88 (Avg Q-sharpe: 2.261)
+2025-09-12 23:19:12,783 - INFO -   Fold 3: M23, M63, M52, M90, M97 (Avg Q-sharpe: 2.075)
+2025-09-12 23:19:12,783 - INFO -   Fold 4: M23, M63, M52, M97, M24 (Avg Q-sharpe: 2.114)
+2025-09-12 23:19:12,783 - INFO -   Fold 5: M23, M63, M52, M97, M90 (Avg Q-sharpe: 1.972)
+2025-09-12 23:19:12,784 - INFO -   Fold 6: M23, M63, M52, M97, M90 (Avg Q-sharpe: 1.994)
+2025-09-12 23:19:12,784 - INFO -   Fold 7: M23, M63, M52, M97, M32 (Avg Q-sharpe: 1.847)
+2025-09-12 23:19:12,784 - INFO -   Fold 8: M23, M52, M63, M97, M90 (Avg Q-sharpe: 1.816)
+2025-09-12 23:19:12,784 - INFO - 
+2025-09-12 23:19:12,784 - INFO - Fold-by-Fold Performance:
+2025-09-12 23:19:12,784 - INFO -   Fold 1: M23, M90, M63, M52, M97 | Sharpe=1.397 | Hit=54.9% | Samples=273
+2025-09-12 23:19:12,784 - INFO -   Fold 2: M23, M63, M52, M90, M88 | Sharpe=0.318 | Hit=50.2% | Samples=273
+2025-09-12 23:19:12,784 - INFO -   Fold 3: M23, M63, M52, M90, M97 | Sharpe=3.161 | Hit=54.2% | Samples=273
+2025-09-12 23:19:12,784 - INFO -   Fold 4: M23, M63, M52, M97, M24 | Sharpe=0.350 | Hit=52.7% | Samples=273
+2025-09-12 23:19:12,784 - INFO -   Fold 5: M23, M63, M52, M97, M90 | Sharpe=2.456 | Hit=56.0% | Samples=273
+2025-09-12 23:19:12,784 - INFO -   Fold 6: M23, M63, M52, M97, M90 | Sharpe=0.567 | Hit=50.2% | Samples=273
+2025-09-12 23:19:12,784 - INFO -   Fold 7: M23, M63, M52, M97, M32 | Sharpe=1.709 | Hit=50.9% | Samples=273
+2025-09-12 23:19:12,784 - INFO -   Fold 8: M23, M52, M63, M97, M90 | Sharpe=2.804 | Hit=55.8% | Samples=274
+2025-09-12 23:19:12,784 - INFO - ================================================================================
+2025-09-12 23:19:12,784 - INFO - ================================================================================
+2025-09-12 23:19:12,784 - INFO - ANALYSIS COMPLETED SUCCESSFULLY!
+2025-09-12 23:19:12,784 - INFO - ================================================================================
+2025-09-12 23:19:12,784 - INFO - Generated 2 visualization files
+2025-09-12 23:19:12,784 - INFO -   - 20250912_213006_fold_@TY#C_100models_10folds_v2_S3.3_TY_tiered_10F.png
+2025-09-12 23:19:12,784 - INFO -   - 20250912_213006_backtest_@TY#C_100models_10folds_v2_S3.3_TY_tiered_10F.png
+2025-09-12 23:19:12,784 - INFO - Training Final: Sharpe=1.703 | Hit=53.6% | Return=3.77% | CB=2.154
+2025-09-12 23:19:12,784 - INFO - Production Final: Sharpe=1.423 | Hit=52.3% | Return=5.35% | CB=1.169
+2025-09-12 23:19:12,784 - INFO - Full Timeline Final: Sharpe=1.508 | Hit=53.1% | Return=4.36% | CB=0.953
