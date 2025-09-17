@@ -470,13 +470,12 @@ def run_cross_validation(X, y, config, logger):
 
         # Store trained models if export is requested
         if config.export_production_models:
-            # Extract trained models directly from fold_results (before DataFrame conversion)
             trained_models = {}
             model_specs = {}
-            for result_dict in fold_results:
-                if 'trained_model' in result_dict:
-                    model_idx = int(result_dict['Model'][1:])
-                    trained_models[model_idx] = result_dict['trained_model']
+            for _, row in fold_df.iterrows():
+                if 'trained_model' in row:
+                    model_idx = int(row['Model'][1:])
+                    trained_models[model_idx] = row['trained_model']
                     # Store the XGB spec used for this model (includes feature info)
                     if model_idx < len(xgb_specs):
                         model_specs[model_idx] = xgb_specs[model_idx]
