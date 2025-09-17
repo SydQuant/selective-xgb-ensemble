@@ -297,7 +297,7 @@ def _train_single_model_mp(args):
     """Train single model in multiprocessing worker."""
     model_idx, spec, X_train_vals, y_train_vals, X_inner_train_vals, y_inner_train_vals, \
     X_inner_val_vals, y_inner_val_vals, X_test_vals, y_test_vals, \
-    train_idx, inner_train_idx, inner_val_idx, test_idx = args
+    train_idx, inner_train_idx, inner_val_idx, test_idx, export_models = args
     
     import pandas as pd
     from model.xgb_drivers import fit_xgb_on_slice
@@ -319,11 +319,24 @@ def _train_single_model_mp(args):
     oos_metrics = calculate_model_metrics(pred_test, pd.Series(y_test_vals, index=test_idx), shifted=False)
     p_sharpe = calculate_metric_pvalue(pred_test, pd.Series(y_test_vals, index=test_idx), 'sharpe', oos_metrics['sharpe'], 50)
     
-    return {
-        'Model': f"M{model_idx:02d}", 'IS_Sharpe': is_metrics['sharpe'], 'IV_Sharpe': iv_metrics['sharpe'], 
-        'OOS_Sharpe': oos_metrics['sharpe'], 'OOS_Hit_Rate': oos_metrics['hit_rate'], 
+    result_dict = {
+        'Model': f"M{model_idx:02d}", 'IS_Sharpe': is_metrics['sharpe'], 'IV_Sharpe': iv_metrics['sharpe'],
+        'OOS_Sharpe': oos_metrics['sharpe'], 'OOS_Hit_Rate': oos_metrics['hit_rate'],
         'OOS_Sharpe_p': p_sharpe, 'Q_Sharpe': 0.0, 'OOS_Predictions': pred_test
-    }, oos_metrics
+    }
+
+    # Include trained model for export if requested
+    if export_models:
+        try:
+            import pickle
+            # Convert model to bytes that can be passed across process boundaries
+            model_bytes = pickle.dumps(model)
+            result_dict['trained_model_bytes'] = model_bytes
+        except Exception as e:
+            # If serialization fails, skip model storage for this worker
+            print(f"Warning: Could not serialize model {model_idx}: {e}")
+
+    return result_dict, oos_metrics
 
 def train_models_multiprocessing(xgb_specs, X_train, y_train, X_inner_train, y_inner_train, 
                                 X_inner_val, y_inner_val, X_test, y_test, config):
@@ -334,7 +347,8 @@ def train_models_multiprocessing(xgb_specs, X_train, y_train, X_inner_train, y_i
     # Prepare arguments
     args_list = [(i, spec, X_train.values, y_train.values, X_inner_train.values, y_inner_train.values,
                   X_inner_val.values, y_inner_val.values, X_test.values, y_test.values,
-                  X_train.index.tolist(), X_inner_train.index.tolist(), X_inner_val.index.tolist(), X_test.index.tolist())
+                  X_train.index.tolist(), X_inner_train.index.tolist(), X_inner_val.index.tolist(), X_test.index.tolist(),
+                  config.export_production_models)
                  for i, spec in enumerate(xgb_specs)]
     
     # Execute in parallel
@@ -378,11 +392,22 @@ def process_single_fold(fold_idx, train_idx, test_idx, X, y, xgb_specs, quality_
     # Extract trained models before DataFrame creation (to avoid pandas corruption)
     trained_models_dict = {}
     for result_dict in fold_results:
+        model_idx = int(result_dict['Model'][1:])
+
+        # Handle regular models (serial processing)
         if 'trained_model' in result_dict:
-            model_idx = int(result_dict['Model'][1:])
             trained_models_dict[model_idx] = result_dict['trained_model']
-            # Remove from result_dict to avoid DataFrame issues
             del result_dict['trained_model']
+
+        # Handle serialized models (multiprocessing)
+        elif 'trained_model_bytes' in result_dict:
+            import pickle
+            try:
+                model = pickle.loads(result_dict['trained_model_bytes'])
+                trained_models_dict[model_idx] = model
+            except Exception as e:
+                logger.error(f"Failed to deserialize model {model_idx}: {e}")
+            del result_dict['trained_model_bytes']
 
     # Create results dataframe (now without complex objects)
     fold_df = pd.DataFrame(fold_results)
