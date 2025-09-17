@@ -123,6 +123,7 @@ def export_production_models(all_fold_results, xgb_specs, selected_features, bac
             'model_feature_slices': model_feature_slices,  # Store model-specific feature slices
             'selected_features': selected_features,
             'selected_model_indices': selected_model_indices,
+            'binary_signal': True,  # Current batch uses binary signals
             'metadata': {
                 'n_models': config.n_models,
                 'n_folds': config.n_folds,
@@ -376,13 +377,12 @@ def process_single_fold(fold_idx, train_idx, test_idx, X, y, xgb_specs, quality_
 
     # Extract trained models before DataFrame creation (to avoid pandas corruption)
     trained_models_dict = {}
-    if config.export_production_models:
-        for result_dict in fold_results:
-            if 'trained_model' in result_dict:
-                model_idx = int(result_dict['Model'][1:])
-                trained_models_dict[model_idx] = result_dict['trained_model']
-                # Remove from result_dict to avoid DataFrame issues
-                del result_dict['trained_model']
+    for result_dict in fold_results:
+        if 'trained_model' in result_dict:
+            model_idx = int(result_dict['Model'][1:])
+            trained_models_dict[model_idx] = result_dict['trained_model']
+            # Remove from result_dict to avoid DataFrame issues
+            del result_dict['trained_model']
 
     # Create results dataframe (now without complex objects)
     fold_df = pd.DataFrame(fold_results)
@@ -413,8 +413,8 @@ def process_single_fold(fold_idx, train_idx, test_idx, X, y, xgb_specs, quality_
     logger.info(f"  Best {q_label}:  {best_q['Model']} ({best_q[q_column]:.3f}, OOS_Sharpe={best_q['OOS_Sharpe']:.3f}, OOS_Hit={best_q['OOS_Hit_Rate']:.3f})")
     logger.info(f"  Mean OOS Sharpe: {mean_sharpe:.3f}, Mean Hit: {mean_hit:.3f}")
     logger.info("")
-    
-    return fold_df, model_metrics
+
+    return fold_df, model_metrics, trained_models_dict
 
 def choose_optimal_processing_mode(config, logger):
     """Choose optimal processing mode: GPU if available, otherwise CPU multiprocessing."""
@@ -465,7 +465,7 @@ def run_cross_validation(X, y, config, logger):
     
     for fold_idx, (train_idx, test_idx) in enumerate(fold_splits):
         logger.info(f"Processing Fold {fold_idx+1}/{len(fold_splits)}")
-        fold_df, model_metrics = process_single_fold(fold_idx, train_idx, test_idx, X, y, 
+        fold_df, model_metrics, trained_models_dict = process_single_fold(fold_idx, train_idx, test_idx, X, y,
                                                    xgb_specs, quality_tracker, config, logger,
                                                    use_gpu=use_gpu, use_multiprocessing=use_multiprocessing)
         # Extract OOS predictions for backtesting

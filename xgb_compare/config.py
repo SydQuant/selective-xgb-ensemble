@@ -118,7 +118,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument('--quality_halflife', type=int, default=63, help='Quality halflife (days)')
     parser.add_argument('--cutoff_fraction', type=float, default=0.6, help='Training/production split fraction')
     parser.add_argument('--top_n_models', type=int, default=5, help='Top models for production')
-    parser.add_argument('--model_selection_pct', type=float, default=0.05, help='Top percentage of models to select (0.05=5%)')
+    parser.add_argument('--model_selection_pct', type=float, default=0.05, help='Top percentage of models to select (0.05=5%%)')
     parser.add_argument('--q_metric', type=str, default='sharpe', 
                        choices=['sharpe', 'hit_rate', 'cb_ratio', 'adj_sharpe', 'combined', 'sharpe_hit'], help='Q-score metric')
     parser.add_argument('--reselection_frequency', type=int, default=1, help='Reselection frequency (folds)')
