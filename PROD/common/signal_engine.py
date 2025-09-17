@@ -27,9 +27,24 @@ class SignalEngine:
         if symbol in self.loaded_models:
             return self.loaded_models[symbol]
 
-        # Try consolidated format first
-        consolidated_file = self.models_dir / f"{symbol}_production.pkl"
+        # Try new timestamp format first (e.g., @ES#C_20250917_201818.pkl)
+        timestamp_files = list(self.models_dir.glob(f"{symbol}_*.pkl"))
+        if timestamp_files:
+            # Use the most recent file (last in sorted order)
+            consolidated_file = sorted(timestamp_files)[-1]
+            try:
+                with open(consolidated_file, 'rb') as f:
+                    package = pickle.load(f)
 
+                self.loaded_models[symbol] = package
+                self.symbol_configs[symbol] = package.get('metadata', {})
+                logger.info(f"Loaded timestamp package for {symbol}: {consolidated_file.name}, {len(package.get('models', {}))} models")
+                return package
+            except Exception as e:
+                logger.error(f"Failed to load timestamp package for {symbol}: {e}")
+
+        # Try legacy production format
+        consolidated_file = self.models_dir / f"{symbol}_production.pkl"
         if consolidated_file.exists():
             try:
                 with open(consolidated_file, 'rb') as f:
@@ -37,10 +52,10 @@ class SignalEngine:
 
                 self.loaded_models[symbol] = package
                 self.symbol_configs[symbol] = package.get('metadata', {})
-                logger.info(f"Loaded consolidated package for {symbol}: {len(package.get('models', {}))} models")
+                logger.info(f"Loaded legacy production package for {symbol}: {len(package.get('models', {}))} models")
                 return package
             except Exception as e:
-                logger.error(f"Failed to load consolidated package for {symbol}: {e}")
+                logger.error(f"Failed to load legacy production package for {symbol}: {e}")
 
         # Fallback to old format (separate files)
         config_file = self.config_dir / "models" / f"{symbol}.yaml"
