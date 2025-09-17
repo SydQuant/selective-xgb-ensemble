@@ -1,0 +1,28 @@
+2025-09-17 12:33:42,058 - INFO - ================================================================================
+2025-09-17 12:33:42,058 - INFO - XGBoost Comparison Framework
+2025-09-17 12:33:42,058 - INFO - ================================================================================
+2025-09-17 12:33:42,058 - INFO - Configuration:
+2025-09-17 12:33:42,058 - INFO -   Target Symbol: @RTY#C
+2025-09-17 12:33:42,058 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-17 12:33:42,058 - INFO -   Models: 100, Type: tiered
+2025-09-17 12:33:42,058 - INFO -   Folds: 10
+2025-09-17 12:33:42,058 - INFO -   Max Features: 100 (Limited)
+2025-09-17 12:33:42,058 - INFO -   Feature Selection: Enabled
+2025-09-17 12:33:42,058 - INFO -   Inner Val Fraction: 0.2
+2025-09-17 12:33:42,058 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-17 12:33:42,058 - INFO -   Signal Type: Binary (+1/-1)
+2025-09-17 12:33:42,058 - INFO -   Cross-validation: Expanding window
+2025-09-17 12:33:42,058 - INFO -   Production: Cutoff=0.6, Top N=5, Q-Metric=sharpe
+2025-09-17 12:33:42,058 - INFO -   Reselection: Every 1 fold(s)
+2025-09-17 12:33:42,058 - INFO - 
+2025-09-17 12:33:53,876 - INFO - Dropped 9 rows due to NaN in target column @RTY#C_target_return
+2025-09-17 12:33:54,117 - INFO - Loaded: X=(2726, 1906), y=(2726,)
+2025-09-17 12:35:30,494 - INFO - Selected 100 features (threshold: 0.7)
+2025-09-17 12:35:30,839 - INFO - Selected: 100 features
+2025-09-17 12:35:31,437 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-17 12:35:31,441 - INFO - Processing mode: CPU multiprocessing (GPU: False, Total models: 1000)
+2025-09-17 12:35:31,681 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-17 12:35:31,806 - INFO - Using expanding window
+2025-09-17 12:35:31,809 - INFO - Starting analysis: 100 tiered models x 9 folds
+2025-09-17 12:35:31,809 - INFO - Processing Fold 1/9
+2025-09-17 12:35:31,818 - INFO -   Using multiprocessing with 9 workers

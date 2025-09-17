@@ -1,0 +1,28 @@
+2025-09-17 12:33:41,379 - INFO - ================================================================================
+2025-09-17 12:33:41,379 - INFO - XGBoost Comparison Framework
+2025-09-17 12:33:41,379 - INFO - ================================================================================
+2025-09-17 12:33:41,379 - INFO - Configuration:
+2025-09-17 12:33:41,379 - INFO -   Target Symbol: @RTY#C
+2025-09-17 12:33:41,379 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-17 12:33:41,379 - INFO -   Models: 150, Type: standard
+2025-09-17 12:33:41,379 - INFO -   Folds: 10
+2025-09-17 12:33:41,379 - INFO -   Max Features: 100 (Limited)
+2025-09-17 12:33:41,379 - INFO -   Feature Selection: Enabled
+2025-09-17 12:33:41,379 - INFO -   Inner Val Fraction: 0.2
+2025-09-17 12:33:41,379 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-17 12:33:41,379 - INFO -   Signal Type: Binary (+1/-1)
+2025-09-17 12:33:41,379 - INFO -   Cross-validation: Expanding window
+2025-09-17 12:33:41,379 - INFO -   Production: Cutoff=0.6, Top N=8, Q-Metric=sharpe
+2025-09-17 12:33:41,379 - INFO -   Reselection: Every 1 fold(s)
+2025-09-17 12:33:41,379 - INFO - 
+2025-09-17 12:33:53,005 - INFO - Dropped 9 rows due to NaN in target column @RTY#C_target_return
+2025-09-17 12:33:53,512 - INFO - Loaded: X=(2726, 1906), y=(2726,)
+2025-09-17 12:35:38,334 - INFO - Selected 100 features (threshold: 0.7)
+2025-09-17 12:35:39,037 - INFO - Selected: 100 features
+2025-09-17 12:35:41,163 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-17 12:35:41,164 - INFO - Processing mode: CPU multiprocessing (GPU: False, Total models: 1500)
+2025-09-17 12:35:41,534 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-17 12:35:41,608 - INFO - Using expanding window
+2025-09-17 12:35:41,628 - INFO - Starting analysis: 150 standard models x 9 folds
+2025-09-17 12:35:41,628 - INFO - Processing Fold 1/9
+2025-09-17 12:35:41,722 - INFO -   Using multiprocessing with 9 workers

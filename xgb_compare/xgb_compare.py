@@ -373,8 +373,18 @@ def process_single_fold(fold_idx, train_idx, test_idx, X, y, xgb_specs, quality_
     
     # Update quality tracker
     quality_tracker.update_quality(fold_idx, model_metrics)
-    
-    # Create results dataframe
+
+    # Extract trained models before DataFrame creation (to avoid pandas corruption)
+    trained_models_dict = {}
+    if config.export_production_models:
+        for result_dict in fold_results:
+            if 'trained_model' in result_dict:
+                model_idx = int(result_dict['Model'][1:])
+                trained_models_dict[model_idx] = result_dict['trained_model']
+                # Remove from result_dict to avoid DataFrame issues
+                del result_dict['trained_model']
+
+    # Create results dataframe (now without complex objects)
     fold_df = pd.DataFrame(fold_results)
     
     # Update Q-scores based on configured metric
@@ -470,18 +480,14 @@ def run_cross_validation(X, y, config, logger):
 
         # Store trained models if export is requested
         if config.export_production_models:
-            trained_models = {}
+            # Use pre-extracted trained models (before DataFrame corruption)
             model_specs = {}
-            for _, row in fold_df.iterrows():
-                if 'trained_model' in row:
-                    model_idx = int(row['Model'][1:])
-                    trained_models[model_idx] = row['trained_model']
-                    # Store the XGB spec used for this model (includes feature info)
-                    if model_idx < len(xgb_specs):
-                        model_specs[model_idx] = xgb_specs[model_idx]
-            fold_result['trained_models'] = trained_models
+            for model_idx in trained_models_dict.keys():
+                if model_idx < len(xgb_specs):
+                    model_specs[model_idx] = xgb_specs[model_idx]
+            fold_result['trained_models'] = trained_models_dict
             fold_result['model_specs'] = model_specs
-            logger.info(f"Stored {len(trained_models)} trained models for production export")
+            logger.info(f"Stored {len(trained_models_dict)} trained models for production export")
 
         all_fold_results[f'fold_{fold_idx+1}'] = fold_result
     
