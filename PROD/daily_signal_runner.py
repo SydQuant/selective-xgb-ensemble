@@ -14,7 +14,7 @@ from common.data_engine import DataEngine
 from common.signal_engine import SignalEngine
 from common.trades_util import TradeProcessor, send_sl_tp_email
 
-EXCLUDED_SYMBOLS = {"@RTY#C"}  # Symbols to skip in signal generation
+EXCLUDED_SYMBOLS = {} #{"@RTY#C"}  # Symbols to skip in signal generation
 
 def filter_tradeable_symbols(symbols, signal_engine, logger):
     """Filter symbols based on exclusion list and model availability."""
