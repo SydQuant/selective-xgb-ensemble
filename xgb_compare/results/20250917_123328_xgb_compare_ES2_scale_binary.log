@@ -34,3 +34,75 @@
 2025-09-17 12:39:24,621 - INFO - Stored 0 trained models for production export
 2025-09-17 12:39:24,621 - INFO - Processing Fold 2/13
 2025-09-17 12:39:24,650 - INFO -   Using multiprocessing with 9 workers
+2025-09-17 12:45:03,434 - INFO - Fold 2 Summary:
+2025-09-17 12:45:03,439 - INFO -   Best OOS Sharpe: M33 (3.632, p=0.000)
+2025-09-17 12:45:03,439 - INFO -   Best Q-Sharpe:  M79 (3.536, OOS_Sharpe=1.449, OOS_Hit=0.525)
+2025-09-17 12:45:03,439 - INFO -   Mean OOS Sharpe: 1.017, Mean Hit: 0.495
+2025-09-17 12:45:03,439 - INFO - 
+2025-09-17 12:45:03,492 - INFO - Stored 0 trained models for production export
+2025-09-17 12:45:03,492 - INFO - Processing Fold 3/13
+2025-09-17 12:45:03,523 - INFO -   Using multiprocessing with 9 workers
+2025-09-17 12:50:21,302 - INFO - Fold 3 Summary:
+2025-09-17 12:50:21,310 - INFO -   Best OOS Sharpe: M08 (3.221, p=0.020)
+2025-09-17 12:50:21,310 - INFO -   Best Q-Sharpe:  M79 (3.268, OOS_Sharpe=0.855, OOS_Hit=0.519)
+2025-09-17 12:50:21,310 - INFO -   Mean OOS Sharpe: 0.710, Mean Hit: 0.529
+2025-09-17 12:50:21,310 - INFO - 
+2025-09-17 12:50:21,362 - INFO - Stored 0 trained models for production export
+2025-09-17 12:50:21,363 - INFO - Processing Fold 4/13
+2025-09-17 12:50:21,412 - INFO -   Using multiprocessing with 9 workers
+2025-09-17 12:55:42,707 - INFO - Fold 4 Summary:
+2025-09-17 12:55:42,713 - INFO -   Best OOS Sharpe: M74 (3.715, p=0.000)
+2025-09-17 12:55:42,713 - INFO -   Best Q-Sharpe:  M79 (3.034, OOS_Sharpe=0.930, OOS_Hit=0.492)
+2025-09-17 12:55:42,713 - INFO -   Mean OOS Sharpe: 1.040, Mean Hit: 0.513
+2025-09-17 12:55:42,713 - INFO - 
+2025-09-17 12:55:42,754 - INFO - Stored 0 trained models for production export
+2025-09-17 12:55:42,755 - INFO - Processing Fold 5/13
+2025-09-17 12:55:42,794 - INFO -   Using multiprocessing with 9 workers
+2025-09-17 13:01:55,094 - INFO - Fold 5 Summary:
+2025-09-17 13:01:55,101 - INFO -   Best OOS Sharpe: M14 (3.188, p=0.020)
+2025-09-17 13:01:55,101 - INFO -   Best Q-Sharpe:  M79 (2.890, OOS_Sharpe=1.597, OOS_Hit=0.558)
+2025-09-17 13:01:55,101 - INFO -   Mean OOS Sharpe: 0.604, Mean Hit: 0.542
+2025-09-17 13:01:55,101 - INFO - 
+2025-09-17 13:01:55,211 - INFO - Stored 0 trained models for production export
+2025-09-17 13:01:55,212 - INFO - Processing Fold 6/13
+2025-09-17 13:01:55,246 - INFO -   Using multiprocessing with 9 workers
+2025-09-17 13:08:33,476 - INFO - Fold 6 Summary:
+2025-09-17 13:08:33,486 - INFO -   Best OOS Sharpe: M92 (3.225, p=0.000)
+2025-09-17 13:08:33,487 - INFO -   Best Q-Sharpe:  M79 (2.586, OOS_Sharpe=-0.156, OOS_Hit=0.525)
+2025-09-17 13:08:33,487 - INFO -   Mean OOS Sharpe: 0.769, Mean Hit: 0.523
+2025-09-17 13:08:33,487 - INFO - 
+2025-09-17 13:08:33,651 - INFO - Stored 0 trained models for production export
+2025-09-17 13:08:33,651 - INFO - Processing Fold 7/13
+2025-09-17 13:08:33,698 - INFO -   Using multiprocessing with 9 workers
+2025-09-17 13:15:02,144 - INFO - Fold 7 Summary:
+2025-09-17 13:15:02,158 - INFO -   Best OOS Sharpe: M122 (3.222, p=0.040)
+2025-09-17 13:15:02,158 - INFO -   Best Q-Sharpe:  M73 (2.475, OOS_Sharpe=1.523, OOS_Hit=0.492)
+2025-09-17 13:15:02,158 - INFO -   Mean OOS Sharpe: 1.258, Mean Hit: 0.531
+2025-09-17 13:15:02,158 - INFO - 
+2025-09-17 13:15:02,203 - INFO - Stored 0 trained models for production export
+2025-09-17 13:15:02,204 - INFO - Processing Fold 8/13
+2025-09-17 13:15:02,249 - INFO -   Using multiprocessing with 9 workers
+2025-09-17 13:21:08,763 - INFO - Fold 8 Summary:
+2025-09-17 13:21:08,777 - INFO -   Best OOS Sharpe: M108 (3.684, p=0.000)
+2025-09-17 13:21:08,777 - INFO -   Best Q-Sharpe:  M73 (2.397, OOS_Sharpe=1.696, OOS_Hit=0.547)
+2025-09-17 13:21:08,777 - INFO -   Mean OOS Sharpe: 1.366, Mean Hit: 0.510
+2025-09-17 13:21:08,777 - INFO - 
+2025-09-17 13:21:08,841 - INFO - Stored 0 trained models for production export
+2025-09-17 13:21:08,841 - INFO - Processing Fold 9/13
+2025-09-17 13:21:08,893 - INFO -   Using multiprocessing with 9 workers
+2025-09-17 13:27:06,412 - INFO - Fold 9 Summary:
+2025-09-17 13:27:06,435 - INFO -   Best OOS Sharpe: M127 (3.433, p=0.020)
+2025-09-17 13:27:06,436 - INFO -   Best Q-Sharpe:  M73 (2.241, OOS_Sharpe=0.837, OOS_Hit=0.514)
+2025-09-17 13:27:06,436 - INFO -   Mean OOS Sharpe: 0.757, Mean Hit: 0.502
+2025-09-17 13:27:06,436 - INFO - 
+2025-09-17 13:27:06,509 - INFO - Stored 0 trained models for production export
+2025-09-17 13:27:06,510 - INFO - Processing Fold 10/13
+2025-09-17 13:27:06,553 - INFO -   Using multiprocessing with 9 workers
+2025-09-17 13:33:28,429 - INFO - Fold 10 Summary:
+2025-09-17 13:33:28,437 - INFO -   Best OOS Sharpe: M75 (3.775, p=0.000)
+2025-09-17 13:33:28,437 - INFO -   Best Q-Sharpe:  M73 (2.070, OOS_Sharpe=0.529, OOS_Hit=0.508)
+2025-09-17 13:33:28,438 - INFO -   Mean OOS Sharpe: 1.498, Mean Hit: 0.535
+2025-09-17 13:33:28,438 - INFO - 
+2025-09-17 13:33:28,529 - INFO - Stored 0 trained models for production export
+2025-09-17 13:33:28,530 - INFO - Processing Fold 11/13
+2025-09-17 13:33:28,569 - INFO -   Using multiprocessing with 9 workers
