@@ -140,14 +140,21 @@ class DataEngine:
         try:
             # Load production package to get exact features
             models_dir = Path(__file__).parent.parent / "models"
-            package_file = models_dir / f"{target_symbol}_production.pkl"
 
-            if not package_file.exists():
-                logger.error(f"No production package for {target_symbol}")
+            # Load timestamp format files (e.g., @ES#C_20250917_201818.pkl)
+            timestamp_files = list(models_dir.glob(f"{target_symbol}_*.pkl"))
+            if not timestamp_files:
+                logger.error(f"No model package found for {target_symbol}")
                 return features_df
 
-            with open(package_file, 'rb') as f:
-                package = pickle.load(f)
+            # Use the most recent file (last in sorted order)
+            package_file = sorted(timestamp_files)[-1]
+            try:
+                with open(package_file, 'rb') as f:
+                    package = pickle.load(f)
+            except Exception as e:
+                logger.error(f"Failed to load package for {target_symbol}: {e}")
+                return features_df
 
             expected_features = package['selected_features']
 

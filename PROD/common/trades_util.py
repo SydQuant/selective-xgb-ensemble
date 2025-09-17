@@ -1,10 +1,8 @@
-"""
-Simplified Trade Processing for XGBoost Production
-Core trade generation functionality without complexity.
-"""
+"""XGBoost Production Trade Processing - Streamlined and Simplified"""
 
 import math
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
@@ -15,7 +13,7 @@ import yaml
 logger = logging.getLogger(__name__)
 
 class TradeProcessor:
-    """Simplified trade processing."""
+    """Trade processing and file generation."""
 
     def __init__(self, config_file: Path):
         with open(config_file, 'r') as f:
@@ -27,25 +25,24 @@ class TradeProcessor:
         self.s3_config = config.get('s3', {})
 
     def process_trade(self, symbol: str, signal: int, price: float) -> Dict:
-        """Process single trade - exact v2.1 logic."""
+        """Process single trade using portfolio allocation logic."""
         inst_config = self.instrument_config[symbol]
         current_pos = self.current_positions.get(symbol, 0)
 
-        # Calculate position
+        # Calculate target position
         notional = self.portfolio_config['allocations'][inst_config['basket']]
         raw_pos = signal * notional / inst_config['fraction'] / price / inst_config['multiplier']
         target_pos = math.floor(abs(raw_pos)) * np.sign(signal)
         trade_size = target_pos - current_pos
 
-        # Apply limits
-        max_held = inst_config['max_held']
-        if abs(target_pos) > max_held:
-            target_pos = max_held * np.sign(target_pos)
+        # Apply position limits
+        if abs(target_pos) > inst_config['max_held']:
+            target_pos = inst_config['max_held'] * np.sign(target_pos)
             trade_size = target_pos - current_pos
 
-        max_traded = inst_config['max_traded']
-        if abs(trade_size) > max_traded:
-            trade_size = max_traded * np.sign(trade_size)
+        # Apply trade size limits
+        if abs(trade_size) > inst_config['max_traded']:
+            trade_size = inst_config['max_traded'] * np.sign(trade_size)
 
         return {
             'symbol': symbol,
@@ -79,7 +76,7 @@ class TradeProcessor:
                 'QUANTITY': abs(trade['trade_size']),
                 'URGENCY': 5,
                 'SIDE': "BUY" if trade['trade_size'] > 0 else "SELL",
-                'STRATEGY': 'XGBOOST',
+                'STRATEGY': 'LIQSEEK',
                 'ORDER_TYPE': 'MARKET',
                 'LIMIT_PRICE': '',
                 'STOP_PRICE': '',
@@ -114,47 +111,65 @@ class TradeProcessor:
 
 
 def send_sl_tp_email(sl_trades, tp_trades, trade_file: Path, recipients: List[str]) -> bool:
-    """Send email notification for trade file."""
+
     try:
+        try:
+            from dotenv import load_dotenv  # type: ignore
+            load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
+        except Exception:
+            pass
+
         import smtplib
-        from email.mime.multipart import MIMEMultipart
-        from email.mime.text import MIMEText
-        from email.mime.application import MIMEApplication
+        from email.message import EmailMessage
 
-        # Email configuration (could be moved to config)
-        smtp_server = "smtp.gmail.com"
-        smtp_port = 587
-        sender_email = "your-email@gmail.com"  # Configure as needed
-        sender_password = "your-password"      # Use app password or environment variable
+        smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+        smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        sender_email = os.getenv("EMAIL_USER")
+        sender_password = os.getenv("EMAIL_PASS")
 
-        # Create message
-        msg = MIMEMultipart()
+        if not recipients:
+            logger.warning("No email recipients configured; skipping email send.")
+            return False
+
+        if not sender_email or not sender_password:
+            logger.error("EMAIL_USER or EMAIL_PASS not set; cannot send email.")
+            return False
+
+        # Gmail app passwords are displayed with spaces; remove them if present
+        sender_password = sender_password.replace(" ", "")
+
+        # Compose message
+        msg = EmailMessage()
         msg['From'] = sender_email
         msg['To'] = ", ".join(recipients)
-        msg['Subject'] = f"XGBoost Trade File - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        msg['Subject'] = f"Trading Report (XGB): {trade_file.name.replace('.xlsx', '')}"
+        msg.set_content("Please find attached trade file, SL/TP report, and plots.\n\n")
 
-        # Create email body
-        body = f"""
-XGBoost Production Trade File Generated
+        # Attach files (only if provided and exist)
+        for file_path in [trade_file, sl_trades, tp_trades]:
+            try:
+                if file_path is None:
+                    continue
+                fp = Path(file_path)
+                if not fp.exists():
+                    continue
+                maintype = 'application'
+                subtype = fp.suffix.lstrip('.') or 'octet-stream'
+                with open(fp, 'rb') as f:
+                    data = f.read()
+                msg.add_attachment(data, maintype=maintype, subtype=subtype, filename=fp.name)
+            except Exception as attach_err:
+                logger.warning(f"Failed to attach {file_path}: {attach_err}")
 
-File: {trade_file.name}
-Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+        # Connect and send
+        if smtp_port == 465:
+            server = smtplib.SMTP_SSL(smtp_server, smtp_port)
+        else:
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
 
-Please find the attached trade file.
-        """
-
-        msg.attach(MIMEText(body, 'plain'))
-
-        # Attach trade file if it exists
-        if trade_file.exists():
-            with open(trade_file, 'rb') as f:
-                attachment = MIMEApplication(f.read(), _subtype='xlsx')
-                attachment.add_header('Content-Disposition', 'attachment', filename=trade_file.name)
-                msg.attach(attachment)
-
-        # Send email
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()
         server.login(sender_email, sender_password)
         server.send_message(msg)
         server.quit()
