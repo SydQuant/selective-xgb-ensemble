@@ -26,3 +26,11 @@
 2025-09-17 12:34:41,124 - INFO - Starting analysis: 150 standard models x 13 folds
 2025-09-17 12:34:41,125 - INFO - Processing Fold 1/13
 2025-09-17 12:34:41,150 - INFO -   Using multiprocessing with 9 workers
+2025-09-17 12:39:24,594 - INFO - Fold 1 Summary:
+2025-09-17 12:39:24,598 - INFO -   Best OOS Sharpe: M79 (3.768, p=0.000)
+2025-09-17 12:39:24,599 - INFO -   Best Q-Sharpe:  M79 (3.768, OOS_Sharpe=3.768, OOS_Hit=0.575)
+2025-09-17 12:39:24,599 - INFO -   Mean OOS Sharpe: 0.951, Mean Hit: 0.526
+2025-09-17 12:39:24,599 - INFO - 
+2025-09-17 12:39:24,621 - INFO - Stored 0 trained models for production export
+2025-09-17 12:39:24,621 - INFO - Processing Fold 2/13
+2025-09-17 12:39:24,650 - INFO -   Using multiprocessing with 9 workers

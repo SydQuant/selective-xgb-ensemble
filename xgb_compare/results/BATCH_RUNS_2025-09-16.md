@@ -25,7 +25,7 @@
 | @KW#C  | 0.631          | 50.0%        | 1.571             | 51.4%          | 1.093                | 50.6%             | ✅ 003833   |
 | @NQ#C  | 1.545          | 54.5%        | 1.824             | 54.1%          | 1.667                | 54.3%             | ✅ 003832   |
 | @RTY#C | 0.430          | 51.0%        | 0.473             | 53.3%          | 0.448                | 51.9%             | ✅ 003833   |
-| @S#C   | -              | -            | -                 | -              | -                    | -                 | ⚡ Running   |
+| @S#C   | 1.888          | 54.2%        | 2.891             | 56.9%          | 2.189                | 55.4%             | ✅ 023608   |
 | @SM#C  | 1.651          | 53.3%        | 0.891             | 52.9%          | 1.377                | 53.1%             | ✅ 023525   |
 | @TY#C  | 0.914          | 51.8%        | 1.690             | 54.0%          | 1.293                | 52.7%             | ✅ 023029   |
 | @US#C  | 1.433          | 52.4%        | 1.699             | 53.7%          | 1.546                | 53.0%             | ✅ 023406   |
@@ -47,6 +47,27 @@
 - ✅ HHMMSS: Completed at timestamp
 - ❌ Failed: Test encountered error
 
+## Summary Statistics
+
+**🎉 ALL 27 SYMBOLS COMPLETED ✅**
+
+**Performance Tiers (Full Timeline Sharpe):**
+- **Excellent (>2.0)**: @S#C (2.189), @AD#C (2.043)
+- **Strong (1.5-2.0)**: @EU#C (1.778), QHG#C (1.672), @NQ#C (1.667), QPL#C (1.569), @US#C (1.546)
+- **Good (1.0-1.5)**: @FV#C (1.421), @BP#C (1.410), QGC#C (1.397), @SM#C (1.377), @C#C (1.313), @TY#C (1.293), QSI#C (1.265), @JY#C (1.205)
+- **Moderate (0.5-1.0)**: @KW#C (1.093), @ES#C (1.028), BD#C (1.046), @W#C (0.937), @CT#C (0.954), BL#C (0.920), QBZ#C (0.658), QNG#C (0.605)
+- **Weak (<0.5)**: @RTY#C (0.448), QRB#C (0.036), @BO#C (-0.087), QCL#C (-0.132)
+
+**Best Performers:**
+1. **@S#C**: 2.189 Sharpe, 55.4% Hit (Soybeans)
+2. **@AD#C**: 2.043 Sharpe, 54.6% Hit (AUD/USD)
+3. **@EU#C**: 1.778 Sharpe, 54.9% Hit (EUR/USD)
+
+**Improvement Tests Running:**
+- **@ES#C**: 4 configs testing method/architecture/precision improvements
+- **@RTY#C**: 4 configs testing fold/architecture/scale optimizations
+
 ---
 *Created: 2025-09-16 23:50*
-*Last updated: 2025-09-16 23:50*
+*Completed: 2025-09-17 02:36*
+*27/27 symbols tested with binary signals (100M/15F/100feat)*
