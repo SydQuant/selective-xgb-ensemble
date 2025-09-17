@@ -1,0 +1,36 @@
+2025-09-17 20:18:07,896 - INFO - ================================================================================
+2025-09-17 20:18:07,896 - INFO - XGBoost Comparison Framework
+2025-09-17 20:18:07,896 - INFO - ================================================================================
+2025-09-17 20:18:07,896 - INFO - Configuration:
+2025-09-17 20:18:07,896 - INFO -   Target Symbol: @ES#C
+2025-09-17 20:18:07,896 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-17 20:18:07,896 - INFO -   Models: 200, Type: standard
+2025-09-17 20:18:07,896 - INFO -   Folds: 15
+2025-09-17 20:18:07,896 - INFO -   Max Features: 100 (Limited)
+2025-09-17 20:18:07,896 - INFO -   Feature Selection: Enabled
+2025-09-17 20:18:07,896 - INFO -   Inner Val Fraction: 0.2
+2025-09-17 20:18:07,896 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-17 20:18:07,896 - INFO -   Signal Type: Binary (+1/-1)
+2025-09-17 20:18:07,896 - INFO -   Cross-validation: Expanding window
+2025-09-17 20:18:07,897 - INFO -   Production: Cutoff=0.6, Top N=10, Q-Metric=hit_rate
+2025-09-17 20:18:07,897 - INFO -   Reselection: Every 1 fold(s)
+2025-09-17 20:18:07,897 - INFO - 
+2025-09-17 20:18:13,054 - INFO - Dropped 8 rows due to NaN in target column @ES#C_target_return
+2025-09-17 20:18:13,154 - INFO - Loaded: X=(2727, 1906), y=(2727,)
+2025-09-17 20:18:42,649 - INFO - Selected 100 features (threshold: 0.7)
+2025-09-17 20:18:42,663 - INFO - Selected: 100 features
+2025-09-17 20:18:42,697 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-17 20:18:42,698 - INFO - Processing mode: CPU multiprocessing (GPU: False, Total models: 3000)
+2025-09-17 20:18:42,701 - INFO - GPU detection: XGBoost not compiled with CUDA support - using CPU
+2025-09-17 20:18:42,704 - INFO - Using expanding window
+2025-09-17 20:18:42,704 - INFO - Starting analysis: 200 standard models x 13 folds
+2025-09-17 20:18:42,704 - INFO - Processing Fold 1/13
+2025-09-17 20:18:42,707 - INFO -   Using multiprocessing with 9 workers
+2025-09-17 20:19:18,118 - INFO - Fold 1 Summary:
+2025-09-17 20:19:18,118 - INFO -   Best OOS Sharpe: M79 (3.768, p=0.000)
+2025-09-17 20:19:18,118 - INFO -   Best Q-Hit_Rate:  M166 (0.608, OOS_Sharpe=3.159, OOS_Hit=0.608)
+2025-09-17 20:19:18,118 - INFO -   Mean OOS Sharpe: 0.936, Mean Hit: 0.526
+2025-09-17 20:19:18,118 - INFO - 
+2025-09-17 20:19:18,124 - INFO - Stored 200 trained models for production export
+2025-09-17 20:19:18,124 - INFO - Processing Fold 2/13
+2025-09-17 20:19:18,127 - INFO -   Using multiprocessing with 9 workers

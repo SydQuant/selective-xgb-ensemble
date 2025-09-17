@@ -1,0 +1,19 @@
+2025-09-17 20:18:59,401 - INFO - ================================================================================
+2025-09-17 20:18:59,401 - INFO - XGBoost Comparison Framework
+2025-09-17 20:18:59,401 - INFO - ================================================================================
+2025-09-17 20:18:59,401 - INFO - Configuration:
+2025-09-17 20:18:59,401 - INFO -   Target Symbol: @RTY#C
+2025-09-17 20:18:59,401 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-17 20:18:59,401 - INFO -   Models: 150, Type: standard
+2025-09-17 20:18:59,401 - INFO -   Folds: 15
+2025-09-17 20:18:59,401 - INFO -   Max Features: 100 (Limited)
+2025-09-17 20:18:59,401 - INFO -   Feature Selection: Enabled
+2025-09-17 20:18:59,401 - INFO -   Inner Val Fraction: 0.2
+2025-09-17 20:18:59,402 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-17 20:18:59,402 - INFO -   Signal Type: Binary (+1/-1)
+2025-09-17 20:18:59,402 - INFO -   Cross-validation: Expanding window
+2025-09-17 20:18:59,402 - INFO -   Production: Cutoff=0.6, Top N=8, Q-Metric=hit_rate
+2025-09-17 20:18:59,402 - INFO -   Reselection: Every 1 fold(s)
+2025-09-17 20:18:59,402 - INFO - 
+2025-09-17 20:19:16,548 - INFO - Dropped 9 rows due to NaN in target column @RTY#C_target_return
+2025-09-17 20:19:16,689 - INFO - Loaded: X=(2726, 1906), y=(2726,)
