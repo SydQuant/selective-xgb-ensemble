@@ -22,7 +22,7 @@ paths:
 email_config:
   enabled: true
   recipients:
-    - "christian.beulen@sydneyquantitative.com"
+    - "# christian.beulen@sydneyquantitative.com"
     - "realstevendong@gmail.com"
   sender: "realstevendong@gmail.com"
 
@@ -39,3 +39,24 @@ logging_config:
   format: "%(message)s"
   console_output: true
   file_output: true
+
+# FX configuration for currency conversion
+FX:
+  AUD:
+    inverted: false
+    ticker: AUDUSD.FXCM
+  CAD:
+    inverted: true
+    ticker: USDCAD.FXCM
+  CHF:
+    inverted: true
+    ticker: USDCHF.FXCM
+  EUR:
+    inverted: false
+    ticker: EURUSD.FXCM
+  GBP:
+    inverted: false
+    ticker: GBPUSD.FXCM
+  ZAR:
+    inverted: true
+    ticker: USDZAR.FXCM

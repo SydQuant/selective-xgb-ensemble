@@ -2,6 +2,7 @@ instrument_config:
   '@AD#C':
     basket: FX
     bloomberg: ADU5 Curncy
+    bloomberg_generic: AD1 Curncy
     description: AUSTRALIAN DOLLAR
     fraction: 4
     max_held: 20
@@ -10,6 +11,7 @@ instrument_config:
   '@BO#C':
     basket: AGS
     bloomberg: BOZ5 Comdty
+    bloomberg_generic: BO1 Comdty
     description: SOYBEAN OIL
     fraction: 7
     max_held: 27
@@ -18,6 +20,7 @@ instrument_config:
   '@BP#C':
     basket: FX
     bloomberg: BPU5 Curncy
+    bloomberg_generic: BP1 Curncy
     description: BRITISH POUND
     fraction: 4
     max_held: 16
@@ -26,6 +29,7 @@ instrument_config:
   '@C#C':
     basket: AGS
     bloomberg: C Z5 Comdty
+    bloomberg_generic: C 1 Comdty
     description: CORN
     fraction: 7
     max_held: 30
@@ -138,6 +142,7 @@ instrument_config:
   BD#C:
     basket: RATESEU
     bloomberg: RXU5 Comdty
+    currency: EUR
     description: EURO BUND
     fraction: 2
     max_held: 30
@@ -146,6 +151,7 @@ instrument_config:
   BL#C:
     basket: RATESEU
     bloomberg: OEU5 Comdty
+    currency: EUR
     description: EURO BUND
     fraction: 2
     max_held: 34
@@ -226,6 +232,7 @@ portfolio_config:
     METALS: 5000000
     RATESEU: 8000000
     RATESUS: 12000000
+
 
 current_positions:
   '@ES#C': 0

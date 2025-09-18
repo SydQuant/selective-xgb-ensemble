@@ -46,6 +46,18 @@ class ProductionConfig:
         """Default signal generation hour."""
         return self.global_config.get('signal_config', {}).get('signal_hour', 12)
 
+    def get_required_fx_symbols(self, traded_symbols: List[str]) -> List[str]:
+        """Get FX tickers needed for non-USD symbols."""
+        fx_config = self.global_config.get('FX', {})
+        currencies = {self.trading_config['instrument_config'][s].get('currency', 'USD')
+                     for s in traded_symbols if self.trading_config['instrument_config'][s].get('currency') != 'USD'}
+        return [fx_config[c]['ticker'] for c in currencies if c in fx_config]
+
+    @property
+    def fx_config(self) -> Dict[str, Dict[str, any]]:
+        """FX configuration for currency conversion."""
+        return self.global_config.get('FX', {})
+
 # Global configuration instance
 config = ProductionConfig()
 
@@ -58,4 +70,5 @@ current_positions = config.trading_config['current_positions']
 s3_config = config.trading_config.get('s3', {})
 TRADING_SYMBOLS = config.trading_symbols
 FEATURE_SYMBOLS = config.feature_symbols
+FX_CONFIG = config.fx_config
 SIGNAL_HOUR = config.signal_hour

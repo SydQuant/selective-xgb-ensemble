@@ -220,7 +220,8 @@ class DataEngine:
                     # Get latest price
                     price = float(raw_data[symbol]['close'].iloc[-1])
                     batch_results[symbol] = (features_df, price)
-
+            logger.info(f"Data fetched for {len(batch_results)} symbols")
+            
             return batch_results
 
         except Exception as e:

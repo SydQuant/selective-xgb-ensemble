@@ -1,0 +1,18 @@
+2025-09-18 03:47:40,000 - INFO - ================================================================================
+2025-09-18 03:47:40,000 - INFO - XGBoost Comparison Framework
+2025-09-18 03:47:40,000 - INFO - ================================================================================
+2025-09-18 03:47:40,000 - INFO - Configuration:
+2025-09-18 03:47:40,000 - INFO -   Target Symbol: @RTY#C
+2025-09-18 03:47:40,000 - INFO -   Date Range: 2015-01-01 to 2025-08-01
+2025-09-18 03:47:40,000 - INFO -   Models: 150, Type: standard
+2025-09-18 03:47:40,001 - INFO -   Folds: 15
+2025-09-18 03:47:40,001 - INFO -   Max Features: 250 (Limited)
+2025-09-18 03:47:40,001 - INFO -   Feature Selection: Enabled
+2025-09-18 03:47:40,001 - INFO -   Inner Val Fraction: 0.2
+2025-09-18 03:47:40,001 - INFO -   EWMA Alpha: 0.1, Quality Halflife: 63 days
+2025-09-18 03:47:40,001 - INFO -   Signal Type: Binary (+1/-1)
+2025-09-18 03:47:40,001 - INFO -   Cross-validation: Expanding window
+2025-09-18 03:47:40,001 - INFO -   Production: Cutoff=0.6, Top N=8, Q-Metric=sharpe
+2025-09-18 03:47:40,001 - INFO -   Reselection: Every 1 fold(s)
+2025-09-18 03:47:40,001 - INFO - 
+2025-09-18 03:48:06,343 - ERROR - Error preparing data: cannot reindex on an axis with duplicate labels

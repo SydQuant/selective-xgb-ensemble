@@ -1,0 +1,283 @@
+instrument_config:
+  '@AD#C':
+    basket: FX
+    bloomberg_generic: AD1 Curncy
+    currency: USD
+    q_internal_code: ADc1
+    description: AUSTRALIAN DOLLAR
+    fraction: 4
+    max_held: 20
+    max_traded: 40
+    multiplier: 100000
+  '@BO#C':
+    basket: AGS
+    bloomberg_generic: BO1 Comdty
+    currency: USD
+    q_internal_code: ZLc1
+    description: SOYBEAN OIL
+    fraction: 7
+    max_held: 27
+    max_traded: 54
+    multiplier: 600
+  '@BP#C':
+    basket: FX
+    bloomberg_generic: BP1 Curncy
+    currency: USD
+    q_internal_code: BPc1
+    description: BRITISH POUND
+    fraction: 4
+    max_held: 16
+    max_traded: 32
+    multiplier: 62500
+  '@C#C':
+    basket: AGS
+    bloomberg_generic: C 1 Comdty
+    currency: USD
+    q_internal_code: Cc1
+    description: CORN
+    fraction: 7
+    max_held: 30
+    max_traded: 60
+    multiplier: 50
+  '@CT#C':
+    basket: AGS
+    bloomberg_generic: CT1 Comdty
+    currency: USD
+    q_internal_code: CTc1
+    description: COTTON
+    fraction: 7
+    max_held: 22
+    max_traded: 44
+    multiplier: 500
+  '@ES#C':
+    basket: EQUITY
+    bloomberg_generic: ES1 Index
+    currency: USD
+    q_internal_code: ESc1
+    description: E-MINI S&P 500
+    fraction: 3
+    max_held: 11
+    max_traded: 22
+    multiplier: 50
+  '@EU#C':
+    basket: FX
+    bloomberg_generic: EC1 Curncy
+    currency: USD
+    q_internal_code: UROc1
+    description: EURO FX
+    fraction: 4
+    max_held: 10
+    max_traded: 20
+    multiplier: 125000
+  '@FV#C':
+    basket: BOND
+    bloomberg_generic: FV1 Comdty
+    currency: USD
+    q_internal_code: ZFc1
+    description: 5 YR US TREASURY NOTE
+    fraction: 5
+    max_held: 37
+    max_traded: 74
+    multiplier: 1000
+  '@JY#C':
+    basket: FX
+    bloomberg_generic: JY1 Curncy
+    currency: USD
+    q_internal_code: JYc1
+    description: JAPANESE YEN
+    fraction: 4
+    max_held: 15
+    max_traded: 30
+    multiplier: 12500000
+  '@KW#C':
+    basket: AGS
+    bloomberg_generic: KW1 Comdty
+    currency: USD
+    q_internal_code: KWc1
+    description: HARD RED WINTER WHEAT
+    fraction: 7
+    max_held: 0
+    max_traded: 0
+    multiplier: 50
+  '@NQ#C':
+    basket: EQUITY
+    bloomberg_generic: NQ1 Index
+    currency: USD
+    q_internal_code: NQc1
+    description: E-MINI NASDAQ 100
+    fraction: 3
+    max_held: 8
+    max_traded: 16
+    multiplier: 20
+  '@RTY#C':
+    basket: EQUITY
+    bloomberg_generic: RTY1 Index
+    currency: USD
+    q_internal_code: TFSc1
+    description: E-MINI RUSSELL 2000
+    fraction: 3
+    max_held: 31
+    max_traded: 62
+    multiplier: 50
+  '@S#C':
+    basket: AGS
+    bloomberg_generic: S 1 Comdty
+    currency: USD
+    q_internal_code: Sc1
+    description: SOYBEANS
+    fraction: 7
+    max_held: 14
+    max_traded: 28
+    multiplier: 50
+  '@SM#C':
+    basket: AGS
+    bloomberg_generic: SM1 Comdty
+    currency: USD
+    q_internal_code: ZMc1
+    description: SOYBEAN MEAL
+    fraction: 7
+    max_held: 24
+    max_traded: 48
+    multiplier: 100
+  '@TY#C':
+    basket: BOND
+    bloomberg_generic: TY1 Comdty
+    currency: USD
+    q_internal_code: ZNc1
+    description: 10 YR US TREASURY NOTE
+    fraction: 5
+    max_held: 36
+    max_traded: 72
+    multiplier: 1000
+  '@US#C':
+    basket: BOND
+    bloomberg_generic: US1 Comdty
+    currency: USD
+    q_internal_code: ZBc1
+    description: US LONG BOND
+    fraction: 5
+    max_held: 34
+    max_traded: 68
+    multiplier: 1000
+  '@W#C':
+    basket: AGS
+    bloomberg_generic: W 1 Comdty
+    currency: USD
+    q_internal_code: Wc1
+    description: WHEAT
+    fraction: 7
+    max_held: 26
+    max_traded: 52
+    multiplier: 50
+  BD#C:
+    basket: BOND
+    bloomberg_generic: RX1 Comdty
+    currency: EUR
+    q_internal_code: FGBLc1
+    description: EURO BUND
+    fraction: 5
+    max_held: 30
+    max_traded: 60
+    multiplier: 1000
+  BL#C:
+    basket: BOND
+    bloomberg_generic: OE1 Comdty
+    currency: EUR
+    q_internal_code: FGBMc1
+    description: EURO BUND
+    fraction: 5
+    max_held: 34
+    max_traded: 68
+    multiplier: 1000
+  QBZ#C:
+    basket: COMMODITY
+    bloomberg_generic: CO1 Comdty
+    currency: USD
+    q_internal_code: LCOc1
+    description: BRENT CRUDE OIL
+    fraction: 8
+    max_held: 17
+    max_traded: 0
+    multiplier: 1000
+  QCL#C:
+    basket: COMMODITY
+    bloomberg_generic: CL1 Comdty
+    currency: USD
+    q_internal_code: CLc1
+    description: CRUDE OIL
+    fraction: 8
+    max_held: 18
+    max_traded: 36
+    multiplier: 1000
+  QGC#C:
+    basket: COMMODITY
+    bloomberg_generic: GC1 Comdty
+    currency: USD
+    q_internal_code: GCc1
+    description: GOLD
+    fraction: 8
+    max_held: 4
+    max_traded: 8
+    multiplier: 100
+  QHG#C:
+    basket: COMMODITY
+    bloomberg_generic: HG1 Comdty
+    currency: USD
+    q_internal_code: HGc1
+    description: COPPER
+    fraction: 8
+    max_held: 11
+    max_traded: 22
+    multiplier: 25000
+  QNG#C:
+    basket: COMMODITY
+    bloomberg_generic: NG1 Comdty
+    currency: USD
+    q_internal_code: NGc1
+    description: NATURAL GAS
+    fraction: 8
+    max_held: 10
+    max_traded: 30
+    multiplier: 10000
+  QPL#C:
+    basket: COMMODITY
+    bloomberg_generic: PL1 Comdty
+    currency: USD
+    q_internal_code: PLc1
+    description: PLATINUM
+    fraction: 8
+    max_held: 26
+    max_traded: 52
+    multiplier: 50
+  QRB#C:
+    basket: COMMODITY
+    bloomberg_generic: XB1 Comdty
+    currency: USD
+    q_internal_code: RBc1
+    description: RBOB GASOLINE
+    fraction: 8
+    max_held: 13
+    max_traded: 0
+    multiplier: 42000
+  QSI#C:
+    basket: COMMODITY
+    bloomberg_generic: SI1 Comdty
+    currency: USD
+    q_internal_code: SIc1
+    description: SILVER
+    fraction: 8
+    max_held: 8
+    max_traded: 16
+    multiplier: 5000
+
+portfolio_config:
+  total_aum: 16000000
+  allocations:
+    AGS: 2000000
+    BOND: 4000000
+    COMMODITY: 2000000
+    EQUITY: 4000000
+    FX: 4000000
+
+current_positions:
+  '@ES#C': 0
