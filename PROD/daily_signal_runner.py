@@ -6,7 +6,7 @@ import warnings
 import logging
 from pathlib import Path
 
-warnings.filterwarnings('ignore', category=UserWarning, module='xgboost')
+warnings.filterwarnings('ignore', category=UserWarning) #, module='xgboost')
 sys.path.insert(0, str(Path(__file__).parent))
 
 from config import TRADING_SYMBOLS, FEATURE_SYMBOLS, FX_CONFIG, global_config, instrument_config, config

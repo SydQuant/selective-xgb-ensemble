@@ -153,6 +153,8 @@ class TradeProcessor:
 
     def save_q_trade_file(self, trades: List[Dict], signal_hour: int = 12) -> Path:
         """Save Q trades in LPXD external advisors format to CSV file."""
+        if not self.portfolio_config_q or not self.instrument_config_q:
+            raise ValueError("Q config not loaded")
         from datetime import timezone
 
         # Generate timestamp in GMT timezone with YYYYMMDD-HHMM format
@@ -172,7 +174,7 @@ class TradeProcessor:
                 continue
 
             symbol = trade['symbol']
-            inst_config = self.instrument_config[symbol]
+            inst_config = self.instrument_config_q[symbol]
             bloomberg_ticker = inst_config.get('bloomberg_generic', inst_config.get('bloomberg', ''))
             internal_code = inst_config.get('q_internal_code', '')
             if internal_code == '' or pd.isna(internal_code):
