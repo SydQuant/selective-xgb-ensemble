@@ -144,7 +144,7 @@ def prepare_target_returns(raw_data: Dict[str, pd.DataFrame], target_symbol: str
     
     return signal_returns
 
-def clean_data_simple(df: pd.DataFrame) -> pd.DataFrame:
+def clean_data_simple(df: pd.DataFrame, keep_target_nans: bool = False) -> pd.DataFrame:
     """Intelligent data cleaning that preserves high-quality features."""
     
     target_cols = [c for c in df.columns if c.endswith('_target_return')]
@@ -202,8 +202,8 @@ def clean_data_simple(df: pd.DataFrame) -> pd.DataFrame:
     if features_to_drop_nan:
         df_clean = df_clean.drop(columns=features_to_drop_nan)
     
-    # 4. Remove rows where target is NaN (essential for ML)
-    if target_cols:
+    # 4. Remove rows where target is NaN (essential for ML, optional for reconciliation)
+    if target_cols and not keep_target_nans:
         target_col = target_cols[0]
         before_rows = len(df_clean)
         df_clean = df_clean.dropna(subset=[target_col])
@@ -218,8 +218,9 @@ def clean_data_simple(df: pd.DataFrame) -> pd.DataFrame:
     
     return df_clean
 
-def prepare_real_data_simple(target_symbol: str, symbols: List[str] = None, start_date: str = None, 
-                           end_date: str = None, n_hours: int = 24, signal_hour: int = 12) -> pd.DataFrame:
+def prepare_real_data_simple(target_symbol: str, symbols: List[str] = None, start_date: str = None,
+                           end_date: str = None, n_hours: int = 24, signal_hour: int = 12,
+                           keep_rows_without_targets: bool = False) -> pd.DataFrame:
     """
     Simplified data preparation following original data_utils.py logic.
     
@@ -244,7 +245,9 @@ def prepare_real_data_simple(target_symbol: str, symbols: List[str] = None, star
                 if start_date:
                     df = df[df.index >= pd.Timestamp(start_date)]
                 if end_date:
-                    df = df[df.index <= pd.Timestamp(end_date)]
+                    # Include the full end date by adding 23:59:59
+                    end_timestamp = pd.Timestamp(end_date) + pd.Timedelta(hours=23, minutes=59, seconds=59)
+                    df = df[df.index <= end_timestamp]
                 if len(df) > 100:  # Only include symbols with sufficient data
                     raw_data[symbol] = df
             except Exception as e:
@@ -265,11 +268,9 @@ def prepare_real_data_simple(target_symbol: str, symbols: List[str] = None, star
         target_reindexed = target_returns.reindex(feature_df.index)
         df = pd.concat([feature_df, target_reindexed.to_frame(target_col)], axis=1)
         
-        # Clean
-        df = clean_data_simple(df)
-        df = df.dropna(subset=[target_col])
-        
-        
+        # Clean data, passing the flag to preserve target NaNs if needed
+        df = clean_data_simple(df, keep_target_nans=keep_rows_without_targets)
+
         return df
         
     except Exception as e:

@@ -22,7 +22,7 @@ paths:
 email_config:
   enabled: true
   recipients:
-    - "# christian.beulen@sydneyquantitative.com"
+    - "christian.beulen@sydneyquantitative.com"
     - "realstevendong@gmail.com"
   sender: "realstevendong@gmail.com"
 
