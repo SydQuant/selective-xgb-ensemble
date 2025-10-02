@@ -1,0 +1,101 @@
+[2025-09-25 13:18:01] Loaded .env from /home/ubuntu/XGB PROD
+[2025-09-25 13:18:01] === XGBoost Production Daily Signal Generation ===
+[2025-09-25 13:18:01] Working directory: /home/ubuntu/XGB PROD
+[2025-09-25 13:18:01] Python command: python3
+[2025-09-25 13:18:01] Log file: logs/20250925/xgb_prod_20250925_131801.log
+[2025-09-25 13:18:01] 🔧 Ensuring clean state for IQFeed/Xvfb
+[2025-09-25 13:18:03] 🖥️  Starting Xvfb on :1
+[2025-09-25 13:18:08] 🪟 Starting IQFeed (IQCharts.exe) via wine
+[2025-09-25 13:18:08] IQFeed PID: 2346
+[2025-09-25 13:18:08] ⏳ Waiting for IQFeed to initialize...
+[2025-09-25 13:18:23] 🚀 Starting signal generation...
+=== XGBoost Daily Signal Generation ===
+Processing 24 tradeable symbols & 1 FX symbols
+====Getting live prices====
+====Getting live prices====
+Data fetched for 24 symbols
+@AD#C: Signal=-1, Avg Score=-0.54 bps, Price=0.6548
+@BO#C: Signal=1, Avg Score=-5.79 bps, Price=50.2200
+@BP#C: Signal=-1, Avg Score=0.00 bps, Price=1.3343
+@C#C: Signal=1, Avg Score=2.48 bps, Price=424.2500
+@CT#C: Signal=1, Avg Score=4.51 bps, Price=66.1400
+@ES#C: Signal=1, Avg Score=0.81 bps, Price=6661.5000
+@EU#C: Signal=-1, Avg Score=-0.40 bps, Price=1.1720
+@FV#C: Signal=-1, Avg Score=-0.99 bps, Price=109.0547
+@JY#C: Signal=-1, Avg Score=-1.88 bps, Price=0.0067
+@NQ#C: Signal=1, Avg Score=-0.03 bps, Price=24629.2500
+@RTY#C: Signal=1, Avg Score=1.03 bps, Price=2433.3000
+@S#C: Signal=1, Avg Score=1.59 bps, Price=1009.0000
+@SM#C: Signal=1, Avg Score=17.37 bps, Price=273.4000
+@TY#C: Signal=-1, Avg Score=-1.11 bps, Price=112.3125
+@US#C: Signal=-1, Avg Score=-1.12 bps, Price=116.0625
+@W#C: Signal=1, Avg Score=1.88 bps, Price=526.7500
+BD#C: EUR 127.99 -> USD 149.32
+BD#C: Signal=-1, Avg Score=-0.56 bps, Price=149.3234
+BL#C: EUR 117.53 -> USD 137.12
+BL#C: Signal=-1, Avg Score=-0.22 bps, Price=137.1199
+QCL#C: Signal=-1, Avg Score=-5.38 bps, Price=64.9000
+QGC#C: Signal=1, Avg Score=3.17 bps, Price=3773.3000
+QHG#C: Signal=1, Avg Score=2.46 bps, Price=4.7610
+QNG#C: Signal=-1, Avg Score=-3.06 bps, Price=3.1750
+QPL#C: Signal=-1, Avg Score=-0.92 bps, Price=1537.9000
+QSI#C: Signal=-1, Avg Score=0.34 bps, Price=45.2050
+Active P trades: 24
+  P @AD#C: -19 @ 0.6548
+  P @BO#C: +11 @ 50.2200
+  P @BP#C: -14 @ 1.3343
+  P @C#C: +16 @ 424.2500
+  P @CT#C: +10 @ 66.1400
+  P @ES#C: +10 @ 6661.5000
+  P @EU#C: -8 @ 1.1720
+  P @FV#C: -36 @ 109.0547
+  P @JY#C: -14 @ 0.0067
+  P @NQ#C: +6 @ 24629.2500
+  P @RTY#C: +27 @ 2433.3000
+  P @S#C: +7 @ 1009.0000
+  P @SM#C: +13 @ 273.4000
+  P @TY#C: -35 @ 112.3125
+  P @US#C: -34 @ 116.0625
+  P @W#C: +13 @ 526.7500
+  P BD#C: -26 @ 149.3234
+  P BL#C: -29 @ 137.1199
+  P QCL#C: -18 @ 64.9000
+  P QGC#C: +3 @ 3773.3000
+  P QHG#C: +10 @ 4.7610
+  P QNG#C: -10 @ 3.1750
+  P QPL#C: -16 @ 1537.9000
+  P QSI#C: -5 @ 45.2050
+Active Q trades: 23
+  Q @AD#C: -15 @ 0.6548
+  Q @BO#C: +9 @ 50.2200
+  Q @BP#C: -11 @ 1.3343
+  Q @C#C: +13 @ 424.2500
+  Q @CT#C: +8 @ 66.1400
+  Q @ES#C: +4 @ 6661.5000
+  Q @EU#C: -6 @ 1.1720
+  Q @FV#C: -7 @ 109.0547
+  Q @JY#C: -11 @ 0.0067
+  Q @NQ#C: +2 @ 24629.2500
+  Q @RTY#C: +10 @ 2433.3000
+  Q @S#C: +5 @ 1009.0000
+  Q @SM#C: +10 @ 273.4000
+  Q @TY#C: -7 @ 112.3125
+  Q @US#C: -6 @ 116.0625
+  Q @W#C: +10 @ 526.7500
+  Q BD#C: -5 @ 149.3234
+  Q BL#C: -5 @ 137.1199
+  Q QCL#C: -3 @ 64.9000
+  Q QHG#C: +2 @ 4.7610
+  Q QNG#C: -7 @ 3.1750
+  Q QPL#C: -3 @ 1537.9000
+  Q QSI#C: -1 @ 45.2050
+Saved 24 trades to /home/ubuntu/XGB PROD/logs/20250925/20250925_GMS_Trade_File_xgb_prod_12hr.xlsx
+Saved 23 Q trades to /home/ubuntu/XGB PROD/logs/20250925/lpxd_external_advisors_CB_20250925-1719.csv
+Found credentials from IAM Role: ec2-s3-access-role
+Saved P trades to /home/ubuntu/XGB PROD/logs/20250925/20250925_GMS_Trade_File_xgb_prod_12hr.xlsx
+Saved Q trades to /home/ubuntu/XGB PROD/logs/20250925/lpxd_external_advisors_CB_20250925-1719.csv
+Email sent to ['christian.beulen@sydneyquantitative.com', 'realstevendong@gmail.com']
+Email sent with both trade files
+Completed: 24 signals, 24 P trades, 23 Q trades
+[2025-09-25 13:19:36] ✅ Signal generation completed successfully
+[2025-09-25 13:19:36] 🧹 Cleaning up IQFeed/Xvfb
