@@ -113,13 +113,14 @@ def get_available_trade_dates(logs_dir: Path) -> list:
     return sorted(dates)
 
 
-def get_live_signals(logs_dir: Path, lookback_days: int = 7):
+def get_live_signals(logs_dir: Path, lookback_days: int = 7, start_date: datetime = None):
     """
     Extract signals from recent trade files for reconciliation.
 
     Args:
         logs_dir: Directory containing dated log folders
         lookback_days: Number of recent days to include
+        start_date: Optional start date filter (only include dates >= this)
 
     Returns:
         List of signal dictionaries
@@ -138,6 +139,15 @@ def get_live_signals(logs_dir: Path, lookback_days: int = 7):
 
     # Select recent dates
     recent_dates = available_dates[-lookback_days:] if len(available_dates) >= lookback_days else available_dates
+
+    # Filter by start_date if provided
+    if start_date:
+        recent_dates = [d for d in recent_dates if d >= start_date.date()]
+
+    if not recent_dates:
+        logger.warning("No dates available after filtering")
+        return live_signals
+
     logger.info(f"Processing trade files from {len(recent_dates)} dates: {recent_dates[0]} to {recent_dates[-1]}")
 
     for date in recent_dates:
@@ -348,7 +358,7 @@ def create_performance_plot(backtest_results: dict, backtest_days: int):
     return plot_file
 
 
-def compare_signals(backtest_results: dict, live_signals: list, lookback_days: int) -> pd.DataFrame:
+def compare_signals(backtest_results: dict, live_signals: list, lookback_days: int, start_date: datetime = None) -> pd.DataFrame:
     """Compare backtest signals with live trade signals."""
     if not live_signals:
         logger.warning("No live signals for comparison")
@@ -368,6 +378,10 @@ def compare_signals(backtest_results: dict, live_signals: list, lookback_days: i
             continue
 
         recent_backtest = backtest_df.tail(lookback_days)
+
+        # Filter by start_date if provided
+        if start_date:
+            recent_backtest = recent_backtest[recent_backtest['date'] >= start_date.date()]
 
         for _, bt_row in recent_backtest.iterrows():
             bt_date = bt_row['date']
@@ -441,10 +455,9 @@ def save_reconciliation_report(comparison_df: pd.DataFrame, output_dir: Path):
 def main():
     """Main weekly backtest analysis."""
     parser = argparse.ArgumentParser(description='XGBoost Weekly Backtest with Reconciliation v1.1')
-    parser.add_argument('--backtest-days', type=int, default=30, help='Number of days to backtest')
-    parser.add_argument('--reconcile-days', type=int, default=7, help='Number of recent days for reconciliation')
-    parser.add_argument('--symbols', nargs='+', default=None, help='Symbols to test (default: auto-detect)')
-    parser.add_argument('--reconcile', action='store_true', help='Run reconciliation against live trades')
+    parser.add_argument('--rec-start', type=str, default=None, help='Reconciliation start date (YYYY-MM-DD), default: 10 days before latest')
+    parser.add_argument('--rec-end', type=str, default=None, help='Reconciliation end date (YYYY-MM-DD), default: latest available')
+    parser.add_argument('--symbols', nargs='+', default=None, help='Symbols to test (default: auto-detect with max_traded > 0)')
     args = parser.parse_args()
 
     logger = setup_logging()
@@ -474,18 +487,35 @@ def main():
 
     if available_dates:
         end_date = datetime.combine(max(available_dates), datetime.min.time())
-        logger.info(f"Using end date {end_date.date()} from available trade files")
+        logger.info(f"Latest available trade date: {end_date.date()}")
     else:
         end_date = datetime.now()
         logger.warning("No trade files found, using current date")
 
-    logger.info(f"Running {args.backtest_days}-day backtest for {len(symbols_to_test)} symbols...")
+    # Parse reconciliation date range
+    if args.rec_end:
+        rec_end = datetime.strptime(args.rec_end, '%Y-%m-%d')
+    else:
+        rec_end = end_date
+
+    if args.rec_start:
+        rec_start = datetime.strptime(args.rec_start, '%Y-%m-%d')
+    else:
+        rec_start = rec_end - timedelta(days=10)
+
+    # Calculate backtest days needed (with 30-day buffer for features)
+    # This ensures features like 20-day MA, ATR, etc. are properly calculated
+    backtest_start = rec_start - timedelta(days=30)
+    backtest_days = (rec_end.date() - backtest_start.date()).days + 5
+    logger.info(f"Reconciliation period: {rec_start.date()} to {rec_end.date()}")
+    logger.info(f"Backtest period: {backtest_start.date()} to {rec_end.date()} ({backtest_days} days with 30-day feature buffer)")
+    logger.info(f"Running backtest for {len(symbols_to_test)} symbols...")
 
     # Run backtests
     backtest_results = {}
     for symbol in symbols_to_test:
         logger.info(f"Processing {symbol}...")
-        df = run_backtest(symbol, end_date, args.backtest_days)
+        df = run_backtest(symbol, rec_end, backtest_days)
         backtest_results[symbol] = df
 
         if not df.empty:
@@ -496,13 +526,17 @@ def main():
             logger.info(f"  {symbol}: No data")
 
     # Reconciliation
-    if args.reconcile and logs_dir.exists():
-        logger.info(f"\n=== Running Reconciliation (last {args.reconcile_days} days) ===")
-        live_signals = get_live_signals(logs_dir, args.reconcile_days)
+    if logs_dir.exists():
+        logger.info(f"\n=== Running Reconciliation ({rec_start.date()} to {rec_end.date()}) ===")
+
+        # Calculate lookback days for live signals
+        lookback_days = (rec_end.date() - rec_start.date()).days + 5
+
+        live_signals = get_live_signals(logs_dir, lookback_days, rec_start)
         logger.info(f"Found {len(live_signals)} live trade signals")
 
         if live_signals:
-            comparison_df = compare_signals(backtest_results, live_signals, args.reconcile_days)
+            comparison_df = compare_signals(backtest_results, live_signals, backtest_days, rec_start)
             output_dir = Path(__file__).parent / "outputs" / "weekly_backtest"
             report_file = save_reconciliation_report(comparison_df, output_dir)
             if report_file:
