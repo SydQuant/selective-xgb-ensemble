@@ -450,18 +450,23 @@ def main():
     logger = setup_logging()
     logger.info("=== XGBoost Weekly Backtest Analysis v1.1 ===")
 
-    # Auto-detect symbols with models
+    # Auto-detect symbols with models (filter by max_traded > 0)
     if args.symbols:
         symbols_to_test = args.symbols
     else:
+        from config import trading_config
         models_dir = Path(__file__).parent.parent / "models"
         available_symbols = set()
         for model_file in models_dir.glob("*_*.pkl"):
             parts = model_file.stem.split('_')
             if len(parts) >= 3:  # symbol_date_time
-                available_symbols.add(parts[0])
+                symbol = parts[0]
+                # Only include symbols with max_traded > 0
+                inst_config = trading_config['instrument_config'].get(symbol, {})
+                if inst_config.get('max_traded', 0) > 0:
+                    available_symbols.add(symbol)
         symbols_to_test = sorted(available_symbols)
-        logger.info(f"Auto-detected {len(symbols_to_test)} symbols with models")
+        logger.info(f"Auto-detected {len(symbols_to_test)} symbols with models and max_traded > 0")
 
     # Determine end date from available trade data
     logs_dir = Path(__file__).parent.parent / "logs"

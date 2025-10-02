@@ -1,132 +1,120 @@
 === XGBoost Weekly Backtest Analysis v1.1 ===
-Auto-detected 27 symbols with models
+Auto-detected 24 symbols with models and max_traded > 0
 Using end date 2025-09-30 from available trade files
-Running 14-day backtest for 27 symbols...
+Running 16-day backtest for 24 symbols...
 Processing @AD#C...
 Running backtest for @AD#C ending 2025-09-30...
-  @AD#C: PnL=1.46%, Trades=14
+  @AD#C: PnL=2.41%, Trades=16
 Processing @BO#C...
 Running backtest for @BO#C ending 2025-09-30...
-  @BO#C: PnL=-10.12%, Trades=14
+  @BO#C: PnL=-11.04%, Trades=16
 Processing @BP#C...
 Running backtest for @BP#C ending 2025-09-30...
-  @BP#C: PnL=0.07%, Trades=14
+  @BP#C: PnL=-0.13%, Trades=16
 Processing @C#C...
 Running backtest for @C#C ending 2025-09-30...
-  @C#C: PnL=-9.72%, Trades=14
+  @C#C: PnL=-8.46%, Trades=16
 Processing @CT#C...
 Running backtest for @CT#C ending 2025-09-30...
-  @CT#C: PnL=-0.91%, Trades=14
+  @CT#C: PnL=-1.16%, Trades=16
 Processing @ES#C...
 Running backtest for @ES#C ending 2025-09-30...
-  @ES#C: PnL=-0.87%, Trades=14
+  @ES#C: PnL=-0.99%, Trades=16
 Processing @EU#C...
 Running backtest for @EU#C ending 2025-09-30...
-  @EU#C: PnL=2.22%, Trades=14
+  @EU#C: PnL=2.24%, Trades=16
 Processing @FV#C...
 Running backtest for @FV#C ending 2025-09-30...
-  @FV#C: PnL=-0.03%, Trades=14
+  @FV#C: PnL=0.02%, Trades=16
 Processing @JY#C...
 Running backtest for @JY#C ending 2025-09-30...
-  @JY#C: PnL=1.62%, Trades=14
-Processing @KW#C...
-Running backtest for @KW#C ending 2025-09-30...
-  @KW#C: PnL=-1.24%, Trades=14
+  @JY#C: PnL=1.68%, Trades=16
 Processing @NQ#C...
 Running backtest for @NQ#C ending 2025-09-30...
-  @NQ#C: PnL=-1.71%, Trades=14
+  @NQ#C: PnL=-0.88%, Trades=16
 Processing @RTY#C...
 Running backtest for @RTY#C ending 2025-09-30...
-  @RTY#C: PnL=-3.75%, Trades=12
+  @RTY#C: PnL=-4.00%, Trades=13
 Processing @S#C...
 Running backtest for @S#C ending 2025-09-30...
-  @S#C: PnL=-4.62%, Trades=14
+  @S#C: PnL=-3.33%, Trades=16
 Processing @SM#C...
 Running backtest for @SM#C ending 2025-09-30...
-  @SM#C: PnL=6.06%, Trades=14
+  @SM#C: PnL=7.71%, Trades=16
 Processing @TY#C...
 Running backtest for @TY#C ending 2025-09-30...
-  @TY#C: PnL=-0.43%, Trades=14
+  @TY#C: PnL=-0.03%, Trades=16
 Processing @US#C...
 Running backtest for @US#C ending 2025-09-30...
-  @US#C: PnL=-1.85%, Trades=14
+  @US#C: PnL=-0.97%, Trades=16
 Processing @W#C...
 Running backtest for @W#C ending 2025-09-30...
-  @W#C: PnL=-12.55%, Trades=14
+  @W#C: PnL=-12.97%, Trades=16
 Processing BD#C...
 Running backtest for BD#C ending 2025-09-30...
-  BD#C: PnL=-0.41%, Trades=14
+  BD#C: PnL=-0.31%, Trades=16
 Processing BL#C...
 Running backtest for BL#C ending 2025-09-30...
-  BL#C: PnL=-0.12%, Trades=14
-Processing QBZ#C...
-Running backtest for QBZ#C ending 2025-09-30...
-  QBZ#C: PnL=-5.83%, Trades=14
+  BL#C: PnL=-0.33%, Trades=16
 Processing QCL#C...
 Running backtest for QCL#C ending 2025-09-30...
-  QCL#C: PnL=-7.26%, Trades=14
+  QCL#C: PnL=-11.25%, Trades=16
 Processing QGC#C...
 Running backtest for QGC#C ending 2025-09-30...
-  QGC#C: PnL=-0.07%, Trades=14
+  QGC#C: PnL=0.12%, Trades=16
 Processing QHG#C...
 Running backtest for QHG#C ending 2025-09-30...
-  QHG#C: PnL=-3.14%, Trades=14
+  QHG#C: PnL=-3.44%, Trades=16
 Processing QNG#C...
 Running backtest for QNG#C ending 2025-09-30...
-  QNG#C: PnL=18.07%, Trades=14
+  QNG#C: PnL=15.92%, Trades=16
 Processing QPL#C...
 Running backtest for QPL#C ending 2025-09-30...
-  QPL#C: PnL=-14.38%, Trades=14
-Processing QRB#C...
-Running backtest for QRB#C ending 2025-09-30...
-  QRB#C: PnL=4.25%, Trades=14
+  QPL#C: PnL=-12.38%, Trades=16
 Processing QSI#C...
 Running backtest for QSI#C ending 2025-09-30...
-  QSI#C: PnL=-4.05%, Trades=14
+  QSI#C: PnL=-4.86%, Trades=16
 
-=== Running Reconciliation (last 12 days) ===
+=== Running Reconciliation (last 14 days) ===
 Created 27 Bloomberg mapping patterns
 Processing trade files from 11 dates: 2025-09-16 to 2025-09-30
 Found 244 live trade signals
 
 === Signal Reconciliation Summary ===
-Total Comparisons: 324
+Total Comparisons: 336
 Matching Signals: 240
-Mismatches: 84
-Match Rate: 74.07%
+Mismatches: 96
+Match Rate: 71.43%
 
 === Mismatches by Symbol ===
-QRB#C: 12 mismatches
-QBZ#C: 12 mismatches
-@KW#C: 12 mismatches
-QSI#C: 3 mismatches
-QPL#C: 3 mismatches
-QNG#C: 3 mismatches
-@US#C: 2 mismatches
-QHG#C: 2 mismatches
-QGC#C: 2 mismatches
-QCL#C: 2 mismatches
-BL#C: 2 mismatches
-BD#C: 2 mismatches
-@W#C: 2 mismatches
-@AD#C: 2 mismatches
-@BO#C: 2 mismatches
-@S#C: 2 mismatches
-@NQ#C: 2 mismatches
-@JY#C: 2 mismatches
-@FV#C: 2 mismatches
-@EU#C: 2 mismatches
-@CT#C: 2 mismatches
-@C#C: 2 mismatches
-@BP#C: 2 mismatches
-@SM#C: 2 mismatches
-@TY#C: 1 mismatches
-@RTY#C: 1 mismatches
-@ES#C: 1 mismatches
-Reconciliation report: /Users/steven/Projects/SQ/bond_ls_xgb_grope_full_v6/PROD/weekly_analysis_scripts/outputs/weekly_backtest/reconciliation_20251002_1437.csv
+QSI#C: 5 mismatches
+QPL#C: 5 mismatches
+QNG#C: 5 mismatches
+@BO#C: 4 mismatches
+QHG#C: 4 mismatches
+QGC#C: 4 mismatches
+QCL#C: 4 mismatches
+BL#C: 4 mismatches
+BD#C: 4 mismatches
+@W#C: 4 mismatches
+@US#C: 4 mismatches
+@AD#C: 4 mismatches
+@S#C: 4 mismatches
+@NQ#C: 4 mismatches
+@JY#C: 4 mismatches
+@FV#C: 4 mismatches
+@EU#C: 4 mismatches
+@CT#C: 4 mismatches
+@C#C: 4 mismatches
+@BP#C: 4 mismatches
+@SM#C: 4 mismatches
+@TY#C: 3 mismatches
+@RTY#C: 3 mismatches
+@ES#C: 3 mismatches
+Reconciliation report: /Users/steven/Projects/SQ/bond_ls_xgb_grope_full_v6/PROD/weekly_analysis_scripts/outputs/weekly_backtest/reconciliation_20251002_1440.csv
 
 === Summary ===
-Symbols with data: 27/27
-Total PnL: -49.32%
-Total Trades: 376
+Symbols with data: 24/24
+Total PnL: -46.45%
+Total Trades: 381
 Weekly backtest completed
