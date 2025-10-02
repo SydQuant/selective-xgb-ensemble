@@ -94,7 +94,8 @@
       "Read(/C:\\Users\\zhang\\Desktop\\Steve\\bond_ls_xgb_grope_full_v6/**)",
       "Read(/C:\\Users\\zhang\\Desktop\\Steve\\bond_ls_xgb_grope_full_v6/**)",
       "Read(/C:\\Users\\zhang\\Desktop\\Steve\\bond_ls_xgb_grope_full_v6/**)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(python3:*)"
     ],
     "deny": [],
     "ask": []

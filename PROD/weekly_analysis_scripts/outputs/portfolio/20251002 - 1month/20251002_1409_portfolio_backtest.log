@@ -1,0 +1,38 @@
+=== Portfolio Backtest Analysis ===
+Using specified end date: 2025-09-30
+Running portfolio backtest from 2025-09-01 to 2025-09-30 for 27 symbols...
+Creating portfolio visualizations...
+Performance & metrics saved: /Users/steven/Projects/SQ/bond_ls_xgb_grope_full_v6/PROD/weekly_analysis_scripts/outputs/portfolio/performance_20250901_20250930.png
+Symbol grid saved: /Users/steven/Projects/SQ/bond_ls_xgb_grope_full_v6/PROD/weekly_analysis_scripts/outputs/portfolio/symbol_grid_20250901_20250930.png
+Position details saved: /Users/steven/Projects/SQ/bond_ls_xgb_grope_full_v6/PROD/weekly_analysis_scripts/outputs/portfolio/positions_20251002_1410.csv
+Daily metrics saved: /Users/steven/Projects/SQ/bond_ls_xgb_grope_full_v6/PROD/weekly_analysis_scripts/outputs/portfolio/daily_metrics_20251002_1410.csv
+
+============================================================
+PORTFOLIO BACKTEST SUMMARY
+============================================================
+Backtest Period: 2025-09-01 to 2025-09-29
+Number of Days: 21
+
+PERFORMANCE METRICS:
+  Total Return: -1.32%
+  Daily Mean: -0.063%
+  Daily Std Dev: 0.158%
+  Sharpe Ratio (annualized): -6.324
+  Max Daily Gain: 0.18%
+  Max Daily Loss: -0.41%
+  Max Drawdown: -1.52%
+
+PORTFOLIO COMPOSITION:
+  Avg Positions: 26.7
+  Avg Utilization: 86.5%
+  Total Symbols: 27
+
+BASKET ALLOCATION:
+  AGS         :   0.6% of AUM, Return:  -0.17%
+  EQUITY      :   5.8% of AUM, Return:   0.26%
+  Energy      :   1.8% of AUM, Return:  -0.37%
+  FX          :   2.4% of AUM, Return:   0.23%
+  METALS      :   2.3% of AUM, Return:  -0.65%
+  RATESEU     :   7.8% of AUM, Return:  -0.10%
+  RATESUS     :   7.9% of AUM, Return:  -0.50%
+============================================================
